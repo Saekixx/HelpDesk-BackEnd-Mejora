@@ -9,6 +9,9 @@ import {
 import { Response } from 'express';
 import { DomainException } from '../../domain/domain.exception';
 
+// GlobalExceptionFilter es un filtro de excepciones que captura todas las excepciones
+// no manejadas en la aplicación y las transforma en respuestas HTTP adecuadas.
+
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {

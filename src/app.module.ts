@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { createObserveModule } from '@nestjs/observe';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsuariosModule } from './usuarios/users.module';
 import { ClientesModule } from './clientes/clientes.module';
@@ -48,7 +46,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ClientesModule,
     PlanesModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

@@ -36,4 +36,10 @@ export class UserTypeOrmRepository implements UserRepositoryPort {
     if (!entity) return null;
     return UserMapper.toDomain(entity);
   }
+
+  // Implementación del método existsByCorreo del puerto
+  async existsByCorreo(correo: string): Promise<boolean> {
+    const count = await this.typeOrmRepository.count({ where: { correo } });
+    return count > 0;
+  }
 }

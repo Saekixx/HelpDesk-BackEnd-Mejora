@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -17,10 +17,11 @@ import { BcryptHashAdapter } from './infrastructure/adapters/bcrypt-hash.adapter
 // Controladores y Módulos requeridos
 import { AuthController } from './infrastructure/controllers/auth.controller';
 import { UsuariosModule } from '../usuarios/users.module';
+import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
 
 @Module({
   imports: [
-    UsuariosModule, // Importamos el módulo de usuarios para poder inyectar los repositorios de usuarios y roles
+    forwardRef(() => UsuariosModule), // Importamos el módulo de usuarios para poder inyectar los repositorios de usuarios y roles
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -35,6 +36,7 @@ import { UsuariosModule } from '../usuarios/users.module';
   providers: [
     LoginUseCase,
     RegisterUseCase,
+    JwtAuthGuard, // Agregamos el guardia de autenticación JWT como proveedor para que pueda ser inyectado en otros lugares si es necesario
     {
       provide: TOKEN_SERVICE,
       useClass: JwtTokenAdapter,

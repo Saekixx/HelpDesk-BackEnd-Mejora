@@ -9,4 +9,6 @@ export interface UserRepositoryPort {
   findByCorreo(correo: string): Promise<User | null>;
 
   findById(id: number): Promise<User | null>;
+
+  existsByCorreo(correo: string): Promise<boolean>;
 }

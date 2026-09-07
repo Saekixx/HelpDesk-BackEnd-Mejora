@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import {
   USER_REPOSITORY,
   UserRepositoryPort,
@@ -13,6 +8,10 @@ import {
   HashServicePort,
 } from '@/auth/domain/ports/hash.service.port';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
+import {
+  EmailAlreadyInUseException,
+  UserNotFoundException,
+} from '@/usuarios/domain/exceptions/user.exceptions';
 
 @Injectable()
 export class UpdateProfileUseCase {
@@ -24,13 +23,13 @@ export class UpdateProfileUseCase {
   ) {}
 
   async execute(
-    userId: string,
+    userId: number,
     updateProfileDto: UpdateProfileDto,
-  ): Promise<void> {
+  ): Promise<string> {
     // Validar que el usuario exista en la base de datos
     const user: any = await this.usuarioRepository.findById(Number(userId));
     // Si el usuario no existe, lanzar un error
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new UserNotFoundException();
 
     // Verificar que la contraseña actual proporcionada coincida con la almacenada en la base de datos
     const isPasswordValid = await this.hashService.compare(
@@ -51,20 +50,28 @@ export class UpdateProfileUseCase {
     }
 
     // Si se proporciona un nuevo correo electrónico, verificar que no esté en uso por otro usuario
-    if (updateProfileDto.email) {
-      const existingUser = await this.usuarioRepository.findByCorreo(
+    if (updateProfileDto.email && updateProfileDto.email !== user.correo) {
+      // Verificar si el correo electrónico ya está en uso por otro usuario,
+      // si es así, lanzar una excepción EmailAlreadyInUseException
+      const existingUserWithEmail = await this.usuarioRepository.existsByCorreo(
         updateProfileDto.email,
       );
-      if (existingUser && existingUser.id_usuario !== user.id) {
-        throw new UnauthorizedException('El correo electrónico ya está en uso');
+      // Si ya existe un usuario con el correo electrónico proporcionado, lanzar una excepción
+      if (existingUserWithEmail) {
+        throw new EmailAlreadyInUseException();
       }
-      user.email = updateProfileDto.email;
+      // Actualizar el correo electrónico del usuario
+      user.correo = updateProfileDto.email;
     }
 
     // Actualizar los campos del perfil del usuario si se proporcionan
     if (updateProfileDto.nombre) user.nombre = updateProfileDto.nombre;
     if (updateProfileDto.apellido) user.apellido = updateProfileDto.apellido;
     if (updateProfileDto.telefono) user.telefono = updateProfileDto.telefono;
+
+    // Guardar los cambios en el perfil del usuario en la base de datos
     await this.usuarioRepository.save(user);
+
+    return 'Perfil actualizado exitosamente';
   }
 }
