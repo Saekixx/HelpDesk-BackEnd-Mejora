@@ -13,6 +13,7 @@ import { CreateUserUseCase } from './application/use-cases/create-user.use-case'
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
 import { AuthModule } from '@/auth/auth.module';
 import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
+import { GetUserByIdUseCase } from './application/use-cases/get-user-by-id.use-case';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
   providers: [
     // Casos de Usos
     GetUsersUseCase,
+    GetUserByIdUseCase,
     CreateUserUseCase,
     UpdateProfileUseCase,
     {
