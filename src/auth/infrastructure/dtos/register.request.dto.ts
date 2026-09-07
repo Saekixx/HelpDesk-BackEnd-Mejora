@@ -1,3 +1,4 @@
+import { RegisterCommand } from '@/auth/application/dtos/register.dto';
 import {
   IsEmail,
   IsNotEmpty,
@@ -7,7 +8,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class RegisterRequestDto {
+export class RegisterRequestDto implements RegisterCommand {
   @IsString()
   @IsNotEmpty({ message: 'El nombre es obligatorio' })
   nombre: string;

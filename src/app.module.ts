@@ -9,8 +9,8 @@ import { PlanesModule } from './planes/planes.module';
 import { CommonModule } from './common/infrastructure/common.module';
 
 // Entidades de la base de datos
-import { UserEntity } from './usuarios/infrastructure/entities/user.entity';
-import { RolEntity } from './usuarios/infrastructure/entities/rol.entity';
+import { UserEntity } from './usuarios/infrastructure/adapters/persistence/entities/user.entity';
+import { RolEntity } from './usuarios/infrastructure/adapters/persistence/entities/rol.entity';
 import { ClienteEntity } from './clientes/infrastructure/entities/cliente.entity';
 import { SucursalEntity } from './clientes/infrastructure/entities/sucursal.entity';
 import { AreaEntity } from './clientes/infrastructure/entities/area.entity';

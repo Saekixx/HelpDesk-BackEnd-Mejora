@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RolMapper } from '../mappers/rol.mapper';
 import { Rol } from '@/usuarios/domain/entities/rol.entity';
-import { RolEntity } from '../entities/rol.entity';
 import { RolRepositoryPort } from '@/usuarios/domain/ports/rol.repository.port';
+import { RolEntity } from './entities/rol.entity';
+import { RolMapper } from './mappers/rol.mapper';
 
 @Injectable()
 export class RolTypeOrmRepository implements RolRepositoryPort {

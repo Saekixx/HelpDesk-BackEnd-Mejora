@@ -1,11 +1,15 @@
+import {
+  PaginatedUsersResult,
+  UserRepositoryPort,
+} from '@/usuarios/domain/ports/user.repository.port';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
-import { UserRepositoryPort } from '../../domain/ports/user.repository.port';
-import { User } from '../../domain/entities/user.entity';
-import { UserEntity } from '../entities/user.entity';
-import { UserMapper } from '../mappers/user.mapper';
+import { UserEntity } from './entities/user.entity';
+import { User } from '@/usuarios/domain/entities/user.entity';
+import { UserMapper } from './mappers/user.mapper';
+import { UserFilterCriteria } from '@/usuarios/domain/criteria/user-filter.criteria';
+import { UserQueryBuilder } from './builders/user-query.builder';
 
 @Injectable()
 export class UserTypeOrmRepository implements UserRepositoryPort {
@@ -41,5 +45,33 @@ export class UserTypeOrmRepository implements UserRepositoryPort {
   async existsByCorreo(correo: string): Promise<boolean> {
     const count = await this.typeOrmRepository.count({ where: { correo } });
     return count > 0;
+  }
+
+  // Implementación del método findAllWithFilters del puerto
+  async findAllWithFilters(
+    filters: UserFilterCriteria,
+  ): Promise<PaginatedUsersResult> {
+    const { page = 1, limit = 10 } = filters;
+
+    // Creamos la consulta base
+    const query = this.typeOrmRepository.createQueryBuilder('user');
+
+    // Delegamos la construcción de los cláusulas WHERE al builder
+    UserQueryBuilder.applyFilters(query, filters);
+
+    const skip = (page - 1) * limit;
+    const [entities, total] = await query
+      .orderBy('user.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: entities.map(UserMapper.toDomain),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

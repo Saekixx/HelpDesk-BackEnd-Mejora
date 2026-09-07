@@ -1,3 +1,4 @@
+import { UpdateProfileDto } from '@/usuarios/application/dtos/update-profile.dto';
 import {
   IsString,
   IsOptional,
@@ -6,7 +7,7 @@ import {
   IsEmail,
 } from 'class-validator';
 
-export class UpdateProfileDTO {
+export class UpdateProfileDTO implements UpdateProfileDto {
   @IsString()
   @IsNotEmpty()
   currentPassword: string;

@@ -1,11 +1,11 @@
-export class CreateUserDto {
-  readonly nombre: string;
-  readonly apellido: string;
-  readonly correo: string;
-  readonly password: string;
-  readonly telefono: string;
-  readonly id_rol: number;
-  readonly id_cliente?: number;
-  readonly id_sucursal?: number;
-  readonly id_area?: number;
+export interface CreateUserDto {
+  nombre: string;
+  apellido: string;
+  correo: string;
+  password: string;
+  telefono: string;
+  id_rol: number;
+  id_cliente?: number | null;
+  id_sucursal?: number | null;
+  id_area?: number | null;
 }

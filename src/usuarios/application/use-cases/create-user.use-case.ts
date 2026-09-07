@@ -1,5 +1,9 @@
-// src/usuarios/application/use-cases/create-user.use-case.ts
-import { Inject, Injectable, ConflictException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   USER_REPOSITORY,
   UserRepositoryPort,
@@ -19,28 +23,84 @@ import {
 export class CreateUserUseCase {
   constructor(
     @Inject(USER_REPOSITORY)
-    private readonly userRepository: UserRepositoryPort, // Inyecta el puerto del repositorio de usuarios
+    private readonly userRepository: UserRepositoryPort,
     @Inject(ROL_REPOSITORY)
-    private readonly rolRepository: RolRepositoryPort, // Inyecta el puerto del repositorio de roles
+    private readonly rolRepository: RolRepositoryPort,
     @Inject(HASH_SERVICE)
-    private readonly hashService: HashServicePort, // Inyecta el puerto del servicio de hash
+    private readonly hashService: HashServicePort,
   ) {}
 
   async execute(dto: CreateUserDto): Promise<Omit<User, 'password'>> {
     // Validar si el correo ya está registrado
     const existingUser = await this.userRepository.findByCorreo(dto.correo);
-    if (existingUser)
+    if (existingUser) {
       throw new ConflictException('El correo electrónico ya está registrado');
+    }
 
-    // Validar si el rol existe
+    // Validar si el rol existe y obtener su nombre
     const existingRol = await this.rolRepository.findById(dto.id_rol);
-    if (!existingRol)
+    if (!existingRol) {
       throw new ConflictException('El rol especificado no existe');
+    }
+
+    // Normalizar y validar relaciones según la jerarquía del rol
+    let finalIdCliente: number | null = null;
+    let finalIdSucursal: number | null = null;
+    let finalIdArea: number | null = null;
+
+    // Validar las relaciones según la jerarquía del rol
+    const rolNombre = existingRol.nombre.toUpperCase();
+
+    switch (rolNombre) {
+      case 'ADMINISTRADOR':
+      case 'SOPORTE_INSITU':
+      case 'SOPORTE_REMOTO':
+        // No deben asociarse a ninguna entidad externa
+        break;
+
+      // Los roles de cliente requieren validaciones específicas (id_cliente)
+      case 'CLIENTE_EMPRESA':
+        if (!dto.id_cliente) {
+          throw new BadRequestException(
+            'El rol CLIENTE_EMPRESA requiere seleccionar un cliente/empresa',
+          );
+        }
+        finalIdCliente = dto.id_cliente;
+        break;
+      // Los roles de cliente con sucursal requieren id_cliente y id_sucursal
+      case 'CLIENTE_SUCURSAL':
+        if (!dto.id_cliente || !dto.id_sucursal) {
+          throw new BadRequestException(
+            'El rol CLIENTE_SUCURSAL requiere cliente/empresa y sucursal',
+          );
+        }
+        finalIdCliente = dto.id_cliente;
+        finalIdSucursal = dto.id_sucursal;
+        break;
+
+      // Los roles de cliente con sucursal y área requieren id_cliente, id_sucursal y id_area
+      case 'CLIENTE_TRABAJADOR':
+        if (!dto.id_cliente || !dto.id_sucursal || !dto.id_area) {
+          throw new BadRequestException(
+            'El rol CLIENTE_TRABAJADOR requiere cliente/empresa, sucursal y área',
+          );
+        }
+        finalIdCliente = dto.id_cliente;
+        finalIdSucursal = dto.id_sucursal;
+        finalIdArea = dto.id_area;
+        break;
+
+      // Si el rol no coincide con ninguno de los casos anteriores, lanzar una excepción
+      default:
+        throw new BadRequestException(
+          `El rol ${existingRol.nombre} no tiene reglas de asignación definidas`,
+        );
+    }
 
     // Hashear la contraseña
     const hashedPassword = await this.hashService.hash(dto.password);
 
-    // Crear instancia del Modelo de Dominio
+    // Instanciar la entidad de Dominio
     const newUser = new User({
       nombre: dto.nombre,
       apellido: dto.apellido,
@@ -49,17 +109,16 @@ export class CreateUserUseCase {
       telefono: dto.telefono,
       is_active: true,
       id_rol: dto.id_rol,
-      id_cliente: dto.id_cliente ?? null,
-      id_sucursal: dto.id_sucursal ?? null,
-      id_area: dto.id_area ?? null,
+      id_cliente: finalIdCliente,
+      id_sucursal: finalIdSucursal,
+      id_area: finalIdArea,
     });
 
-    // Guardamos en la base de datos a través del Puerto
+    // Guardar en base de datos
     const savedUser = await this.userRepository.save(newUser);
 
-    // Excluir la contraseña de la respuesta de retorno
+    // Retornar omitiendo la contraseña
     const { password, ...userWithoutPassword } = savedUser;
-
     return userWithoutPassword;
   }
 }

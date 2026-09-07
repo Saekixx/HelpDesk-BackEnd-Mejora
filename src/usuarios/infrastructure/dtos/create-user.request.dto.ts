@@ -1,3 +1,4 @@
+import { CreateUserDto } from '@/usuarios/application/dtos/create-user.dto';
 import {
   IsEmail,
   IsNotEmpty,
@@ -7,7 +8,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class CreateUserRequestDto {
+export class CreateUserRequestDto implements CreateUserDto {
   @IsString({ message: 'El nombre debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El nombre es obligatorio' })
   readonly nombre: string;

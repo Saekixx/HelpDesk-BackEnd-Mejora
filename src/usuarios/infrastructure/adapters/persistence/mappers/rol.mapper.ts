@@ -1,4 +1,4 @@
-import { Rol } from '../../domain/entities/rol.entity';
+import { Rol } from '../../../../domain/entities/rol.entity';
 import { RolEntity } from '../entities/rol.entity';
 
 export class RolMapper {
