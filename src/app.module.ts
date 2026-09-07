@@ -6,11 +6,15 @@ import { AuthModule } from './auth/auth.module';
 import { UsuariosModule } from './usuarios/users.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { PlanesModule } from './planes/planes.module';
+import { CommonModule } from './common/infrastructure/common.module';
 
 // Entidades de la base de datos
 import { UserEntity } from './usuarios/infrastructure/entities/user.entity';
 import { RolEntity } from './usuarios/infrastructure/entities/rol.entity';
-import { CommonModule } from './common/infrastructure/common.module';
+import { ClienteEntity } from './clientes/infrastructure/entities/cliente.entity';
+import { SucursalEntity } from './clientes/infrastructure/entities/sucursal.entity';
+import { AreaEntity } from './clientes/infrastructure/entities/area.entity';
+import { PlanEntity } from './planes/infrastructure/entities/plan.entity';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -32,8 +36,13 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'helpdesk_db',
       entities: [
+        // Agrega aquí tus entidades TypeORM
         UserEntity,
-        RolEntity, // Agrega aquí tus entidades TypeORM
+        RolEntity,
+        ClienteEntity,
+        SucursalEntity,
+        AreaEntity,
+        PlanEntity,
       ],
       synchronize: false, // Cambiar a false en producción
     }),
