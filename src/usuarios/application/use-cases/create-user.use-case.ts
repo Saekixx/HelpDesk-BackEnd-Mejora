@@ -41,19 +41,18 @@ export class CreateUserUseCase {
     const hashedPassword = await this.hashService.hash(dto.password);
 
     // Crear instancia del Modelo de Dominio
-    const newUser = new User(
-      null, // El ID será generado por la base de datos
-      dto.nombre,
-      dto.apellido,
-      dto.correo,
-      hashedPassword,
-      dto.telefono,
-      true, // estado activo por defecto
-      dto.id_rol,
-      dto.id_cliente ?? null,
-      dto.id_sucursal ?? null,
-      dto.id_area ?? null,
-    );
+    const newUser = new User({
+      nombre: dto.nombre,
+      apellido: dto.apellido,
+      correo: dto.correo,
+      password: hashedPassword,
+      telefono: dto.telefono,
+      is_active: true,
+      id_rol: dto.id_rol,
+      id_cliente: dto.id_cliente ?? null,
+      id_sucursal: dto.id_sucursal ?? null,
+      id_area: dto.id_area ?? null,
+    });
 
     // Guardamos en la base de datos a través del Puerto
     const savedUser = await this.userRepository.save(newUser);

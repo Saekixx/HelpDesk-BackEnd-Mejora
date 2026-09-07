@@ -14,11 +14,19 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginRequestDto) {
-    return await this.loginUseCase.execute(dto.correo, dto.password);
+    const data = await this.loginUseCase.execute(dto.correo, dto.password);
+    return {
+      message: 'Login exitoso',
+      data,
+    };
   }
 
   @Post('register')
   async register(@Body() dto: RegisterRequestDto) {
-    return await this.authRegisterUseCase.execute(dto);
+    const data = await this.authRegisterUseCase.execute(dto);
+    return {
+      message: 'Usuario registrado exitosamente',
+      data,
+    };
   }
 }

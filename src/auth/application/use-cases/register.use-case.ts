@@ -45,19 +45,18 @@ export class RegisterUseCase {
     const hashedPassword = await this.hashService.hash(command.password);
 
     // Creamos la entidad de Dominio
-    const newUser = new User(
-      null, // ID autogenerado en BD
-      command.nombre,
-      command.apellido,
-      command.correo,
-      hashedPassword,
-      command.telefono,
-      true, // estado activo por defecto
-      command.id_rol,
-      command.id_cliente ?? null,
-      command.id_sucursal ?? null,
-      command.id_area ?? null,
-    );
+    const newUser = new User({
+      nombre: command.nombre,
+      apellido: command.apellido,
+      correo: command.correo,
+      password: hashedPassword,
+      telefono: command.telefono,
+      is_active: true,
+      id_rol: command.id_rol,
+      id_cliente: command.id_cliente ?? null,
+      id_sucursal: command.id_sucursal ?? null,
+      id_area: command.id_area ?? null,
+    });
 
     // Guardamos el usuario en la base de datos a través del puerto
     const savedUser = await this.userRepository.save(newUser);

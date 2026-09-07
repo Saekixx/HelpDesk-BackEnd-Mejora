@@ -63,7 +63,6 @@ export class LoginUseCase {
 
     // Retornar el token de acceso
     return {
-      message: 'Login exitoso',
       token,
       user: {
         nombre: user.nombre,

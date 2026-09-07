@@ -2,44 +2,39 @@ import { User } from '../../domain/entities/user.entity';
 import { UserEntity } from '../entities/user.entity';
 
 export class UserMapper {
-  // Transforma del Dominio a la Base de Datos
-  static toPersistence(domainUser: User): UserEntity {
-    const entity = new UserEntity();
-
-    // Si el id ya existe (ej. actualización), lo asignamos
-    if (domainUser.id_usuario !== null) {
-      entity.id_usuario = domainUser.id_usuario;
-    }
-
-    entity.nombre = domainUser.nombre;
-    entity.apellido = domainUser.apellido;
-    entity.correo = domainUser.correo;
-    entity.password = domainUser.password;
-    entity.telefono = domainUser.telefono;
-    entity.is_active = domainUser.is_active;
-    entity.id_rol = domainUser.id_rol;
-    entity.id_cliente = domainUser.id_cliente;
-    entity.id_sucursal = domainUser.id_sucursal;
-    entity.id_area = domainUser.id_area;
-    return entity;
+  static toDomain(entity: UserEntity): User {
+    return new User({
+      id_usuario: entity.id_usuario,
+      nombre: entity.nombre,
+      apellido: entity.apellido,
+      correo: entity.correo,
+      password: entity.password,
+      telefono: entity.telefono,
+      is_active: entity.is_active,
+      id_rol: entity.id_rol,
+      id_cliente: entity.id_cliente ?? null,
+      id_sucursal: entity.id_sucursal ?? null,
+      id_area: entity.id_area ?? null,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    });
   }
 
-  // Transforma de la Base de Datos al Dominio
-  static toDomain(entity: UserEntity): User {
-    return new User(
-      entity.id_usuario, // Aquí la BD ya le asignó su number autoincremental
-      entity.nombre,
-      entity.apellido,
-      entity.correo,
-      entity.password,
-      entity.telefono,
-      entity.is_active,
-      entity.id_rol,
-      entity.id_cliente,
-      entity.id_sucursal,
-      entity.id_area,
-      entity.createdAt,
-      entity.updatedAt,
-    );
+  static toPersistence(domain: User): UserEntity {
+    const entity = new UserEntity();
+    if (domain.id_usuario) {
+      entity.id_usuario = domain.id_usuario;
+    }
+    entity.nombre = domain.nombre;
+    entity.apellido = domain.apellido;
+    entity.correo = domain.correo;
+    entity.password = domain.password;
+    entity.telefono = domain.telefono;
+    entity.is_active = domain.is_active;
+    entity.id_rol = domain.id_rol;
+    entity.id_cliente = domain.id_cliente;
+    entity.id_sucursal = domain.id_sucursal;
+    entity.id_area = domain.id_area;
+    return entity;
   }
 }

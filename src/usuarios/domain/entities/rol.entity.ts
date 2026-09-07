@@ -1,8 +1,17 @@
-export class Rol {
-  constructor(
-    public readonly id_rol: number | null = null,
-    public readonly nombre: string,
+export interface RolProps {
+  id_rol?: number;
+  nombre: string;
+  createdAt?: Date;
+}
 
-    public readonly createdAt: Date = new Date(),
-  ) {}
+export class Rol {
+  public readonly id_rol?: number;
+  public readonly nombre: string;
+  public readonly createdAt: Date;
+
+  constructor(props: RolProps) {
+    this.id_rol = props.id_rol;
+    this.nombre = props.nombre;
+    this.createdAt = props.createdAt ?? new Date();
+  }
 }
