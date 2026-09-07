@@ -12,6 +12,7 @@ import { PlanesModule } from './planes/planes.module';
 // Entidades de la base de datos
 import { UserEntity } from './usuarios/infrastructure/entities/user.entity';
 import { RolEntity } from './usuarios/infrastructure/entities/rol.entity';
+import { CommonModule } from './common/infrastructure/common.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -38,6 +39,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       ],
       synchronize: false, // Cambiar a false en producción
     }),
+    // Módulo común que contiene filtros e interceptores globales
+    CommonModule,
 
     // Módulos de la aplicación
     AuthModule,
