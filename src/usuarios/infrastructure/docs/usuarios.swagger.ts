@@ -7,6 +7,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
+import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
 
 export function ApiFindAllUsersSwagger() {
   return applyDecorators(
@@ -164,6 +165,100 @@ export function ApiUpdateProfileSwagger() {
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
       description: 'Datos de actualización no válidos.',
+    }),
+  );
+}
+
+export function ApiAssignRolSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Asignar o reasignar rol a un usuario',
+      description:
+        'Actualiza el rol del usuario ajustando obligatoriamente sus relaciones corporativas (cliente, sucursal, área) según la jerarquía del nuevo rol.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del usuario a modificar',
+      example: 1,
+    }),
+    ApiBody({ type: AssignRolRequestDto }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Rol y asignaciones actualizados correctamente.',
+      schema: {
+        example: 'Rol y asignaciones actualizados correctamente',
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Faltan datos requeridos para el nuevo rol o el ID no es válido.',
+      schema: {
+        example: {
+          message:
+            'El rol CLIENTE_SUCURSAL requiere cliente/empresa y sucursal',
+          error: 'Bad Request',
+          statusCode: 400,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El usuario o el rol especificado no existen.',
+      schema: {
+        example: {
+          message: 'El rol especificado no existe',
+          error: 'Not Found',
+          statusCode: 404,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+  );
+}
+
+export function ApiToggleUserStatusSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Activar o desactivar estado de usuario',
+      description:
+        'Alterna (toggle) el estado `is_active` del usuario. Impide que un usuario pueda desactivar su propia cuenta.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del usuario a activar/desactivar',
+      example: 2,
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Estado cambiado exitosamente.',
+      schema: {
+        example: 'Usuario desactivado correctamente',
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Intento de auto-desactivación o ID no válido.',
+      schema: {
+        example: {
+          message: 'No puedes desactivar tu propia cuenta',
+          error: 'Bad Request',
+          statusCode: 400,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'Usuario no encontrado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
     }),
   );
 }

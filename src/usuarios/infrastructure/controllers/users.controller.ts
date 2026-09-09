@@ -12,6 +12,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
+import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
 import { CreateUserUseCase } from '@/usuarios/application/use-cases/create-user.use-case';
 import { UpdateProfileUseCase } from '@/usuarios/application/use-cases/update-profile.use-case';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
@@ -20,14 +21,15 @@ import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
 import { GetUsersUseCase } from '@/usuarios/application/use-cases/get-users.use-case';
 import { GetUserByIdUseCase } from '@/usuarios/application/use-cases/get-user-by-id.use-case';
 import {
+  ApiAssignRolSwagger,
   ApiCreateUserSwagger,
   ApiFindAllUsersSwagger,
   ApiFindUserByIdSwagger,
+  ApiToggleUserStatusSwagger,
   ApiUpdateProfileSwagger,
 } from '../docs/usuarios.swagger';
 import { ToggleUserStatusUseCase } from '@/usuarios/application/use-cases/toggle-user-status.use-case';
 import { AssignRolUseCase } from '@/usuarios/application/use-cases/assign-rol.use-case';
-import { AssignRolDTO } from '@/usuarios/application/dtos/assign-rol.use-case';
 
 @ApiTags('Usuarios')
 @Controller('usuario')
@@ -83,15 +85,17 @@ export class UsersController {
 
   @Patch(':id/rol')
   @UseGuards(JwtAuthGuard)
+  @ApiAssignRolSwagger()
   async updateRole(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: AssignRolDTO,
+    @Body() dto: AssignRolRequestDto,
   ) {
     return await this.assignRolUseCase.execute(id, dto);
   }
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard)
+  @ApiToggleUserStatusSwagger()
   async toggleStatus(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('userId') currentUserId: number,
