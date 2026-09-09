@@ -14,6 +14,8 @@ import { UpdateProfileUseCase } from './application/use-cases/update-profile.use
 import { AuthModule } from '@/auth/auth.module';
 import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { GetUserByIdUseCase } from './application/use-cases/get-user-by-id.use-case';
+import { AssignRolUseCase } from './application/use-cases/assign-rol.use-case';
+import { ToggleUserStatusUseCase } from './application/use-cases/toggle-user-status.use-case';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { GetUserByIdUseCase } from './application/use-cases/get-user-by-id.use-c
     GetUserByIdUseCase,
     CreateUserUseCase,
     UpdateProfileUseCase,
+    AssignRolUseCase,
+    ToggleUserStatusUseCase,
     {
       provide: USER_REPOSITORY,
       useClass: UserTypeOrmRepository,

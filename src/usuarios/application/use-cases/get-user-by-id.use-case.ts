@@ -3,6 +3,7 @@ import {
   USER_REPOSITORY,
   UserRepositoryPort,
 } from '../../domain/ports/user.repository.port';
+import { UserNotFoundException } from '@/usuarios/domain/exceptions/user.exceptions';
 
 @Injectable()
 export class GetUserByIdUseCase {
@@ -16,7 +17,7 @@ export class GetUserByIdUseCase {
     const user = await this.userRepository.findById(id);
 
     // Si no se encuentra el usuario, lanzamos una excepción NotFoundException
-    if (!user) throw new NotFoundException(`El usuario con ID ${id} no existe`);
+    if (!user) throw new UserNotFoundException();
 
     // Omitimos el campo password de la respuesta
     const { password, ...userWithoutPassword } = user;

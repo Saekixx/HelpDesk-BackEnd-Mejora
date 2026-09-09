@@ -18,6 +18,7 @@ import {
   ROL_REPOSITORY,
   RolRepositoryPort,
 } from '@/usuarios/domain/ports/rol.repository.port';
+import { EmailAlreadyInUseException } from '@/usuarios/domain/exceptions/user.exceptions';
 
 @Injectable()
 export class CreateUserUseCase {
@@ -33,15 +34,12 @@ export class CreateUserUseCase {
   async execute(dto: CreateUserDto): Promise<Omit<User, 'password'>> {
     // Validar si el correo ya está registrado
     const existingUser = await this.userRepository.findByCorreo(dto.correo);
-    if (existingUser) {
-      throw new ConflictException('El correo electrónico ya está registrado');
-    }
+    if (existingUser) throw new EmailAlreadyInUseException();
 
     // Validar si el rol existe y obtener su nombre
     const existingRol = await this.rolRepository.findById(dto.id_rol);
-    if (!existingRol) {
+    if (!existingRol)
       throw new ConflictException('El rol especificado no existe');
-    }
 
     // Normalizar y validar relaciones según la jerarquía del rol
     let finalIdCliente: number | null = null;

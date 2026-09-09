@@ -25,6 +25,9 @@ import {
   ApiFindUserByIdSwagger,
   ApiUpdateProfileSwagger,
 } from '../docs/usuarios.swagger';
+import { ToggleUserStatusUseCase } from '@/usuarios/application/use-cases/toggle-user-status.use-case';
+import { AssignRolUseCase } from '@/usuarios/application/use-cases/assign-rol.use-case';
+import { AssignRolDTO } from '@/usuarios/application/dtos/assign-rol.use-case';
 
 @ApiTags('Usuarios')
 @Controller('usuario')
@@ -34,6 +37,8 @@ export class UsersController {
     private readonly updateProfileUseCase: UpdateProfileUseCase,
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
     private readonly getUsersUseCase: GetUsersUseCase,
+    private readonly assignRolUseCase: AssignRolUseCase,
+    private readonly toggleUserStatusUseCase: ToggleUserStatusUseCase,
   ) {}
 
   @Get()
@@ -74,5 +79,23 @@ export class UsersController {
     @Body() dto: UpdateProfileDTO,
   ) {
     return await this.updateProfileUseCase.execute(userId, dto);
+  }
+
+  @Patch(':id/rol')
+  @UseGuards(JwtAuthGuard)
+  async updateRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AssignRolDTO,
+  ) {
+    return await this.assignRolUseCase.execute(id, dto);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
+  async toggleStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('userId') currentUserId: number,
+  ) {
+    return await this.toggleUserStatusUseCase.execute(id, currentUserId);
   }
 }
