@@ -4,5 +4,7 @@ import { Rol } from '../entities/rol.entity';
 export const ROL_REPOSITORY = 'ROL_REPOSITORY';
 
 export interface RolRepositoryPort {
+  findAll(): Promise<Rol[]>;
+
   findById(id: number): Promise<Rol | null>;
 }

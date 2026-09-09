@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { forwardRef, Get, Module } from '@nestjs/common';
 import { USER_REPOSITORY } from './domain/ports/user.repository.port';
 import { ROL_REPOSITORY } from './domain/ports/rol.repository.port';
 
@@ -17,13 +17,15 @@ import { ToggleUserStatusUseCase } from './application/use-cases/toggle-user-sta
 
 import { AuthModule } from '@/auth/auth.module';
 import { CommonModule } from '@/common/common.module'; // Ajusta la ruta a tu PrismaModule
+import { RolesController } from './infrastructure/controllers/roles.controller';
+import { GetRolesUseCase } from './application/use-cases/get-roles.use-case';
 
 @Module({
   imports: [
     CommonModule, // Se encarga de proveer PrismaService
     forwardRef(() => AuthModule),
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, RolesController],
   providers: [
     // Casos de Uso
     GetUsersUseCase,
@@ -32,6 +34,7 @@ import { CommonModule } from '@/common/common.module'; // Ajusta la ruta a tu Pr
     UpdateProfileUseCase,
     AssignRolUseCase,
     ToggleUserStatusUseCase,
+    GetRolesUseCase,
 
     // Mapeo de Puertos a Implementaciones de Prisma
     {

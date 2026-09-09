@@ -8,6 +8,11 @@ import { RolMapper } from './mappers/rol.mapper';
 export class RolPrismaRepository implements RolRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAll(): Promise<Rol[]> {
+    const entities = await this.prisma.rol.findMany();
+    return entities.map(RolMapper.toDomain);
+  }
+
   async findById(id: number): Promise<Rol | null> {
     const entity = await this.prisma.rol.findUnique({
       where: { id_rol: id },
