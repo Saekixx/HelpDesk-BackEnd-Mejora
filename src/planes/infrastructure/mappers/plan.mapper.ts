@@ -1,32 +1,44 @@
-import { Plan } from '../../domain/entities/plan.entity';
-import { PlanEntity } from '../entities/plan.entity';
+import { planes as PrismaPlan, Prisma } from '@prisma/client';
+import { Plan } from '@/planes/domain/entities/plan.entity';
 
 export class PlanMapper {
-  static toDomain(entity: PlanEntity): Plan {
+  static toDomain(entity: PrismaPlan): Plan {
+    let serviciosArray: string[] = [];
+
+    if (entity.servicios) {
+      if (typeof entity.servicios === 'string') {
+        try {
+          serviciosArray = JSON.parse(entity.servicios);
+        } catch {
+          serviciosArray = entity.servicios.split(',').map((s) => s.trim());
+        }
+      } else if (Array.isArray(entity.servicios)) {
+        serviciosArray = entity.servicios as string[];
+      }
+    }
+
     return new Plan({
       id_plan: entity.id_plan,
       numero_plan: entity.numero_plan,
       tipo: entity.tipo,
-      servicio: entity.servicio,
-      precio: Number(entity.precio),
-      limite_equipos: entity.limite_equipos,
-      is_active: entity.is_active,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
+      servicio: serviciosArray,
+      precio: Number(entity.precio ?? 0),
+      limite_equipos: entity.limite_equipos ?? 0,
+      is_active: entity.is_active ?? true,
+      createdAt: entity.created_at ?? undefined,
+      updatedAt: entity.updated_at ?? undefined,
     });
   }
 
-  static toPersistence(domain: Plan): PlanEntity {
-    const entity = new PlanEntity();
-    if (domain.id_plan) {
-      entity.id_plan = domain.id_plan;
-    }
-    entity.numero_plan = domain.numero_plan;
-    entity.tipo = domain.tipo;
-    entity.servicio = domain.servicio;
-    entity.precio = domain.precio;
-    entity.limite_equipos = domain.limite_equipos;
-    entity.is_active = domain.is_active;
-    return entity;
+  static toPersistence(domain: Plan): Partial<PrismaPlan> {
+    return {
+      ...(domain.id_plan && { id_plan: domain.id_plan }),
+      numero_plan: domain.numero_plan,
+      tipo: domain.tipo,
+      servicios: JSON.stringify(domain.servicio),
+      precio: new Prisma.Decimal(domain.precio ?? 0),
+      limite_equipos: domain.limite_equipos,
+      is_active: domain.is_active,
+    };
   }
 }

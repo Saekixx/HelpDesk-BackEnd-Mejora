@@ -1,52 +1,46 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from './infrastructure/adapters/persistence/entities/user.entity';
-import { RolEntity } from './infrastructure/adapters/persistence/entities/rol.entity'; // Importar entidad de Rol
-
 import { USER_REPOSITORY } from './domain/ports/user.repository.port';
-import { ROL_REPOSITORY } from './domain/ports/rol.repository.port'; // Crear puerto si no existe
+import { ROL_REPOSITORY } from './domain/ports/rol.repository.port';
 
-import { UserTypeOrmRepository } from './infrastructure/adapters/persistence/user-typeorm.repository';
-import { RolTypeOrmRepository } from './infrastructure/adapters/persistence/rol-typeorm.repository';
+// Repositorios de Prisma
+import { UserPrismaRepository } from './infrastructure/adapters/persistence/user-prisma.repository';
+import { RolPrismaRepository } from './infrastructure/adapters/persistence/rol-prisma.repository';
+
+// Controladores y Casos de Uso
 import { UsersController } from './infrastructure/controllers/users.controller';
 import { CreateUserUseCase } from './application/use-cases/create-user.use-case';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
-import { AuthModule } from '@/auth/auth.module';
 import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { GetUserByIdUseCase } from './application/use-cases/get-user-by-id.use-case';
 import { AssignRolUseCase } from './application/use-cases/assign-rol.use-case';
 import { ToggleUserStatusUseCase } from './application/use-cases/toggle-user-status.use-case';
-import { ClienteEntity } from '@/clientes/infrastructure/adapters/persistence/entities/cliente.entity';
-import { SucursalEntity } from '@/clientes/infrastructure/adapters/persistence/entities/sucursal.entity';
-import { AreaEntity } from '@/clientes/infrastructure/adapters/persistence/entities/area.entity';
+
+import { AuthModule } from '@/auth/auth.module';
+import { CommonModule } from '@/common/common.module'; // Ajusta la ruta a tu PrismaModule
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      UserEntity,
-      RolEntity,
-      ClienteEntity,
-      SucursalEntity,
-      AreaEntity,
-    ]),
+    CommonModule, // Se encarga de proveer PrismaService
     forwardRef(() => AuthModule),
   ],
   controllers: [UsersController],
   providers: [
-    // Casos de Usos
+    // Casos de Uso
     GetUsersUseCase,
     GetUserByIdUseCase,
     CreateUserUseCase,
     UpdateProfileUseCase,
     AssignRolUseCase,
     ToggleUserStatusUseCase,
+
+    // Mapeo de Puertos a Implementaciones de Prisma
     {
       provide: USER_REPOSITORY,
-      useClass: UserTypeOrmRepository,
+      useClass: UserPrismaRepository,
     },
     {
       provide: ROL_REPOSITORY,
-      useClass: RolTypeOrmRepository,
+      useClass: RolPrismaRepository,
     },
   ],
   exports: [USER_REPOSITORY, ROL_REPOSITORY],

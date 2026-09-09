@@ -1,20 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { createObserveModule } from '@nestjs/observe';
 
 import { AuthModule } from './auth/auth.module';
 import { UsuariosModule } from './usuarios/users.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { PlanesModule } from './planes/planes.module';
-import { CommonModule } from './common/infrastructure/common.module';
-
-// Entidades de la base de datos
-import { UserEntity } from './usuarios/infrastructure/adapters/persistence/entities/user.entity';
-import { RolEntity } from './usuarios/infrastructure/adapters/persistence/entities/rol.entity';
-import { ClienteEntity } from './clientes/infrastructure/adapters/persistence/entities/cliente.entity';
-import { SucursalEntity } from './clientes/infrastructure/adapters/persistence/entities/sucursal.entity';
-import { AreaEntity } from './clientes/infrastructure/adapters/persistence/entities/area.entity';
-import { PlanEntity } from './planes/infrastructure/entities/plan.entity';
+import { CommonModule } from './common/common.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -27,26 +18,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     //   serviceId: 'helpdesk-backend',
     // }),
 
-    // Configuración de la Base de Datos
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT) || 3306,
-      username: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'helpdesk_db',
-      entities: [
-        // Agrega aquí tus entidades TypeORM
-        UserEntity,
-        RolEntity,
-        ClienteEntity,
-        SucursalEntity,
-        AreaEntity,
-        PlanEntity,
-      ],
-      synchronize: false, // Cambiar a false en producción
-    }),
-    // Módulo común que contiene filtros e interceptores globales
+    // CommonModule se encarga de proveer PrismaService y otros servicios globales
     CommonModule,
 
     // Módulos de la aplicación

@@ -1,21 +1,19 @@
-import { Rol } from '../../../../domain/entities/rol.entity';
-import { RolEntity } from '../entities/rol.entity';
+import { rol as PrismaRol } from '@prisma/client';
+import { Rol } from '@/usuarios/domain/entities/rol.entity';
 
 export class RolMapper {
-  static toDomain(entity: RolEntity): Rol {
+  static toDomain(prismaRol: PrismaRol): Rol {
     return new Rol({
-      id_rol: entity.id_rol,
-      nombre: entity.nombre,
-      createdAt: entity.createdAt,
+      id_rol: prismaRol.id_rol,
+      nombre: prismaRol.nombre,
+      createdAt: prismaRol.created_at ?? undefined,
     });
   }
 
-  static toPersistence(domain: Rol): RolEntity {
-    const entity = new RolEntity();
-    if (domain.id_rol) {
-      entity.id_rol = domain.id_rol;
-    }
-    entity.nombre = domain.nombre;
-    return entity;
+  static toPersistence(domain: Rol): Partial<PrismaRol> {
+    return {
+      ...(domain.id_rol && { id_rol: domain.id_rol }),
+      nombre: domain.nombre,
+    };
   }
 }

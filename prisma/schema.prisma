@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model area {
+  id_area     Int         @id @default(autoincrement())
+  nombre_area String      @db.VarChar(100)
+  contacto    String      @db.VarChar(100)
+  telefono    String      @db.VarChar(20)
+  correo      String      @db.VarChar(100)
+  id_sucursal Int?
+  is_active   Boolean?    @default(true)
+  created_at  DateTime?   @default(now()) @db.DateTime(0)
+  updated_at  DateTime?   @default(now()) @db.DateTime(0)
+  sucursales  sucursales? @relation(fields: [id_sucursal], references: [id_sucursal], onDelete: Cascade, onUpdate: Restrict, map: "fk_area_sucursal")
+  equipos     equipos[]
+  usuarios    usuarios[]
+
+  @@index([id_sucursal], map: "fk_area_sucursal")
+}
+
+model citas_soporte {
+  id_cita          Int                   @id @default(autoincrement())
+  id_soporte       Int
+  id_sucursal      Int
+  fecha_programada DateTime              @db.DateTime(0)
+  estado           citas_soporte_estado? @default(Pendiente)
+  observaciones    String?               @db.Text
+  created_at       DateTime?             @default(now()) @db.DateTime(0)
+  updated_at       DateTime?             @default(now()) @db.DateTime(0)
+  usuarios         usuarios              @relation(fields: [id_soporte], references: [id_usuario], onDelete: Cascade, onUpdate: Restrict, map: "fk_cita_soporte")
+  sucursales       sucursales            @relation(fields: [id_sucursal], references: [id_sucursal], onDelete: Cascade, onUpdate: Restrict, map: "fk_cita_sucursal")
+  citas_tickets    citas_tickets[]
+
+  @@index([id_soporte], map: "fk_cita_soporte")
+  @@index([id_sucursal], map: "fk_cita_sucursal")
+}
+
+model citas_tickets {
+  id_cita       Int
+  id_ticket     Int
+  citas_soporte citas_soporte @relation(fields: [id_cita], references: [id_cita], onDelete: Cascade, onUpdate: Restrict, map: "fk_citastickets_cita")
+  tickets       tickets       @relation(fields: [id_ticket], references: [id_tickets], onDelete: Cascade, onUpdate: Restrict, map: "fk_citastickets_ticket")
+
+  @@id([id_cita, id_ticket])
+  @@index([id_ticket], map: "fk_citastickets_ticket")
+}
+
+model clientes {
+  id_cliente                Int                    @id @default(autoincrement())
+  tipo_cliente              clientes_tipo_cliente? @default(JURIDICA)
+  numero_documento          String?                @unique(map: "numero_documento") @db.VarChar(20)
+  nombre_principal          String                 @db.VarChar(150)
+  direccion                 String?                @db.VarChar(200)
+  telefono                  String?                @db.VarChar(20)
+  correo                    String?                @db.VarChar(100)
+  rubro                     String?                @db.VarChar(100)
+  id_plan                   Int?
+  fecha_inicio_plan         DateTime?              @db.Date
+  fecha_finalizacion_plan   DateTime?              @db.Date
+  costo_negociado           Decimal?               @db.Decimal(10, 2)
+  limite_equipos_contratado Int?
+  fecha_registro            DateTime?              @default(now()) @db.DateTime(0)
+  is_active                 Boolean?               @default(true)
+  created_at                DateTime?              @default(now()) @db.DateTime(0)
+  updated_at                DateTime?              @default(now()) @db.DateTime(0)
+  planes                    planes?                @relation(fields: [id_plan], references: [id_plan], onUpdate: Restrict, map: "fk_clientes_plan")
+  equipos                   equipos[]
+  sucursales                sucursales[]
+  tickets                   tickets[]
+  usuarios                  usuarios[]
+
+  @@index([id_plan], map: "fk_clientes_plan")
+}
+
+model equipos {
+  id_equipo         Int                 @id @default(autoincrement())
+  tipo              String              @db.VarChar(50)
+  marca             String              @db.VarChar(50)
+  num_serie         String?             @unique(map: "num_serie") @db.VarChar(100)
+  nombre_usuario    String?             @db.VarChar(100)
+  ult_revision      DateTime?           @db.Date
+  rev_programada    DateTime?           @db.Date
+  id_trabajador     Int?
+  id_cliente        Int?
+  id_sucursal       Int?
+  id_area           Int?
+  is_active         Boolean?            @default(true)
+  created_at        DateTime?           @default(now()) @db.DateTime(0)
+  updated_at        DateTime?           @default(now()) @db.DateTime(0)
+  usuarios          usuarios?           @relation(fields: [id_trabajador], references: [id_usuario], onDelete: Cascade, onUpdate: Restrict, map: "fk_eqipos_trabajador")
+  area              area?               @relation(fields: [id_area], references: [id_area], onUpdate: Restrict, map: "fk_equipos_area")
+  clientes          clientes?           @relation(fields: [id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: Restrict, map: "fk_equipos_cliente")
+  sucursales        sucursales?         @relation(fields: [id_sucursal], references: [id_sucursal], onUpdate: Restrict, map: "fk_equipos_sucursal")
+  registro_hardware registro_hardware[]
+  software_equipos  software_equipos[]
+  tickets           tickets[]
+
+  @@index([id_trabajador], map: "fk_eqipos_trabajador")
+  @@index([id_area], map: "fk_equipos_area")
+  @@index([id_cliente], map: "fk_equipos_cliente")
+  @@index([id_sucursal], map: "fk_equipos_sucursal")
+}
+
+model hardware {
+  id_hardware       Int                 @id @default(autoincrement())
+  tipo_equipo       String              @db.VarChar(100)
+  numero_serie      String              @db.VarChar(100)
+  fecha_compra      DateTime            @db.Date
+  marca             String              @db.VarChar(100)
+  proveedor         String              @db.VarChar(100)
+  descripcion       String?             @db.Text
+  ult_revision      DateTime?           @db.Date
+  rev_programada    DateTime?           @db.Date
+  is_active         Boolean?            @default(true)
+  created_at        DateTime?           @default(now()) @db.DateTime(0)
+  updated_at        DateTime?           @default(now()) @db.DateTime(0)
+  registro_hardware registro_hardware[]
+}
+
+model planes {
+  id_plan        Int        @id @default(autoincrement())
+  numero_plan    Int
+  tipo           String     @db.VarChar(100)
+  servicios      String     @db.LongText
+  precio         Decimal?   @default(0.00) @db.Decimal(10, 2)
+  limite_equipos Int?
+  is_active      Boolean?   @default(true)
+  created_at     DateTime?  @default(now()) @db.DateTime(0)
+  updated_at     DateTime?  @default(now()) @db.DateTime(0)
+  clientes       clientes[]
+}
+
+model registro_hardware {
+  id_RH             Int       @id @default(autoincrement())
+  fecha_instalacion DateTime  @default(now()) @db.DateTime(0)
+  descripcion       String    @db.Text
+  serie             String    @db.VarChar(100)
+  proveedor         String    @db.VarChar(255)
+  id_hardware       Int?
+  id_equipo         Int?
+  created_at        DateTime? @default(now()) @db.DateTime(0)
+  updated_at        DateTime? @default(now()) @db.DateTime(0)
+  equipos           equipos?  @relation(fields: [id_equipo], references: [id_equipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_rh_equipo")
+  hardware          hardware? @relation(fields: [id_hardware], references: [id_hardware], onDelete: Cascade, onUpdate: Restrict, map: "fk_rh_hardware")
+
+  @@index([id_equipo], map: "fk_rh_equipo")
+  @@index([id_hardware], map: "fk_rh_hardware")
+}
+
+model rol {
+  id_rol     Int        @id @default(autoincrement())
+  nombre     String     @db.VarChar(50)
+  created_at DateTime?  @default(now()) @db.DateTime(0)
+  usuarios   usuarios[]
+}
+
+model software {
+  id_software       Int                @id @default(autoincrement())
+  nombre_software   String             @db.VarChar(100)
+  licencia          String             @db.VarChar(100)
+  correo            String             @db.VarChar(100)
+  password          String             @db.VarChar(255)
+  fecha_instalacion DateTime           @db.Date
+  fecha_caducidad   DateTime           @db.Date
+  proveedor         String             @db.VarChar(100)
+  is_active         Boolean?           @default(true)
+  created_at        DateTime?          @default(now()) @db.DateTime(0)
+  updated_at        DateTime?          @default(now()) @db.DateTime(0)
+  software_equipos  software_equipos[]
+  tickets           tickets[]
+}
+
+model software_equipos {
+  id_software_equipos Int       @id @default(autoincrement())
+  id_software         Int
+  id_equipo           Int
+  fecha_instalacion   DateTime? @default(now()) @db.DateTime(0)
+  licencia_asignada   String?   @db.VarChar(100)
+  is_active           Boolean?  @default(true)
+  observaciones       String?   @db.Text
+  created_at          DateTime? @default(now()) @db.DateTime(0)
+  updated_at          DateTime? @default(now()) @db.DateTime(0)
+  equipos             equipos   @relation(fields: [id_equipo], references: [id_equipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_equipos")
+  software            software  @relation(fields: [id_software], references: [id_software], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_software")
+
+  @@index([id_equipo], map: "fk_se_equipos")
+  @@index([id_software], map: "fk_se_software")
+}
+
+model sucursales {
+  id_sucursal     Int             @id @default(autoincrement())
+  nombre_sucursal String          @db.VarChar(255)
+  encargado       String          @db.VarChar(255)
+  telefono        String          @db.VarChar(20)
+  direccion       String          @db.VarChar(255)
+  correo          String          @db.VarChar(255)
+  id_cliente      Int?
+  is_active       Boolean?        @default(true)
+  created_at      DateTime?       @default(now()) @db.DateTime(0)
+  updated_at      DateTime?       @default(now()) @db.DateTime(0)
+  area            area[]
+  citas_soporte   citas_soporte[]
+  equipos         equipos[]
+  clientes        clientes?       @relation(fields: [id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: Restrict, map: "fk_sucursal_cliente")
+  usuarios        usuarios[]
+
+  @@index([id_cliente], map: "fk_sucursal_cliente")
+}
+
+model tickets {
+  id_tickets                               Int             @id @default(autoincrement())
+  pin                                      String          @unique(map: "pin") @db.VarChar(6)
+  asunto                                   String          @db.VarChar(255)
+  detalle                                  String          @db.Text
+  estado                                   tickets_estado? @default(Pendiente)
+  id_equipo                                Int
+  id_cliente                               Int
+  id_trabajador                            Int
+  id_soporte                               Int?
+  id_software                              Int?
+  es_software                              Boolean?        @default(false)
+  imagen_url                               String?         @db.VarChar(255)
+  created_at                               DateTime?       @default(now()) @db.DateTime(0)
+  updated_at                               DateTime?       @default(now()) @db.DateTime(0)
+  citas_tickets                            citas_tickets[]
+  clientes                                 clientes        @relation(fields: [id_cliente], references: [id_cliente], onUpdate: Restrict, map: "fk_tickets_clientes")
+  equipos                                  equipos         @relation(fields: [id_equipo], references: [id_equipo], onUpdate: Restrict, map: "fk_tickets_equipo")
+  software                                 software?       @relation(fields: [id_software], references: [id_software], onUpdate: Restrict, map: "fk_tickets_software")
+  usuarios_tickets_id_soporteTousuarios    usuarios?       @relation("tickets_id_soporteTousuarios", fields: [id_soporte], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_tickets_soporte")
+  usuarios_tickets_id_trabajadorTousuarios usuarios        @relation("tickets_id_trabajadorTousuarios", fields: [id_trabajador], references: [id_usuario], onUpdate: Restrict, map: "fk_tickets_trabajador")
+
+  @@index([id_cliente], map: "fk_tickets_clientes")
+  @@index([id_equipo], map: "fk_tickets_equipo")
+  @@index([id_software], map: "fk_tickets_software")
+  @@index([id_soporte], map: "fk_tickets_soporte")
+  @@index([id_trabajador], map: "fk_tickets_trabajador")
+}
+
+model usuarios {
+  id_usuario                              Int             @id @default(autoincrement())
+  nombre                                  String          @db.VarChar(50)
+  apellido                                String          @db.VarChar(50)
+  correo                                  String?         @unique(map: "correo") @db.VarChar(255)
+  password                                String          @db.VarChar(255)
+  telefono                                String?         @db.VarChar(15)
+  is_active                               Boolean?        @default(true)
+  id_rol                                  Int?
+  id_cliente                              Int?
+  id_sucursal                             Int?
+  id_area                                 Int?
+  created_at                              DateTime?       @default(now()) @db.DateTime(0)
+  updated_at                              DateTime?       @default(now()) @db.DateTime(0)
+  citas_soporte                           citas_soporte[]
+  equipos                                 equipos[]
+  tickets_tickets_id_soporteTousuarios    tickets[]       @relation("tickets_id_soporteTousuarios")
+  tickets_tickets_id_trabajadorTousuarios tickets[]       @relation("tickets_id_trabajadorTousuarios")
+  area                                    area?           @relation(fields: [id_area], references: [id_area], onUpdate: Restrict, map: "fk_usuario_area")
+  clientes                                clientes?       @relation(fields: [id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: Restrict, map: "fk_usuario_cliente")
+  rol                                     rol?            @relation(fields: [id_rol], references: [id_rol], onDelete: Restrict, onUpdate: Restrict, map: "fk_usuario_rol")
+  sucursales                              sucursales?     @relation(fields: [id_sucursal], references: [id_sucursal], onUpdate: Restrict, map: "fk_usuario_sucursal")
+
+  @@index([id_area], map: "fk_usuario_area")
+  @@index([id_cliente], map: "fk_usuario_cliente")
+  @@index([id_rol], map: "fk_usuario_rol")
+  @@index([id_sucursal], map: "fk_usuario_sucursal")
+}
+
+enum clientes_tipo_cliente {
+  JURIDICA
+  NATURAL
+}
+
+enum citas_soporte_estado {
+  Pendiente
+  En_Camino    @map("En Camino")
+  Completada
+  Cancelada
+  Reprogramada
+}
+
+enum tickets_estado {
+  Pendiente
+  Asignado
+  En_Progreso @map("En Progreso")
+  Reabierto
+  Cerrado
+}
