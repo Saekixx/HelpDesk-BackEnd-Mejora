@@ -1,4 +1,4 @@
-import { Area } from '../../domain/entities/area.entity';
+import { Area } from '@/clientes/domain/entities/area.entity';
 import { AreaEntity } from '../entities/area.entity';
 
 export class AreaMapper {

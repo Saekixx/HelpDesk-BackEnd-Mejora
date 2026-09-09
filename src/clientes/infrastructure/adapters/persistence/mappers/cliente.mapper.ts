@@ -1,4 +1,7 @@
-import { Cliente, TipoCliente } from '../../domain/entities/cliente.entity';
+import {
+  Cliente,
+  TipoCliente,
+} from '@/clientes/domain/entities/cliente.entity';
 import { ClienteEntity } from '../entities/cliente.entity';
 
 export class ClienteMapper {

@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AreaRepositoryPort } from '@/clientes/domain/ports/area.repository.port';
-import { AreaEntity } from '../entities/area.entity';
+import { AreaEntity } from './entities/area.entity';
 import { Area } from '@/clientes/domain/entities/area.entity';
-import { AreaMapper } from '../mappers/area.mapper';
+import { AreaMapper } from './mappers/area.mapper';
 
 @Injectable()
 export class AreaTypeOrmRepository implements AreaRepositoryPort {

@@ -11,9 +11,9 @@ import { CommonModule } from './common/infrastructure/common.module';
 // Entidades de la base de datos
 import { UserEntity } from './usuarios/infrastructure/adapters/persistence/entities/user.entity';
 import { RolEntity } from './usuarios/infrastructure/adapters/persistence/entities/rol.entity';
-import { ClienteEntity } from './clientes/infrastructure/entities/cliente.entity';
-import { SucursalEntity } from './clientes/infrastructure/entities/sucursal.entity';
-import { AreaEntity } from './clientes/infrastructure/entities/area.entity';
+import { ClienteEntity } from './clientes/infrastructure/adapters/persistence/entities/cliente.entity';
+import { SucursalEntity } from './clientes/infrastructure/adapters/persistence/entities/sucursal.entity';
+import { AreaEntity } from './clientes/infrastructure/adapters/persistence/entities/area.entity';
 import { PlanEntity } from './planes/infrastructure/entities/plan.entity';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();

@@ -1,4 +1,4 @@
-import { Sucursal } from '../../domain/entities/sucursal.entity';
+import { Sucursal } from '@/clientes/domain/entities/sucursal.entity';
 import { SucursalEntity } from '../entities/sucursal.entity';
 
 export class SucursalMapper {

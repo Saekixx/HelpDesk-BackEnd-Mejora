@@ -1,3 +1,4 @@
+import { UserResponseDto } from '@/usuarios/application/dtos/user-response.dto';
 import { User } from '../../../../domain/entities/user.entity';
 import { UserEntity } from '../entities/user.entity';
 
@@ -36,5 +37,31 @@ export class UserMapper {
     entity.id_sucursal = domain.id_sucursal;
     entity.id_area = domain.id_area;
     return entity;
+  }
+
+  // Método para mapear el builder de UserEntity a UserResponseDto
+  static toResponseDto(entity: UserEntity): UserResponseDto {
+    return {
+      id_usuario: entity.id_usuario,
+      nombre: entity.nombre,
+      apellido: entity.apellido,
+      correo: entity.correo,
+      telefono: entity.telefono,
+      is_active: entity.is_active,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+
+      // IDs de control
+      id_rol: entity.id_rol,
+      id_cliente: entity.id_cliente ?? null,
+      id_sucursal: entity.id_sucursal ?? null,
+      id_area: entity.id_area ?? null,
+
+      // Nombres descriptivos extraídos de las relaciones de TypeORM
+      nombre_rol: entity.rol?.nombre || 'Sin Rol',
+      nombre_cliente: entity.cliente?.nombre_principal || null,
+      nombre_sucursal: entity.sucursal?.nombre_sucursal || null,
+      nombre_area: entity.area?.nombre_area || null,
+    };
   }
 }

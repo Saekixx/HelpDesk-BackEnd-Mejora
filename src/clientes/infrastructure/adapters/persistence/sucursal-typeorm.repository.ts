@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SucursalRepositoryPort } from '@/clientes/domain/ports/sucursal.repository.port';
-import { SucursalEntity } from '../entities/sucursal.entity';
+import { SucursalEntity } from './entities/sucursal.entity';
 import { Sucursal } from '@/clientes/domain/entities/sucursal.entity';
-import { SucursalMapper } from '../mappers/sucursal.mapper';
+import { SucursalMapper } from './mappers/sucursal.mapper';
 
 @Injectable()
 export class SucursalTypeOrmRepository implements SucursalRepositoryPort {

@@ -60,7 +60,12 @@ export class GetUsersQueryDto implements GetUsersFilterDto {
     example: true,
   })
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ obj, key }) => {
+    const rawValue = obj[key];
+    if (rawValue === 'true' || rawValue === true) return true;
+    if (rawValue === 'false' || rawValue === false) return false;
+    return undefined;
+  })
   @IsBoolean()
   is_active?: boolean;
 

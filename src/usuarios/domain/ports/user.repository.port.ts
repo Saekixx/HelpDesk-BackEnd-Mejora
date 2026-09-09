@@ -1,9 +1,10 @@
 import { User } from '../entities/user.entity.js';
 import { UserFilterCriteria } from '../criteria/user-filter.criteria.js';
+import { UserResponseCriteria } from '../criteria/user-response.criteria.js';
 
 // Resultado de la paginación de usuarios
 export interface PaginatedUsersResult {
-  data: User[];
+  data: UserResponseCriteria[];
   total: number;
   page: number;
   limit: number;

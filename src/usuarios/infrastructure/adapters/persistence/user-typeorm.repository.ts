@@ -53,10 +53,9 @@ export class UserTypeOrmRepository implements UserRepositoryPort {
   ): Promise<PaginatedUsersResult> {
     const { page = 1, limit = 10 } = filters;
 
-    // Creamos la consulta base
     const query = this.typeOrmRepository.createQueryBuilder('user');
 
-    // Delegamos la construcción de los cláusulas WHERE al builder
+    // Aplica los JOINs y los filtros
     UserQueryBuilder.applyFilters(query, filters);
 
     const skip = (page - 1) * limit;
@@ -67,7 +66,7 @@ export class UserTypeOrmRepository implements UserRepositoryPort {
       .getManyAndCount();
 
     return {
-      data: entities.map(UserMapper.toDomain),
+      data: entities.map(UserMapper.toResponseDto),
       total,
       page,
       limit,

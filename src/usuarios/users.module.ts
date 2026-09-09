@@ -16,10 +16,19 @@ import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { GetUserByIdUseCase } from './application/use-cases/get-user-by-id.use-case';
 import { AssignRolUseCase } from './application/use-cases/assign-rol.use-case';
 import { ToggleUserStatusUseCase } from './application/use-cases/toggle-user-status.use-case';
+import { ClienteEntity } from '@/clientes/infrastructure/adapters/persistence/entities/cliente.entity';
+import { SucursalEntity } from '@/clientes/infrastructure/adapters/persistence/entities/sucursal.entity';
+import { AreaEntity } from '@/clientes/infrastructure/adapters/persistence/entities/area.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, RolEntity]), // Registrar ambas entidades
+    TypeOrmModule.forFeature([
+      UserEntity,
+      RolEntity,
+      ClienteEntity,
+      SucursalEntity,
+      AreaEntity,
+    ]),
     forwardRef(() => AuthModule),
   ],
   controllers: [UsersController],

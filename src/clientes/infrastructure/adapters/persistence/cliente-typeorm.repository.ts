@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ClienteEntity } from '../entities/cliente.entity';
+import { ClienteEntity } from './entities/cliente.entity';
 import { Repository } from 'typeorm';
 import { ClienteRepositoryPort } from '@/clientes/domain/ports/cliente.repository.port';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClienteMapper } from '../mappers/cliente.mapper';
+import { ClienteMapper } from './mappers/cliente.mapper';
 import { Cliente } from '@/clientes/domain/entities/cliente.entity';
 
 @Injectable()
