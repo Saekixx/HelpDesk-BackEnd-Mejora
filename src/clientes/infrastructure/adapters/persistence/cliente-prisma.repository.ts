@@ -4,6 +4,7 @@ import { ClienteRepositoryPort } from '@/clientes/domain/ports/cliente.repositor
 import { Cliente } from '@/clientes/domain/entities/cliente.entity';
 import { ClienteMapper } from './mappers/cliente.mapper';
 import { Prisma } from '@prisma/client';
+import { OptionDto } from '../../dtos/options.response.dto';
 
 @Injectable()
 export class ClientePrismaRepository implements ClienteRepositoryPort {
@@ -32,5 +33,18 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
     });
     if (!entity) return null;
     return ClienteMapper.toDomain(entity);
+  }
+
+  async getClientesOptions(): Promise<OptionDto[]> {
+    const clientes = await this.prisma.clientes.findMany({
+      select: {
+        id_cliente: true,
+        nombre_principal: true,
+      },
+    });
+    return clientes.map((c) => ({
+      id: c.id_cliente,
+      nombre: c.nombre_principal,
+    }));
   }
 }

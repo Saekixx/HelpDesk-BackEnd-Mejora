@@ -19,6 +19,7 @@ import { AuthModule } from '@/auth/auth.module';
 import { CommonModule } from '@/common/common.module'; // Ajusta la ruta a tu PrismaModule
 import { RolesController } from './infrastructure/controllers/roles.controller';
 import { GetRolesUseCase } from './application/use-cases/get-roles.use-case';
+import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GetRolesUseCase } from './application/use-cases/get-roles.use-case';
     GetUsersUseCase,
     GetUserByIdUseCase,
     CreateUserUseCase,
+    UpdateUserUseCase,
     UpdateProfileUseCase,
     AssignRolUseCase,
     ToggleUserStatusUseCase,

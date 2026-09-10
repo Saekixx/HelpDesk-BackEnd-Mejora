@@ -95,8 +95,8 @@ export class CreateUserUseCase {
         );
     }
 
-    // Hashear la contraseña
-    const hashedPassword = await this.hashService.hash(dto.password);
+    // Hashear la contraseña inicial (por defecto "123456") antes de guardar el usuario
+    const hashedPassword = await this.hashService.hash('123456');
 
     // Instanciar la entidad de Dominio
     const newUser = new User({

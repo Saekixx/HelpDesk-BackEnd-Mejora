@@ -7,7 +7,7 @@ import { ApiTags } from '@nestjs/swagger';
 export class RolesController {
   constructor(private readonly getRolesUseCase: GetRolesUseCase) {}
 
-  @Get('')
+  @Get('options')
   async findAll() {
     const data = await this.getRolesUseCase.execute();
     return {

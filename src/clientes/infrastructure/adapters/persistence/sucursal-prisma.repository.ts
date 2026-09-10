@@ -4,6 +4,7 @@ import { SucursalRepositoryPort } from '@/clientes/domain/ports/sucursal.reposit
 import { Sucursal } from '@/clientes/domain/entities/sucursal.entity';
 import { SucursalMapper } from './mappers/sucursal.mapper';
 import { Prisma } from '@prisma/client';
+import { OptionDto } from '../../dtos/options.response.dto';
 
 @Injectable()
 export class SucursalPrismaRepository implements SucursalRepositoryPort {
@@ -32,5 +33,19 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
     });
     if (!entity) return null;
     return SucursalMapper.toDomain(entity);
+  }
+
+  async getSucursalesOptions(clienteId: number): Promise<OptionDto[]> {
+    const sucursales = await this.prisma.sucursales.findMany({
+      where: { id_cliente: clienteId },
+      select: {
+        id_sucursal: true,
+        nombre_sucursal: true,
+      },
+    });
+    return sucursales.map((s) => ({
+      id: s.id_sucursal,
+      nombre: s.nombre_sucursal,
+    }));
   }
 }

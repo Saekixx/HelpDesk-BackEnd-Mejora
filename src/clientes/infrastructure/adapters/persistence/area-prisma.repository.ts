@@ -4,6 +4,7 @@ import { AreaRepositoryPort } from '@/clientes/domain/ports/area.repository.port
 import { Area } from '@/clientes/domain/entities/area.entity';
 import { AreaMapper } from './mappers/area.mapper';
 import { Prisma } from '@prisma/client';
+import { OptionDto } from '../../dtos/options.response.dto';
 
 @Injectable()
 export class AreaPrismaRepository implements AreaRepositoryPort {
@@ -32,5 +33,19 @@ export class AreaPrismaRepository implements AreaRepositoryPort {
     });
     if (!entity) return null;
     return AreaMapper.toDomain(entity);
+  }
+
+  async getAreasOptions(sucursalId: number): Promise<OptionDto[]> {
+    const areas = await this.prisma.area.findMany({
+      where: { id_sucursal: sucursalId },
+      select: {
+        id_area: true,
+        nombre_area: true,
+      },
+    });
+    return areas.map((a) => ({
+      id: a.id_area,
+      nombre: a.nombre_area,
+    }));
   }
 }

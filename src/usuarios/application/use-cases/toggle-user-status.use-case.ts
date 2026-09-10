@@ -14,12 +14,15 @@ export class ToggleUserStatusUseCase {
   ) {}
 
   async execute(targetUserId: number, currentUserId: number): Promise<string> {
+    const targetId = Number(targetUserId);
+    const currentId = Number(currentUserId);
+
     // Validar que el usuario no intente desactivar su propia cuenta
-    if (targetUserId === currentUserId)
+    if (targetId === currentId)
       throw new BadRequestException('No puedes desactivar tu propia cuenta');
 
-    // Validar existencia del usuario objetivo
-    const user = await this.userRepository.findById(targetUserId);
+    // Validar existencia del usuario objetivo pasándole el ID numérico
+    const user = await this.userRepository.findById(targetId);
     if (!user) throw new UserNotFoundException();
 
     // Cambiar el estado activo del usuario

@@ -27,6 +27,7 @@ import {
   ApiFindUserByIdSwagger,
   ApiToggleUserStatusSwagger,
   ApiUpdateProfileSwagger,
+  ApiUpdateUserSwagger,
 } from '../docs/usuarios.swagger';
 import { ToggleUserStatusUseCase } from '@/usuarios/application/use-cases/toggle-user-status.use-case';
 import { AssignRolUseCase } from '@/usuarios/application/use-cases/assign-rol.use-case';
@@ -69,6 +70,19 @@ export class UsersController {
     const data = await this.createUserUseCase.execute(dto);
     return {
       message: 'Usuario creado exitosamente',
+      data,
+    };
+  }
+
+  @Patch(':id')
+  @ApiUpdateUserSwagger()
+  async updateUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateProfileDTO,
+  ) {
+    const data = await this.updateProfileUseCase.execute(id, dto);
+    return {
+      message: 'Usuario actualizado exitosamente',
       data,
     };
   }

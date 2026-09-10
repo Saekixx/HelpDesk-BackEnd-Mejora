@@ -40,7 +40,7 @@ export class UserPrismaRepository implements UserRepositoryPort {
 
   async findById(id: number): Promise<User | null> {
     const entity = await this.prisma.usuarios.findUnique({
-      where: { id_usuario: id },
+      where: { id_usuario: Number(id) },
     });
     if (!entity) return null;
     return UserMapper.toDomain(entity);

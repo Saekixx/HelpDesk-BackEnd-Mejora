@@ -8,9 +8,12 @@ import {
 } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
+import { UpdateUserDto } from '../dtos/update-user.request.dto';
+import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
 
 export function ApiFindAllUsersSwagger() {
   return applyDecorators(
+    ApiBearerAuth('access-token'),
     ApiOperation({
       summary: 'Obtener lista paginada de usuarios',
       description:
@@ -41,11 +44,16 @@ export function ApiFindAllUsersSwagger() {
         },
       },
     }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
   );
 }
 
 export function ApiFindUserByIdSwagger() {
   return applyDecorators(
+    ApiBearerAuth('access-token'),
     ApiOperation({
       summary: 'Obtener usuario por ID',
       description:
@@ -79,11 +87,16 @@ export function ApiFindUserByIdSwagger() {
       status: HttpStatus.NOT_FOUND,
       description: 'No se encontró ningún usuario con el ID especificado.',
     }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
   );
 }
 
 export function ApiCreateUserSwagger() {
   return applyDecorators(
+    ApiBearerAuth('access-token'),
     ApiOperation({
       summary: 'Crear un nuevo usuario',
       description: `
@@ -142,6 +155,89 @@ Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según
         },
       },
     }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+  );
+}
+
+export function ApiUpdateUserSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Actualizar un usuario por ID (Gestión Administrativa)',
+      description: `
+Permite a un administrador modificar la información, rol o asignaciones corporativas de un usuario por su ID. 
+
+Opcionalmente permite restablecer la contraseña a la clave por defecto (\`123456\`) enviando \`resetPassword: true\`.
+      `,
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del usuario a modificar',
+      example: 1,
+    }),
+    ApiBody({ type: UpdateUserDto }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Usuario actualizado exitosamente.',
+      schema: {
+        example: {
+          message: 'Usuario actualizado exitosamente',
+          data: {
+            id_usuario: 1,
+            nombre: 'Juan Carlos',
+            apellido: 'Pérez López',
+            correo: 'juan.perez@empresa.com',
+            telefono: '+51987654321',
+            is_active: true,
+            id_rol: 2,
+            id_cliente: 1,
+            id_sucursal: null,
+            id_area: null,
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos de entrada no válidos o violaciones de reglas de asignación por rol.',
+      schema: {
+        example: {
+          message: 'El rol CLIENTE_EMPRESA requiere cliente/empresa',
+          error: 'Bad Request',
+          statusCode: 400,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El usuario a actualizar no existe.',
+      schema: {
+        example: {
+          message: 'El usuario con ID 1 no existe',
+          error: 'Not Found',
+          statusCode: 404,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description: 'El nuevo correo electrónico ya pertenece a otro usuario.',
+      schema: {
+        example: {
+          message: 'El correo ya está en uso por otro usuario',
+          error: 'Conflict',
+          statusCode: 409,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
   );
 }
 
@@ -149,18 +245,29 @@ export function ApiUpdateProfileSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
     ApiOperation({
-      summary: 'Actualizar perfil de usuario autenticado',
+      summary: 'Actualizar perfil del usuario autenticado',
       description:
-        'Permite al usuario autenticado modificar su información personal o contraseña actualizando su estado.',
+        'Permite al usuario autenticado modificar su propia información personal o cambiar su clave mediante el token JWT.',
     }),
+    ApiBody({ type: UpdateProfileDTO }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Perfil actualizado exitosamente.',
+      schema: {
+        example: {
+          message: 'Perfil actualizado exitosamente',
+          data: {
+            id_usuario: 1,
+            nombre: 'Juan',
+            apellido: 'Pérez',
+            correo: 'juan.perez@empresa.com',
+          },
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
-      description:
-        'Token no proporcionado, expirado o contraseña actual incorrecta.',
+      description: 'Token de acceso no proporcionado, expirado o inválido.',
     }),
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
@@ -187,7 +294,9 @@ export function ApiAssignRolSwagger() {
       status: HttpStatus.OK,
       description: 'Rol y asignaciones actualizados correctamente.',
       schema: {
-        example: 'Rol y asignaciones actualizados correctamente',
+        example: {
+          message: 'Rol y asignaciones actualizados correctamente',
+        },
       },
     }),
     ApiResponse({
@@ -238,7 +347,9 @@ export function ApiToggleUserStatusSwagger() {
       status: HttpStatus.OK,
       description: 'Estado cambiado exitosamente.',
       schema: {
-        example: 'Usuario desactivado correctamente',
+        example: {
+          message: 'Usuario desactivado correctamente',
+        },
       },
     }),
     ApiResponse({
