@@ -74,7 +74,8 @@ export class UpdateUserUseCase {
     switch (rolNombre) {
       case 'ADMINISTRADOR':
       case 'SOPORTE_INSITU':
-      case 'SOPORTE_REMOTO':
+      case 'SOPORTE_REMOTO': // Dejamos este rol por si a futuro se cambia el nombre de tecnico a remoto
+      case 'SOPORTE_TECNICO': // Soporte remoto actual en la db se llama soporte tecnico pero es remoto
         break;
 
       case 'CLIENTE_EMPRESA':

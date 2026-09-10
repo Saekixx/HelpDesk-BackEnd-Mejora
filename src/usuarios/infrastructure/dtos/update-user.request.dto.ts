@@ -8,7 +8,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 
-export class UpdateUserDto {
+export class UpdateUserDto implements UpdateUserDto {
   @ApiPropertyOptional({
     description: 'Nombre del usuario',
     example: 'Juan',

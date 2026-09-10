@@ -31,12 +31,15 @@ import {
 } from '../docs/usuarios.swagger';
 import { ToggleUserStatusUseCase } from '@/usuarios/application/use-cases/toggle-user-status.use-case';
 import { AssignRolUseCase } from '@/usuarios/application/use-cases/assign-rol.use-case';
+import { UpdateUserDto } from '../dtos/update-user.request.dto';
+import { UpdateUserUseCase } from '@/usuarios/application/use-cases/update-user.use-case';
 
 @ApiTags('Usuarios')
 @Controller('usuario')
 export class UsersController {
   constructor(
     private readonly createUserUseCase: CreateUserUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly updateProfileUseCase: UpdateProfileUseCase,
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
     private readonly getUsersUseCase: GetUsersUseCase,
@@ -78,9 +81,9 @@ export class UsersController {
   @ApiUpdateUserSwagger()
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateProfileDTO,
+    @Body() dto: UpdateUserDto,
   ) {
-    const data = await this.updateProfileUseCase.execute(id, dto);
+    const data = await this.updateUserUseCase.execute(id, dto);
     return {
       message: 'Usuario actualizado exitosamente',
       data,
