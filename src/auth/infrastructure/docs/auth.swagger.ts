@@ -2,6 +2,9 @@ import { applyDecorators, HttpStatus } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { LoginRequestDto } from '../dtos/login.request.dto';
 import { RegisterRequestDto } from '../dtos/register.request.dto';
+import { ConfirmRegisterDto } from '../dtos/confirm-register.dto';
+import { ForgotPasswordDto } from '../dtos/forgot-password.requets.dto';
+import { ResetPasswordDto } from '../dtos/reset-password.requets.dto';
 
 export function ApiLoginSwagger() {
   return applyDecorators(
@@ -66,6 +69,88 @@ export function ApiRegisterSwagger() {
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
       description: 'Datos inválidos o correo ya existente.',
+    }),
+  );
+}
+
+export function ApiConfirmRegisterSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Confirmar registro y activar cuenta',
+      description:
+        'Valida el token recibido por correo, activa la cuenta del usuario y establece su contraseña inicial.',
+    }),
+    ApiBody({ type: ConfirmRegisterDto }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Cuenta activada y contraseña registrada exitosamente.',
+      schema: {
+        example: {
+          status: 201,
+          message: 'Cuenta activada y contraseña establecida con éxito',
+          data: {
+            id_usuario: 2,
+            nombre: 'Jack',
+            correo: 'jack@empresa.com',
+            estado: true,
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Token inválido, expirado o contraseña no cumple los requisitos mínimos.',
+    }),
+  );
+}
+
+export function ApiForgotPasswordSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Solicitar recuperación de contraseña',
+      description:
+        'Genera un token de restablecimiento y envía un correo electrónico si el usuario existe.',
+    }),
+    ApiBody({ type: ForgotPasswordDto }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Proceso de solicitud procesado correctamente.',
+      schema: {
+        example: {
+          message:
+            'Si el correo existe en el sistema, se ha enviado un enlace de recuperación.',
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'El formato del correo electrónico es inválido.',
+    }),
+  );
+}
+
+export function ApiResetPasswordSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Restablecer contraseña',
+      description:
+        'Valida el token de recuperación recibido por correo y actualiza la contraseña del usuario.',
+    }),
+    ApiBody({ type: ResetPasswordDto }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Contraseña actualizada correctamente.',
+      schema: {
+        example: {
+          message: 'Contraseña actualizada con éxito.',
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Token inválido/expirado o la contraseña no cumple con los criterios exigidos.',
     }),
   );
 }

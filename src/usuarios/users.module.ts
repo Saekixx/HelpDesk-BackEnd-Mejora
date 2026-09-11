@@ -20,14 +20,26 @@ import { CommonModule } from '@/common/common.module'; // Ajusta la ruta a tu Pr
 import { RolesController } from './infrastructure/controllers/roles.controller';
 import { GetRolesUseCase } from './application/use-cases/get-roles.use-case';
 import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
+import { SendVerificationEmailUseCase } from '@/mail/application/send-verification-email.use-case';
+import { SendResetPasswordEmailUseCase } from '@/mail/application/send-reset-password-email.use-case';
+import { MailModule } from '@/mail/mail.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     CommonModule, // Se encarga de proveer PrismaService
+    MailModule, // Se encarga de proveer MailerService
+    JwtModule.register({}),
     forwardRef(() => AuthModule),
   ],
   controllers: [UsersController, RolesController],
   providers: [
+    // Casos de uso de Mail
+    SendVerificationEmailUseCase,
+    SendResetPasswordEmailUseCase,
+
     // Casos de Uso
     GetUsersUseCase,
     GetUserByIdUseCase,
