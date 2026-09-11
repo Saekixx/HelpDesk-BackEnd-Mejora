@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import { PlanRepositoryPort } from '@/planes/domain/ports/plan.repository.port';
 import { Plan } from '@/planes/domain/entities/plan.entity';
-import { PlanMapper } from '../mappers/plan.mapper';
+import { PlanMapper } from './mappers/plan.mapper';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -24,6 +24,11 @@ export class PlanPrismaRepository implements PlanRepositoryPort {
       data: data as Prisma.planesCreateInput,
     });
     return PlanMapper.toDomain(created);
+  }
+
+  async findAll(): Promise<Plan[]> {
+    const entities = await this.prisma.planes.findMany();
+    return entities.map(PlanMapper.toDomain);
   }
 
   async findById(id: number): Promise<Plan | null> {
