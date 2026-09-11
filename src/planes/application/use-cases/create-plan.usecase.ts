@@ -18,7 +18,7 @@ export class CreatePlanUseCase {
     const newPlan = new Plan({
       numero_plan: planData.numero_plan,
       tipo: planData.tipo,
-      servicio: planData.servicios,
+      servicio: planData.servicio,
       precio: planData.precio,
       limite_equipos: planData.limite_equipos,
       is_active: true,

@@ -40,7 +40,7 @@ export class UpdatePlanRequestDto implements UpdatePlanDto {
     each: true,
     message: 'Cada servicio debe ser una cadena de texto',
   })
-  servicios: string[];
+  servicio: string[];
 
   @ApiPropertyOptional({
     description: 'Costo mensual o tarifa del plan',

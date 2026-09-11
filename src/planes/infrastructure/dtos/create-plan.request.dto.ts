@@ -40,7 +40,7 @@ export class CreatePlanRequestDto implements CreatePlanDto {
     message: 'Cada servicio debe ser una cadena de texto',
   })
   @IsNotEmpty({ message: 'Debe especificar al menos un servicio' })
-  servicios: string[];
+  servicio: string[];
 
   @ApiProperty({
     description: 'Costo mensual o tarifa del plan',

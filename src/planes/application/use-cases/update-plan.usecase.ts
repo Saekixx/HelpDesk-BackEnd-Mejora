@@ -25,7 +25,7 @@ export class UpdatePlanUseCase {
       id_plan: existingPlan.id_plan,
       numero_plan: planData.numero_plan ?? existingPlan.numero_plan,
       tipo: planData.tipo ?? existingPlan.tipo,
-      servicio: planData.servicios ?? existingPlan.servicio,
+      servicio: planData.servicio ?? existingPlan.servicio,
       precio: planData.precio ?? existingPlan.precio,
       limite_equipos: planData.limite_equipos ?? existingPlan.limite_equipos,
       is_active: existingPlan.is_active,
