@@ -1,10 +1,11 @@
 import {
   Inject,
   Injectable,
-  NotFoundException,
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import {
   USER_REPOSITORY,
   UserRepositoryPort,
@@ -23,6 +24,7 @@ import {
   EmailAlreadyInUseException,
   UserNotFoundException,
 } from '@/usuarios/domain/exceptions/user.exceptions';
+import { SendResetPasswordEmailUseCase } from '@/mail/application/send-reset-password-email.use-case';
 
 @Injectable()
 export class UpdateUserUseCase {
@@ -33,6 +35,9 @@ export class UpdateUserUseCase {
     private readonly rolRepository: RolRepositoryPort,
     @Inject(HASH_SERVICE)
     private readonly hashService: HashServicePort,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly sendResetPasswordEmailUseCase: SendResetPasswordEmailUseCase,
   ) {}
 
   async execute(
@@ -43,20 +48,20 @@ export class UpdateUserUseCase {
     const currentUser = await this.userRepository.findById(id);
     if (!currentUser) throw new UserNotFoundException();
 
-    // Si cambia el correo, validar que no esté en uso por otro usuario
+    // Si cambia el correo, validar disponibilidad
     if (dto.correo && dto.correo !== currentUser.correo) {
       const emailUser = await this.userRepository.findByCorreo(dto.correo);
       if (emailUser && emailUser.id_usuario !== id)
         throw new EmailAlreadyInUseException();
     }
 
-    // Validar si el rol existe y obtener su nombre
+    // Validar si el rol existe
     const targetRolId = dto.id_rol ?? currentUser.id_rol;
     const existingRol = await this.rolRepository.findById(targetRolId);
     if (!existingRol)
       throw new ConflictException('El rol especificado no existe');
 
-    // Normalizar y validar relaciones según la jerarquía del rol
+    // Normalizar datos de relaciones
     const targetClienteId =
       dto.id_cliente !== undefined ? dto.id_cliente : currentUser.id_cliente;
     const targetSucursalId =
@@ -70,12 +75,11 @@ export class UpdateUserUseCase {
 
     const rolNombre = existingRol.nombre.toUpperCase();
 
-    // Validamos las relaciones según la jerarquía del rol
     switch (rolNombre) {
       case 'ADMINISTRADOR':
       case 'SOPORTE_INSITU':
-      case 'SOPORTE_REMOTO': // Dejamos este rol por si a futuro se cambia el nombre de tecnico a remoto
-      case 'SOPORTE_TECNICO': // Soporte remoto actual en la db se llama soporte tecnico pero es remoto
+      case 'SOPORTE_REMOTO':
+      case 'SOPORTE_TECNICO':
         break;
 
       case 'CLIENTE_EMPRESA':
@@ -114,13 +118,29 @@ export class UpdateUserUseCase {
         );
     }
 
-    // Si se solicita reestablecer la contraseña, hasheamos la contraseña por defecto
+    // Restablecer contraseña y enviar correo si resetPassword es true
     let hashedPassword = currentUser.password;
     if (dto.resetPassword) {
       hashedPassword = await this.hashService.hash('123456');
+
+      // Generar token JWT para restablecimiento
+      const resetToken = this.jwtService.sign(
+        { id_usuario: currentUser.id_usuario },
+        {
+          secret: this.configService.get<string>('JWT_RESET_SECRET'),
+          expiresIn: '15m',
+        },
+      );
+
+      // Enviar correo de restablecimiento de contraseña
+      const targetCorreo = dto.correo ?? currentUser.correo;
+      await this.sendResetPasswordEmailUseCase.execute(
+        targetCorreo,
+        resetToken,
+      );
     }
 
-    // Instanciamos la entidad de Dominio con los datos actualizados
+    // Instanciar entidad con datos actualizados
     const updatedUser = new User({
       id_usuario: currentUser.id_usuario,
       nombre: dto.nombre ?? currentUser.nombre,
@@ -135,10 +155,10 @@ export class UpdateUserUseCase {
       id_area: finalIdArea,
     });
 
-    // Guardamos los cambios en la base de datos
+    // Guardar cambios en BD
     const savedUser = await this.userRepository.save(updatedUser);
 
-    // Devolvemos el usuario actualizado sin la contraseña
+    // Retornar omitiendo la contraseña
     const { password, ...userWithoutPassword } = savedUser;
     return userWithoutPassword;
   }

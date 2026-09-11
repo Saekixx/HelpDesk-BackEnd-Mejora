@@ -21,10 +21,15 @@ import { UsuariosModule } from '../usuarios/users.module';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from './infrastructure/guards/role.guard';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
+import { ConfirmRegisterUseCase } from './application/use-cases/confirm-register.use-case';
+import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.use-case';
+import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
+import { MailModule } from '@/mail/mail.module';
 
 @Module({
   imports: [
     ConfigModule,
+    MailModule, // Se encarga de proveer MailerService
     PassportModule.register({ defaultStrategy: 'jwt' }), // Configuración de Passport para usar JWT como estrategia por defecto
     forwardRef(() => UsuariosModule),
     JwtModule.registerAsync({
@@ -43,6 +48,9 @@ import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
     // Casos de uso
     LoginUseCase,
     RegisterUseCase,
+    ConfirmRegisterUseCase,
+    ForgotPasswordUseCase,
+    ResetPasswordUseCase,
 
     // Guardias y Estrategias
     JwtAuthGuard, // Guardia de autenticación JWT que valida la firma y expiración del token, y verifica el estado del usuario en la base de datos
