@@ -51,15 +51,22 @@ export class LoginUseCase {
     if (user.id_usuario === null)
       throw new UnauthorizedException('El usuario no posee un ID válido');
 
-    // Generamos el token de acceso usando el servicio de token
+    // Obtener el rol del usuario para incluirlo en el token y en la respuesta
+    const rol = await this.rolRepository.findById(user.id_rol);
+    if (!rol) throw new UnauthorizedException('Rol no encontrado');
+
+    // IMPORTANTE: el rol y el contexto (cliente/sucursal/área) deben viajar
+    // dentro del propio JWT, porque JwtStrategy arma req.user leyendo estos
+    // mismos campos del payload decodificado, y RoleGuard depende de
+    // req.user.role para autorizar por @Roles(...).
     const token = await this.tokenService.generateToken({
       sub: String(user.id_usuario),
       email: user.correo,
+      role: rol.nombre,
+      clienteId: user.id_cliente ?? undefined,
+      sucursalId: user.id_sucursal ?? undefined,
+      nombre: user.nombre,
     });
-
-    // Obtener el rol del usuario para incluirlo en la respuesta
-    const rol = await this.rolRepository.findById(user.id_rol);
-    if (!rol) throw new UnauthorizedException('Rol no encontrado');
 
     // Retornar el token de acceso
     return {

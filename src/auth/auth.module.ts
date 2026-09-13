@@ -15,7 +15,7 @@ import { HASH_SERVICE } from './domain/ports/hash.service.port';
 import { JwtTokenAdapter } from './infrastructure/adapters/jwt-token.adapter';
 import { BcryptHashAdapter } from './infrastructure/adapters/bcrypt-hash.adapter';
 
-// Controladores, Estrategias y Guardias
+// Controladores, Estrategias y Guards
 import { AuthController } from './infrastructure/controllers/auth.controller';
 import { UsuariosModule } from '../usuarios/users.module';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
@@ -53,8 +53,8 @@ import { MailModule } from '@/mail/mail.module';
     ResetPasswordUseCase,
 
     // Guardias y Estrategias
-    JwtAuthGuard, // Guardia de autenticación JWT que valida la firma y expiración del token, y verifica el estado del usuario en la base de datos
-    RoleGuard, // Guardia de autorización basada en roles que verifica si el usuario tiene el rol requerido para acceder a un recurso
+    JwtAuthGuard, // Guard de autenticación JWT que valida la firma y expiración del token, y verifica el estado del usuario en la base de datos
+    RoleGuard, // Guard de autorización basada en roles que verifica si el usuario tiene el rol requerido para acceder a un recurso
     JwtStrategy, // Estrategia de Passport que valida la firma y expiración del token JWT, y mapea el payload a un objeto JwtPayload que se inyectará en req.user
 
     // Adaptadores de servicios
@@ -67,6 +67,18 @@ import { MailModule } from '@/mail/mail.module';
       useClass: BcryptHashAdapter,
     },
   ],
-  exports: [HASH_SERVICE, TOKEN_SERVICE, JwtAuthGuard, RoleGuard],
+  exports: [
+    HASH_SERVICE,
+    TOKEN_SERVICE,
+    JwtAuthGuard,
+    RoleGuard,
+    // Re-exportamos el módulo completo (no un token suelto): Nest solo
+    // permite exportar providers/módulos que el propio AuthModule tiene
+    // en sus `imports`. Como UsuariosModule ya exporta USER_REPOSITORY,
+    // re-exportar el módulo hace que ese token (y el resto de sus
+    // exports) queden disponibles para quien importe AuthModule
+    // (p. ej. ClientesModule, que lo necesita para JwtAuthGuard).
+    forwardRef(() => UsuariosModule),
+  ],
 })
 export class AuthModule {}

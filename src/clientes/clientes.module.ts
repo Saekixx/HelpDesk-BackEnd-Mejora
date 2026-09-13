@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommonModule } from '@/common/common.module';
+import { AuthModule } from '@/auth/auth.module';
 import { CLIENTE_REPOSITORY } from './domain/ports/cliente.repository.port';
 import { SUCURSAL_REPOSITORY } from './domain/ports/sucursal.repository.port';
 import { AREA_REPOSITORY } from './domain/ports/area.repository.port';
@@ -20,7 +21,10 @@ import { SucursalController } from './infrastructure/controllers/sucursal.contro
 import { AreaController } from './infrastructure/controllers/area.controller';
 
 @Module({
-  imports: [CommonModule],
+  // AuthModule se agrega para que Nest pueda resolver las dependencias de
+  // JwtAuthGuard y RoleGuard usados en ClienteController (ver
+  // @UseGuards(JwtAuthGuard, RoleGuard) en cliente.controller.ts).
+  imports: [CommonModule, AuthModule],
   controllers: [AreaController, SucursalController, ClienteController],
   providers: [
     // Casos de Uso - Clientes
