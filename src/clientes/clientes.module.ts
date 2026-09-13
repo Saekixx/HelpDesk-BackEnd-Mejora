@@ -9,6 +9,11 @@ import { ClientePrismaRepository } from './infrastructure/adapters/persistence/c
 import { SucursalPrismaRepository } from './infrastructure/adapters/persistence/sucursal-prisma.repository';
 import { AreaPrismaRepository } from './infrastructure/adapters/persistence/area-prisma.repository';
 import { GetAreasOptionsUseCase } from './application/use-cases/area/get-areas-options.use-case';
+import { GetAreasUseCase } from './application/use-cases/area/get-areas.use-case';
+import { GetAreaByIdUseCase } from './application/use-cases/area/get-area-by-id.use-case';
+import { CreateAreaUseCase } from './application/use-cases/area/create-area.use-case';
+import { UpdateAreaUseCase } from './application/use-cases/area/update-area.use-case';
+import { ToggleAreaStatusUseCase } from './application/use-cases/area/toggle-area-status.use-case';
 import { GetSucursalesOptionsUseCase } from './application/use-cases/sucursal/get-sucursales-options.use-case';
 import { GetSucursalesUseCase } from './application/use-cases/sucursal/get-sucursales.use-case';
 import { GetSucursalByIdUseCase } from './application/use-cases/sucursal/get-sucursal-by-id.use-case';
@@ -48,6 +53,11 @@ import { AreaController } from './infrastructure/controllers/area.controller';
     ToggleSucursalStatusUseCase,
     // Casos de Uso - Áreas
     GetAreasOptionsUseCase,
+    GetAreasUseCase,
+    GetAreaByIdUseCase,
+    CreateAreaUseCase,
+    UpdateAreaUseCase,
+    ToggleAreaStatusUseCase,
     {
       provide: CLIENTE_REPOSITORY,
       useClass: ClientePrismaRepository,
