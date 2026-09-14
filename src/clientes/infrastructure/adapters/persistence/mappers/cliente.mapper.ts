@@ -1,11 +1,14 @@
 import {
   clientes as PrismaCliente,
+  planes as PrismaPlan,
+  sucursales as PrismaSucursal,
   clientes_tipo_cliente,
   Prisma,
 } from '@prisma/client';
 import {
   Cliente,
   ClienteListItem,
+  ClienteDetail,
   TipoCliente,
 } from '@/clientes/domain/entities/cliente.entity';
 
@@ -14,6 +17,13 @@ import {
 type PrismaClienteConDetalle = PrismaCliente & {
   _count: { sucursales: number };
   planes: { id_plan: number; tipo: string } | null;
+};
+
+// Forma del resultado de Prisma cuando el findById incluye el plan completo
+// y el listado de sucursales (ver ClientePrismaRepository.findById).
+type PrismaClienteConRelaciones = PrismaCliente & {
+  planes: PrismaPlan | null;
+  sucursales: PrismaSucursal[];
 };
 
 export class ClienteMapper {
@@ -49,6 +59,36 @@ export class ClienteMapper {
       plan: entity.planes
         ? { id_plan: entity.planes.id_plan, nombre: entity.planes.tipo }
         : null,
+    };
+  }
+
+  // Usado por GET /clientes/:id, donde el repositorio incluye el plan
+  // completo y el arreglo de sucursales del cliente.
+  static toDetail(entity: PrismaClienteConRelaciones): ClienteDetail {
+    const cliente = ClienteMapper.toDomain(entity);
+    return {
+      ...cliente,
+      plan: entity.planes
+        ? {
+            id_plan: entity.planes.id_plan,
+            nombre: entity.planes.tipo,
+            tipo: entity.planes.tipo,
+            precio: entity.planes.precio
+              ? Number(entity.planes.precio)
+              : undefined,
+            limite_equipos: entity.planes.limite_equipos ?? undefined,
+            is_active: entity.planes.is_active ?? undefined,
+          }
+        : null,
+      sucursales: (entity.sucursales ?? []).map((s) => ({
+        id_sucursal: s.id_sucursal,
+        nombre: s.nombre_sucursal,
+        encargado: s.encargado,
+        telefono: s.telefono,
+        correo: s.correo,
+        direccion: s.direccion,
+        is_active: s.is_active ?? true,
+      })),
     };
   }
 

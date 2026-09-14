@@ -4,7 +4,7 @@ import {
   ClienteRepositoryPort,
   PaginatedClientesResult,
 } from '@/clientes/domain/ports/cliente.repository.port';
-import { Cliente } from '@/clientes/domain/entities/cliente.entity';
+import { Cliente, ClienteDetail } from '@/clientes/domain/entities/cliente.entity';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
 import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
 import { ClienteMapper } from './mappers/cliente.mapper';
@@ -63,12 +63,13 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
     };
   }
 
-  async findById(id: number): Promise<Cliente | null> {
+  async findById(id: number): Promise<ClienteDetail | null> {
     const entity = await this.prisma.clientes.findUnique({
       where: { id_cliente: id },
+      include: { planes: true, sucursales: true },
     });
     if (!entity) return null;
-    return ClienteMapper.toDomain(entity);
+    return ClienteMapper.toDetail(entity);
   }
 
   async existsByDocumento(numero_documento: string): Promise<boolean> {

@@ -1,4 +1,8 @@
-import { Cliente, ClienteListItem } from '../entities/cliente.entity';
+import {
+  Cliente,
+  ClienteListItem,
+  ClienteDetail,
+} from '../entities/cliente.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetClientesFilterDto } from '../dto/get-clientes-filter.dto';
 
@@ -15,7 +19,7 @@ export interface PaginatedClientesResult {
 
 export interface ClienteRepositoryPort {
   findAll(filter: GetClientesFilterDto): Promise<PaginatedClientesResult>;
-  findById(id: number): Promise<Cliente | null>;
+  findById(id: number): Promise<ClienteDetail | null>;
   create(cliente: Cliente): Promise<Cliente>;
   update(id: number, cliente: Cliente): Promise<Cliente>;
   toggleStatus(id: number): Promise<Cliente>;

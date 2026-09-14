@@ -68,3 +68,32 @@ export interface ClienteListItem extends Cliente {
   total_sucursales: number;
   plan: { id_plan: number; nombre: string } | null;
 }
+
+
+// Resumen del plan contratado por el cliente (Prisma: relación `planes`)
+export interface PlanSummary {
+  id_plan: number;
+  nombre: string;
+  tipo: string;
+  precio?: number;
+  limite_equipos?: number;
+  is_active?: boolean;
+}
+
+// Resumen de cada sucursal asociada al cliente (Prisma: relación `sucursales`)
+export interface SucursalSummary {
+  id_sucursal: number;
+  nombre: string;
+  encargado: string;
+  telefono: string;
+  correo: string;
+  direccion: string;
+  is_active: boolean;
+}
+
+// Vista enriquecida usada por GET /clientes/:id: incluye el plan contratado
+// y el listado de sucursales del cliente.
+export interface ClienteDetail extends Cliente {
+  plan: PlanSummary | null;
+  sucursales: SucursalSummary[];
+}

@@ -1,7 +1,15 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiBody,
+  ApiExtraModels,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
+import { ClienteDetailResponseDto } from '../dtos/cliente-detail-response.dto';
 
 const CLIENTE_EJEMPLO = {
   id_cliente: 1,
@@ -18,6 +26,41 @@ const CLIENTE_EJEMPLO = {
   limite_equipos_contratado: 20,
   id_plan: 1,
   is_active: true,
+};
+
+const CLIENTE_DETAIL_EJEMPLO = {
+  ...CLIENTE_EJEMPLO,
+  fecha_registro: '2026-01-01T00:00:00.000Z',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  plan: {
+    id_plan: 1,
+    nombre: 'Plan Premium',
+    tipo: 'Plan Premium',
+    precio: 250.0,
+    limite_equipos: 30,
+    is_active: true,
+  },
+  sucursales: [
+    {
+      id_sucursal: 1,
+      nombre: 'Sucursal Central',
+      encargado: 'Juan Pérez',
+      telefono: '+51987654321',
+      correo: 'sucursal.central@acme.com',
+      direccion: 'Jr. Los Pinos 456',
+      is_active: true,
+    },
+    {
+      id_sucursal: 2,
+      nombre: 'Sucursal Norte',
+      encargado: 'María Gómez',
+      telefono: '+51987654322',
+      correo: 'sucursal.norte@acme.com',
+      direccion: 'Av. Los Álamos 789',
+      is_active: true,
+    },
+  ],
 };
 
 export function ApiFindAllClientesSwagger() {
@@ -81,9 +124,17 @@ export function ApiGetClientesOptionsSwagger() {
   );
 }
 
+// GET /clientes/:id: documenta la respuesta enriquecida con el plan
+// contratado y el arreglo de sucursales, usando ClienteDetailResponseDto
+// y un ejemplo completo.
 export function ApiFindClienteByIdSwagger() {
   return applyDecorators(
-    ApiOperation({ summary: 'Obtener un cliente por id' }),
+    ApiExtraModels(ClienteDetailResponseDto),
+    ApiOperation({
+      summary: 'Obtener un cliente por id',
+      description:
+        'Retorna el detalle completo de un cliente, incluyendo el plan contratado y el listado de sus sucursales.',
+    }),
     ApiParam({
       name: 'id',
       description: 'ID numérico del cliente',
@@ -93,9 +144,20 @@ export function ApiFindClienteByIdSwagger() {
       status: HttpStatus.OK,
       description: 'Cliente obtenido exitosamente.',
       schema: {
+        allOf: [
+          {
+            properties: {
+              message: {
+                type: 'string',
+                example: 'Cliente obtenido exitosamente',
+              },
+              data: { $ref: getSchemaPath(ClienteDetailResponseDto) },
+            },
+          },
+        ],
         example: {
           message: 'Cliente obtenido exitosamente',
-          data: CLIENTE_EJEMPLO,
+          data: CLIENTE_DETAIL_EJEMPLO,
         },
       },
     }),

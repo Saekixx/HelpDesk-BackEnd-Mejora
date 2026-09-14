@@ -19,6 +19,7 @@ import { ToggleClienteStatusUseCase } from '@/clientes/application/use-cases/cli
 import { GetClientesQueryDto } from '../dtos/get-clientes-query.dto';
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
+import { ClienteDetailResponseDto } from '../dtos/cliente-detail-response.dto';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
 import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
@@ -81,7 +82,9 @@ export class ClienteController {
     RolEnum.SOPORTE_REMOTO,
   )
   @ApiFindClienteByIdSwagger()
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string; data: ClienteDetailResponseDto }> {
     const data = await this.getClienteByIdUseCase.execute(id);
     return {
       message: 'Cliente obtenido exitosamente',
