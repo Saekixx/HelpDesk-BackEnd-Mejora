@@ -1,7 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsInt, Min } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsInt, IsEnum, Min } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
+import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
 
 export class GetClientesQueryDto implements GetClientesFilterDto {
   @ApiPropertyOptional({
@@ -11,6 +12,17 @@ export class GetClientesQueryDto implements GetClientesFilterDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({
+    enum: TipoCliente,
+    description: 'Filtrar por tipo de cliente',
+    example: TipoCliente.JURIDICA,
+  })
+  @IsOptional()
+  @IsEnum(TipoCliente, {
+    message: 'El tipo de cliente debe ser JURIDICA o NATURAL',
+  })
+  tipo_cliente?: TipoCliente;
 
   @ApiPropertyOptional({
     description:

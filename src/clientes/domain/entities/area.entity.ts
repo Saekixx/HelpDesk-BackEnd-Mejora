@@ -33,3 +33,9 @@ export class Area {
     this.updatedAt = props.updatedAt ?? new Date();
   }
 }
+
+export interface AreaListItem extends Area {
+  // Nombre de la sucursal a la que pertenece el área
+  sucursal: { id_sucursal: number; nombre: string } | null;
+  cliente: { id_cliente: number; nombre: string } | null;
+}

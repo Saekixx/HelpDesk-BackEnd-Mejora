@@ -1,5 +1,15 @@
 import { area as PrismaArea } from '@prisma/client';
-import { Area } from '@/clientes/domain/entities/area.entity';
+import { Area, AreaListItem } from '@/clientes/domain/entities/area.entity';
+
+// Forma del resultado de Prisma cuando el findAll incluye la sucursal y,
+// anidado dentro de ella, el cliente (ver AreaPrismaRepository.findAll).
+type PrismaAreaConDetalle = PrismaArea & {
+  sucursales: {
+    id_sucursal: number;
+    nombre_sucursal: string;
+    clientes: { id_cliente: number; nombre_principal: string } | null;
+  } | null;
+};
 
 export class AreaMapper {
   static toDomain(entity: PrismaArea): Area {
@@ -14,6 +24,27 @@ export class AreaMapper {
       createdAt: entity.created_at ?? undefined,
       updatedAt: entity.updated_at ?? undefined,
     });
+  }
+
+  // Usado únicamente por el listado paginado (GET /areas), donde el
+  // repositorio incluye la relación anidada sucursales -> clientes.
+  static toListItem(entity: PrismaAreaConDetalle): AreaListItem {
+    const area = AreaMapper.toDomain(entity);
+    return {
+      ...area,
+      sucursal: entity.sucursales
+        ? {
+            id_sucursal: entity.sucursales.id_sucursal,
+            nombre: entity.sucursales.nombre_sucursal,
+          }
+        : null,
+      cliente: entity.sucursales?.clientes
+        ? {
+            id_cliente: entity.sucursales.clientes.id_cliente,
+            nombre: entity.sucursales.clientes.nombre_principal,
+          }
+        : null,
+    };
   }
 
   static toPersistence(domain: Area): Partial<PrismaArea> {

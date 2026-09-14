@@ -36,3 +36,9 @@ export class Sucursal {
     this.updatedAt = props.updatedAt ?? new Date();
   }
 }
+
+export interface SucursalListItem extends Sucursal {
+  // Cantidad total de áreas de la sucursal (Prisma: _count.area)
+  total_areas: number;
+  cliente: { id_cliente: number; nombre: string } | null;
+}

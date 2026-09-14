@@ -5,8 +5,16 @@ import {
 } from '@prisma/client';
 import {
   Cliente,
+  ClienteListItem,
   TipoCliente,
 } from '@/clientes/domain/entities/cliente.entity';
+
+// Forma del resultado de Prisma cuando el findAll incluye el conteo de
+// sucursales y los datos del plan (ver ClientePrismaRepository.findAll).
+type PrismaClienteConDetalle = PrismaCliente & {
+  _count: { sucursales: number };
+  planes: { id_plan: number; tipo: string } | null;
+};
 
 export class ClienteMapper {
   static toDomain(entity: PrismaCliente): Cliente {
@@ -29,6 +37,19 @@ export class ClienteMapper {
       createdAt: entity.created_at ?? undefined,
       updatedAt: entity.updated_at ?? undefined,
     });
+  }
+
+  // Usado únicamente por el listado paginado (GET /clientes), donde el
+  // repositorio incluye _count.sucursales y la relación `planes`.
+  static toListItem(entity: PrismaClienteConDetalle): ClienteListItem {
+    const cliente = ClienteMapper.toDomain(entity);
+    return {
+      ...cliente,
+      total_sucursales: entity._count.sucursales,
+      plan: entity.planes
+        ? { id_plan: entity.planes.id_plan, nombre: entity.planes.tipo }
+        : null,
+    };
   }
 
   static toPersistence(domain: Cliente): Partial<PrismaCliente> {

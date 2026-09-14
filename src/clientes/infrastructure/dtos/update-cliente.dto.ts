@@ -7,9 +7,10 @@ import {
   IsInt,
   IsBoolean,
   IsOptional,
-  IsDateString,
+  IsDate,
   Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { UpdateClienteDto } from '@/clientes/application/dto/update-cliente.dto';
 import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
 
@@ -52,21 +53,27 @@ export class UpdateClienteRequestDto implements UpdateClienteDto {
   @IsString({ message: 'El rubro debe ser una cadena de texto' })
   readonly rubro?: string;
 
-  @ApiPropertyOptional({ example: '2026-01-01' })
+  @ApiPropertyOptional({
+    example: '2026-01-01',
+    type: String,
+    format: 'date',
+  })
   @IsOptional()
-  @IsDateString(
-    {},
-    { message: 'La fecha de inicio de plan debe ser una fecha válida' },
-  )
-  readonly fecha_inicio_plan?: string;
+  @Type(() => Date)
+  @IsDate({ message: 'La fecha de inicio de plan debe ser una fecha válida' })
+  readonly fecha_inicio_plan?: Date;
 
-  @ApiPropertyOptional({ example: '2026-12-31' })
+  @ApiPropertyOptional({
+    example: '2026-12-31',
+    type: String,
+    format: 'date',
+  })
   @IsOptional()
-  @IsDateString(
-    {},
-    { message: 'La fecha de finalización de plan debe ser una fecha válida' },
-  )
-  readonly fecha_finalizacion_plan?: string;
+  @Type(() => Date)
+  @IsDate({
+    message: 'La fecha de finalización de plan debe ser una fecha válida',
+  })
+  readonly fecha_finalizacion_plan?: Date;
 
   @ApiPropertyOptional({ example: 1500.5 })
   @IsOptional()

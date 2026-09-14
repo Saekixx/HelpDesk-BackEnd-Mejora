@@ -43,12 +43,10 @@ export class UpdateClienteUseCase {
       telefono: dto.telefono ?? currentCliente.telefono,
       correo: dto.correo ?? currentCliente.correo,
       rubro: dto.rubro ?? currentCliente.rubro,
-      fecha_inicio_plan: dto.fecha_inicio_plan
-        ? new Date(dto.fecha_inicio_plan)
-        : currentCliente.fecha_inicio_plan,
-      fecha_finalizacion_plan: dto.fecha_finalizacion_plan
-        ? new Date(dto.fecha_finalizacion_plan)
-        : currentCliente.fecha_finalizacion_plan,
+      fecha_inicio_plan:
+        dto.fecha_inicio_plan ?? currentCliente.fecha_inicio_plan,
+      fecha_finalizacion_plan:
+        dto.fecha_finalizacion_plan ?? currentCliente.fecha_finalizacion_plan,
       costo_negociado: dto.costo_negociado ?? currentCliente.costo_negociado,
       limite_equipos_contratado:
         dto.limite_equipos_contratado ??

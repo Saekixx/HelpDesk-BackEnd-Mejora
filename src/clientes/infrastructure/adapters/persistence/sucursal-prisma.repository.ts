@@ -48,12 +48,16 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
+        include: {
+          clientes: { select: { id_cliente: true, nombre_principal: true } },
+          _count: { select: { area: true } },
+        },
       }),
       this.prisma.sucursales.count({ where }),
     ]);
 
     return {
-      data: entities.map(SucursalMapper.toDomain),
+      data: entities.map(SucursalMapper.toListItem),
       total,
       page,
       limit,

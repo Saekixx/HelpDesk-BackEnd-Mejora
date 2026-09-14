@@ -62,3 +62,9 @@ export class Cliente {
     this.updatedAt = props.updatedAt ?? new Date();
   }
 }
+
+export interface ClienteListItem extends Cliente {
+  // Cantidad total de sucursales del cliente (Prisma: _count.sucursales)
+  total_sucursales: number;
+  plan: { id_plan: number; nombre: string } | null;
+}

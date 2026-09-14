@@ -8,9 +8,10 @@ import {
   IsInt,
   IsBoolean,
   IsOptional,
-  IsDateString,
+  IsDate,
   Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { CreateClienteDto } from '@/clientes/application/dto/create-cliente.dto';
 import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
 
@@ -72,22 +73,24 @@ export class CreateClienteRequestDto implements CreateClienteDto {
   @ApiProperty({
     description: 'Fecha de inicio del plan contratado (YYYY-MM-DD)',
     example: '2026-01-01',
+    type: String,
+    format: 'date',
   })
-  @IsDateString(
-    {},
-    { message: 'La fecha de inicio de plan debe ser una fecha válida' },
-  )
-  readonly fecha_inicio_plan: string;
+  @Type(() => Date)
+  @IsDate({ message: 'La fecha de inicio de plan debe ser una fecha válida' })
+  readonly fecha_inicio_plan: Date;
 
   @ApiProperty({
     description: 'Fecha de finalización del plan contratado (YYYY-MM-DD)',
     example: '2026-12-31',
+    type: String,
+    format: 'date',
   })
-  @IsDateString(
-    {},
-    { message: 'La fecha de finalización de plan debe ser una fecha válida' },
-  )
-  readonly fecha_finalizacion_plan: string;
+  @Type(() => Date)
+  @IsDate({
+    message: 'La fecha de finalización de plan debe ser una fecha válida',
+  })
+  readonly fecha_finalizacion_plan: Date;
 
   @ApiProperty({ description: 'Costo negociado con el cliente', example: 1500.5 })
   @IsNumber({}, { message: 'El costo negociado debe ser un número' })

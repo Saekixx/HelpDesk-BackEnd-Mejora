@@ -23,6 +23,14 @@ import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
 import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
 import { RolEnum } from '@/auth/domain/enums/rol.enum';
+import {
+  ApiFindAllClientesSwagger,
+  ApiGetClientesOptionsSwagger,
+  ApiFindClienteByIdSwagger,
+  ApiCreateClienteSwagger,
+  ApiUpdateClienteSwagger,
+  ApiToggleClienteStatusSwagger,
+} from '../docs/cliente.swagger';
 
 @ApiTags('Clientes')
 @ApiBearerAuth('access-token')
@@ -44,6 +52,7 @@ export class ClienteController {
     RolEnum.SOPORTE_INSITU,
     RolEnum.SOPORTE_REMOTO,
   )
+  @ApiFindAllClientesSwagger()
   async findAll(@Query() query: GetClientesQueryDto) {
     const data = await this.getClientesUseCase.execute(query);
     return {
@@ -60,6 +69,7 @@ export class ClienteController {
     RolEnum.SOPORTE_INSITU,
     RolEnum.SOPORTE_REMOTO,
   )
+  @ApiGetClientesOptionsSwagger()
   async getClientesOptions() {
     return await this.getClientesOptionsUseCase.execute();
   }
@@ -70,6 +80,7 @@ export class ClienteController {
     RolEnum.SOPORTE_INSITU,
     RolEnum.SOPORTE_REMOTO,
   )
+  @ApiFindClienteByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const data = await this.getClienteByIdUseCase.execute(id);
     return {
@@ -80,6 +91,7 @@ export class ClienteController {
 
   @Post()
   @Roles(RolEnum.ADMINISTRADOR)
+  @ApiCreateClienteSwagger()
   async create(@Body() dto: CreateClienteRequestDto) {
     const data = await this.createClienteUseCase.execute(dto);
     return {
@@ -90,6 +102,7 @@ export class ClienteController {
 
   @Patch(':id')
   @Roles(RolEnum.ADMINISTRADOR)
+  @ApiUpdateClienteSwagger()
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateClienteRequestDto,
@@ -103,6 +116,7 @@ export class ClienteController {
 
   @Patch(':id/toggle-status')
   @Roles(RolEnum.ADMINISTRADOR)
+  @ApiToggleClienteStatusSwagger()
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     const data = await this.toggleClienteStatusUseCase.execute(id);
     return {

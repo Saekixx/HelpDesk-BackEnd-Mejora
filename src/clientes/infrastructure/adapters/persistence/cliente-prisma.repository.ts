@@ -8,7 +8,7 @@ import { Cliente } from '@/clientes/domain/entities/cliente.entity';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
 import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
 import { ClienteMapper } from './mappers/cliente.mapper';
-import { Prisma } from '@prisma/client';
+import { Prisma, clientes_tipo_cliente } from '@prisma/client';
 import { OptionDto } from '../../dtos/options.response.dto';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
   async findAll(
     filter: GetClientesFilterDto,
   ): Promise<PaginatedClientesResult> {
-    const { page = 1, limit = 10, search, is_active } = filter;
+    const { page = 1, limit = 10, search, tipo_cliente, is_active } = filter;
 
     const where: Prisma.clientesWhereInput = {};
 
@@ -28,6 +28,10 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
         { numero_documento: { contains: search } },
         { correo: { contains: search } },
       ];
+    }
+
+    if (tipo_cliente !== undefined) {
+      where.tipo_cliente = tipo_cliente as unknown as clientes_tipo_cliente;
     }
 
     if (is_active !== undefined) {
@@ -42,12 +46,16 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
+        include: {
+          planes: { select: { id_plan: true, tipo: true } },
+          _count: { select: { sucursales: true } },
+        },
       }),
       this.prisma.clientes.count({ where }),
     ]);
 
     return {
-      data: entities.map(ClienteMapper.toDomain),
+      data: entities.map(ClienteMapper.toListItem),
       total,
       page,
       limit,

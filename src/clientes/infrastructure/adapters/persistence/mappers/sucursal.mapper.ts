@@ -1,5 +1,15 @@
 import { sucursales as PrismaSucursal } from '@prisma/client';
-import { Sucursal } from '@/clientes/domain/entities/sucursal.entity';
+import {
+  Sucursal,
+  SucursalListItem,
+} from '@/clientes/domain/entities/sucursal.entity';
+
+// Forma del resultado de Prisma cuando el findAll incluye el conteo de
+// áreas y los datos del cliente (ver SucursalPrismaRepository.findAll).
+type PrismaSucursalConDetalle = PrismaSucursal & {
+  _count: { area: number };
+  clientes: { id_cliente: number; nombre_principal: string } | null;
+};
 
 export class SucursalMapper {
   static toDomain(entity: PrismaSucursal): Sucursal {
@@ -15,6 +25,22 @@ export class SucursalMapper {
       createdAt: entity.created_at ?? undefined,
       updatedAt: entity.updated_at ?? undefined,
     });
+  }
+
+  // Usado únicamente por el listado paginado (GET /sucursales), donde el
+  // repositorio incluye _count.area y la relación `clientes`.
+  static toListItem(entity: PrismaSucursalConDetalle): SucursalListItem {
+    const sucursal = SucursalMapper.toDomain(entity);
+    return {
+      ...sucursal,
+      total_areas: entity._count.area,
+      cliente: entity.clientes
+        ? {
+            id_cliente: entity.clientes.id_cliente,
+            nombre: entity.clientes.nombre_principal,
+          }
+        : null,
+    };
   }
 
   static toPersistence(domain: Sucursal): Partial<PrismaSucursal> {

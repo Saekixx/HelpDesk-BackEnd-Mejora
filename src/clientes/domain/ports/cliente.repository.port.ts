@@ -1,4 +1,4 @@
-import { Cliente } from '../entities/cliente.entity';
+import { Cliente, ClienteListItem } from '../entities/cliente.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetClientesFilterDto } from '../dto/get-clientes-filter.dto';
 
@@ -6,7 +6,7 @@ export const CLIENTE_REPOSITORY = 'CLIENTE_REPOSITORY';
 
 // Resultado paginado para el listado de clientes
 export interface PaginatedClientesResult {
-  data: Cliente[];
+  data: ClienteListItem[];
   total: number;
   page: number;
   limit: number;

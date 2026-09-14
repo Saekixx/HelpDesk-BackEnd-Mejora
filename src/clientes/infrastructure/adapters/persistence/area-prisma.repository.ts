@@ -33,8 +33,6 @@ export class AreaPrismaRepository implements AreaRepositoryPort {
       where.id_sucursal = id_sucursal;
     }
 
-    // id_cliente no es un campo propio de `area`; se filtra a través de la
-    // relación area -> sucursales, que sí tiene id_cliente.
     if (id_cliente !== undefined) {
       where.sucursales = { id_cliente };
     }
@@ -59,12 +57,23 @@ export class AreaPrismaRepository implements AreaRepositoryPort {
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
+        include: {
+          sucursales: {
+            select: {
+              id_sucursal: true,
+              nombre_sucursal: true,
+              clientes: {
+                select: { id_cliente: true, nombre_principal: true },
+              },
+            },
+          },
+        },
       }),
       this.prisma.area.count({ where }),
     ]);
 
     return {
-      data: entities.map(AreaMapper.toDomain),
+      data: entities.map(AreaMapper.toListItem),
       total,
       page,
       limit,

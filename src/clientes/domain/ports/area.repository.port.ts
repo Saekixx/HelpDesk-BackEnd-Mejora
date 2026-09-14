@@ -1,5 +1,5 @@
 // src/clientes/domain/ports/area.repository.port.ts
-import { Area } from '../entities/area.entity';
+import { Area, AreaListItem } from '../entities/area.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetAreasFilterDto } from '../dto/get-areas-filter.dto';
 import { CreateAreaDto } from '../dto/create-area.dto';
@@ -9,7 +9,7 @@ export const AREA_REPOSITORY = 'AREA_REPOSITORY';
 
 // Resultado paginado para el listado de áreas
 export interface PaginatedAreasResult {
-  data: Area[];
+  data: AreaListItem[];
   total: number;
   page: number;
   limit: number;
@@ -31,6 +31,5 @@ export interface AreaRepositoryPort {
   // Activa/desactiva un área (soft toggle sobre is_active)
   toggleStatus(id: number): Promise<Area>;
 
-  // Se mantiene el método preexistente para poblar selects en el frontend
   getAreasOptions(sucursalId: number): Promise<OptionDto[]>;
 }

@@ -1,4 +1,4 @@
-import { Sucursal } from '../entities/sucursal.entity';
+import { Sucursal, SucursalListItem } from '../entities/sucursal.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetSucursalesFilterDto } from '../dto/get-sucursales-filter.dto';
 import { CreateSucursalDto } from '../dto/create-sucursal.dto';
@@ -8,7 +8,7 @@ export const SUCURSAL_REPOSITORY = 'SUCURSAL_REPOSITORY';
 
 // Resultado paginado para el listado de sucursales
 export interface PaginatedSucursalesResult {
-  data: Sucursal[];
+  data: SucursalListItem[];
   total: number;
   page: number;
   limit: number;
