@@ -8,11 +8,16 @@ import {
   IsBoolean,
   IsOptional,
   IsDate,
+  ValidateNested,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UpdateClienteDto } from '@/clientes/application/dto/update-cliente.dto';
 import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
+import {
+  SucursalAnidadaHttpDto,
+  UpdateSucursalAnidadaHttpDto,
+} from './sucursal-anidada.dto';
 
 // Todos los campos son opcionales (PATCH semántico).
 export class UpdateClienteRequestDto implements UpdateClienteDto {
@@ -96,4 +101,24 @@ export class UpdateClienteRequestDto implements UpdateClienteDto {
   @IsOptional()
   @IsBoolean({ message: 'is_active debe ser un valor booleano' })
   readonly is_active?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Datos a actualizar de la sucursal principal del cliente (solo se aplican los campos enviados)',
+    type: UpdateSucursalAnidadaHttpDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UpdateSucursalAnidadaHttpDto)
+  readonly sucursal_principal?: UpdateSucursalAnidadaHttpDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Sucursales adicionales nuevas a crear para el cliente (no reemplazan a las existentes)',
+    type: [SucursalAnidadaHttpDto],
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SucursalAnidadaHttpDto)
+  readonly sucursales_adicionales?: SucursalAnidadaHttpDto[];
 }
