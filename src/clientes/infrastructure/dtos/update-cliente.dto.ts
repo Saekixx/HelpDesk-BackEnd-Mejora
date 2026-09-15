@@ -106,6 +106,10 @@ export class UpdateClienteRequestDto implements UpdateClienteDto {
     description:
       'Datos a actualizar de la sucursal principal del cliente (solo se aplican los campos enviados)',
     type: UpdateSucursalAnidadaHttpDto,
+    example: {
+      nombre: 'Sucursal Central Renovada',
+      telefono: '+51999888777',
+    },
   })
   @IsOptional()
   @ValidateNested()
@@ -116,6 +120,15 @@ export class UpdateClienteRequestDto implements UpdateClienteDto {
     description:
       'Sucursales adicionales nuevas a crear para el cliente (no reemplazan a las existentes)',
     type: [SucursalAnidadaHttpDto],
+    example: [
+      {
+        nombre: 'Sucursal Sur',
+        encargado: 'Ana Torres',
+        telefono: '+51955443322',
+        correo: 'sur@acme.com',
+        direccion: 'Av. Sur 456',
+      },
+    ],
   })
   @IsOptional()
   @ValidateNested({ each: true })

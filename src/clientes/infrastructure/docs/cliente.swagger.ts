@@ -124,9 +124,6 @@ export function ApiGetClientesOptionsSwagger() {
   );
 }
 
-// GET /clientes/:id: documenta la respuesta enriquecida con el plan
-// contratado y el arreglo de sucursales, usando ClienteDetailResponseDto
-// y un ejemplo completo.
 export function ApiFindClienteByIdSwagger() {
   return applyDecorators(
     ApiExtraModels(ClienteDetailResponseDto),
@@ -217,7 +214,7 @@ export function ApiUpdateClienteSwagger() {
       schema: {
         example: {
           message: 'Cliente actualizado exitosamente',
-          data: CLIENTE_EJEMPLO,
+          data: CLIENTE_DETAIL_EJEMPLO,
         },
       },
     }),

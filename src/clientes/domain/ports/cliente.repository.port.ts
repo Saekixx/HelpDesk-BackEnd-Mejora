@@ -43,11 +43,12 @@ export interface ClienteRepositoryPort {
     cliente: Cliente,
     sucursales: NuevoClienteSucursalesInput,
   ): Promise<Cliente>;
+
   update(
     id: number,
     cliente: Cliente,
     sucursales?: ActualizarClienteSucursalesInput,
-  ): Promise<Cliente>;
+  ): Promise<ClienteDetail>;
   toggleStatus(id: number): Promise<Cliente>;
   getClientesOptions(): Promise<OptionDto[]>;
   existsByDocumento(numero_documento: string): Promise<boolean>;

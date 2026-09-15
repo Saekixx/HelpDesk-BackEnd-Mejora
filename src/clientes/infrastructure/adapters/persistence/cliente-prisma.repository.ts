@@ -129,7 +129,7 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
     id: number,
     cliente: Cliente,
     sucursales?: ActualizarClienteSucursalesInput,
-  ): Promise<Cliente> {
+  ): Promise<ClienteDetail> {
     const exists = await this.prisma.clientes.findUnique({
       where: { id_cliente: id },
     });
@@ -139,7 +139,7 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
     const { id_cliente: _ignored, ...data } =
       ClienteMapper.toPersistence(cliente);
 
-    const updated = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       const clienteActualizado = await tx.clientes.update({
         where: { id_cliente: id },
         data,
@@ -189,7 +189,16 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
       return clienteActualizado;
     });
 
-    return ClienteMapper.toDomain(updated);
+    const entityConRelaciones = await this.prisma.clientes.findUnique({
+      where: { id_cliente: id },
+      include: { planes: true, sucursales: true },
+    });
+
+    if (!entityConRelaciones) {
+      throw new ClienteNotFoundException();
+    }
+
+    return ClienteMapper.toDetail(entityConRelaciones);
   }
 
   async toggleStatus(id: number): Promise<Cliente> {
