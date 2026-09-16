@@ -72,7 +72,6 @@ model clientes {
   planes                    planes?                @relation(fields: [id_plan], references: [id_plan], onUpdate: Restrict, map: "fk_clientes_plan")
   equipos                   equipos[]
   sucursales                sucursales[]
-  tickets                   tickets[]
   usuarios                  usuarios[]
 
   @@index([id_plan], map: "fk_clientes_plan")
@@ -114,6 +113,7 @@ model hardware {
   fecha_compra      DateTime            @db.Date
   marca             String              @db.VarChar(100)
   proveedor         String              @db.VarChar(100)
+  url_factura       String?             @db.VarChar(255)
   descripcion       String?             @db.Text
   ult_revision      DateTime?           @db.Date
   rev_programada    DateTime?           @db.Date
@@ -142,6 +142,7 @@ model registro_hardware {
   descripcion       String    @db.Text
   serie             String    @db.VarChar(100)
   proveedor         String    @db.VarChar(255)
+  is_actual         Boolean?  @default(true)
   id_hardware       Int?
   id_equipo         Int?
   created_at        DateTime? @default(now()) @db.DateTime(0)
@@ -173,7 +174,6 @@ model software {
   created_at        DateTime?          @default(now()) @db.DateTime(0)
   updated_at        DateTime?          @default(now()) @db.DateTime(0)
   software_equipos  software_equipos[]
-  tickets           tickets[]
 }
 
 model software_equipos {
@@ -220,24 +220,17 @@ model tickets {
   detalle                                  String          @db.Text
   estado                                   tickets_estado? @default(Pendiente)
   id_equipo                                Int
-  id_cliente                               Int
   id_trabajador                            Int
   id_soporte                               Int?
-  id_software                              Int?
   es_software                              Boolean?        @default(false)
-  imagen_url                               String?         @db.VarChar(255)
   created_at                               DateTime?       @default(now()) @db.DateTime(0)
   updated_at                               DateTime?       @default(now()) @db.DateTime(0)
   citas_tickets                            citas_tickets[]
-  clientes                                 clientes        @relation(fields: [id_cliente], references: [id_cliente], onUpdate: Restrict, map: "fk_tickets_clientes")
   equipos                                  equipos         @relation(fields: [id_equipo], references: [id_equipo], onUpdate: Restrict, map: "fk_tickets_equipo")
-  software                                 software?       @relation(fields: [id_software], references: [id_software], onUpdate: Restrict, map: "fk_tickets_software")
   usuarios_tickets_id_soporteTousuarios    usuarios?       @relation("tickets_id_soporteTousuarios", fields: [id_soporte], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_tickets_soporte")
   usuarios_tickets_id_trabajadorTousuarios usuarios        @relation("tickets_id_trabajadorTousuarios", fields: [id_trabajador], references: [id_usuario], onUpdate: Restrict, map: "fk_tickets_trabajador")
 
-  @@index([id_cliente], map: "fk_tickets_clientes")
   @@index([id_equipo], map: "fk_tickets_equipo")
-  @@index([id_software], map: "fk_tickets_software")
   @@index([id_soporte], map: "fk_tickets_soporte")
   @@index([id_trabajador], map: "fk_tickets_trabajador")
 }

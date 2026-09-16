@@ -5,21 +5,6 @@ import {
 import { Ticket, EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 import { TicketResponseCriteria } from '@/tickets/domain/criteria/ticket-response.criteria';
 
-export type PrismaTicketWithRelations = PrismaTicket & {
-  usuarios_tickets_id_trabajadorTousuarios?: {
-    id_usuario: number;
-    nombre: string;
-    apellido: string;
-  };
-  equipos?: { id_equipo: number; tipo: string };
-  clientes?: { id_cliente: number; nombre_principal: string };
-  usuarios_tickets_id_soporteTousuarios?: {
-    id_usuario: number;
-    nombre: string;
-    apellido: string;
-  } | null;
-};
-
 export class TicketMapper {
   static toDomain(prismaTicket: PrismaTicket): Ticket {
     return new Ticket({
@@ -29,12 +14,9 @@ export class TicketMapper {
       detalle: prismaTicket.detalle,
       estado: (prismaTicket.estado as unknown as EstadoTicket) ?? undefined,
       id_equipo: prismaTicket.id_equipo,
-      id_cliente: prismaTicket.id_cliente,
       id_trabajador: prismaTicket.id_trabajador,
       id_soporte: prismaTicket.id_soporte ?? undefined,
-      id_software: prismaTicket.id_software ?? undefined,
       es_software: prismaTicket.es_software ?? false,
-      imagen_url: prismaTicket.imagen_url ?? undefined,
       createdAt: prismaTicket.created_at ?? undefined,
       updatedAt: prismaTicket.updated_at ?? undefined,
     });
@@ -48,12 +30,10 @@ export class TicketMapper {
       detalle: domain.detalle,
       estado: domain.estado as unknown as PrismaEstadoTicket,
       id_equipo: domain.id_equipo,
-      id_cliente: domain.id_cliente,
+      // Se eliminó id_cliente ya que pertenece a 'equipos', no a 'tickets'
       id_trabajador: domain.id_trabajador,
       id_soporte: domain.id_soporte ?? null,
-      id_software: domain.id_software ?? null,
       es_software: domain.es_software,
-      imagen_url: domain.imagen_url ?? null,
       created_at: domain.createdAt,
       updated_at: domain.updatedAt,
     };
@@ -63,6 +43,7 @@ export class TicketMapper {
     const trabajador = raw.usuarios_tickets_id_trabajadorTousuarios;
     const soporte = raw.usuarios_tickets_id_soporteTousuarios;
     const equipo = raw.equipos;
+    const cliente = equipo?.clientes; // Navegamos desde equipos -> clientes
 
     return {
       id_tickets: raw.id_tickets,
@@ -78,10 +59,12 @@ export class TicketMapper {
         id: equipo.id_equipo,
         tipo_equipo: equipo.tipo,
       },
-      cliente: {
-        id: raw.clientes.id_cliente,
-        nombre: raw.clientes.nombre_principal,
-      },
+      cliente: cliente
+        ? {
+            id: cliente.id_cliente,
+            nombre: cliente.nombre_principal,
+          }
+        : { id: 0, nombre: 'Sin cliente asignado' },
       sucursal: equipo?.sucursales
         ? {
             id: equipo.sucursales.id_sucursal,
