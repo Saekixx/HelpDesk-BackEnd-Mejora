@@ -13,22 +13,25 @@ export class RelacionResumenDto {
   nombre: string;
 }
 
-// Un componente de hardware registrado para el equipo. La misma forma se
-// usa tanto para `componentes_actuales` (is_active = true) como para
-// `historial` (is_active = false); lo único que cambia es el filtro.
+// Un componente de hardware registrado para el equipo. `tipo`, `marca` y
+// `url_factura` vienen de la tabla `hardware` relacionada (vía
+// id_hardware). `is_active` (clasificación actual/historial) viene en
+// cambio de `registro_hardware.is_actual`, una columna propia del
+// registro. La misma forma se usa tanto para `componentes_actuales`
+// (is_actual !== false) como para `historial` (is_actual === false).
 export class ComponenteHardwareDto {
   @ApiProperty({ description: 'ID del registro de hardware', example: 12 })
   id_RH: number;
 
   @ApiPropertyOptional({
-    description: 'Tipo de componente',
+    description: 'Tipo de componente (columna hardware.tipo_equipo)',
     example: 'Procesador',
     nullable: true,
   })
   tipo: string | null;
 
   @ApiPropertyOptional({
-    description: 'Marca del componente',
+    description: 'Marca del componente (columna hardware.marca)',
     example: 'Intel',
     nullable: true,
   })
@@ -59,15 +62,16 @@ export class ComponenteHardwareDto {
   fecha_instalacion: Date;
 
   @ApiPropertyOptional({
-    description: 'URL del PDF de la factura de compra del componente',
+    description:
+      'URL del PDF de la factura de compra (columna hardware.url_factura)',
     example: 'https://storage.helpdesk.com/facturas/f-8842.pdf',
     nullable: true,
   })
-  url_factura: string | null;
+  url_factura?: string | null;
 
   @ApiProperty({
     description:
-      'true = componente actualmente instalado; false = componente retirado (historial)',
+      'true = componente actualmente instalado; false = componente retirado (historial). Proviene de registro_hardware.is_actual.',
     example: true,
   })
   is_active: boolean;
@@ -143,7 +147,7 @@ export class SoftwareEquipoDto {
   is_active: boolean;
 }
 
-// Respuesta completa de GET /equipos/:id
+// Respuesta completa de GET /equipos/:id.
 export class EquipoDetailResponseDto {
   @ApiProperty({ description: 'ID del equipo', example: 1042 })
   id_equipo: number;
