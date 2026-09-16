@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsuariosModule } from './usuarios/users.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { PlanesModule } from './planes/planes.module';
+import { HardwareModule } from './hardware/hardware.module';
 import { CommonModule } from './common/common.module';
 import { MailModule } from './mail/mail.module';
 import { ConfigModule } from '@nestjs/config';
@@ -26,6 +27,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     UsuariosModule,
     ClientesModule,
     PlanesModule,
+    HardwareModule,
     MailModule,
   ],
   controllers: [],
