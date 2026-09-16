@@ -1,4 +1,8 @@
-import { Equipo, EquipoListItem } from '../entities/equipo.entity';
+import {
+  Equipo,
+  EquipoDetail,
+  EquipoListItem,
+} from '../entities/equipo.entity';
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
 import { CreateEquipoDto } from '../dto/create-equipo.dto';
 import { UpdateEquipoDto } from '../dto/update-equipo.dto';
@@ -19,6 +23,11 @@ export interface EquipoRepositoryPort {
   findAll(filters: GetEquiposFilterDto): Promise<PaginatedEquiposResult>;
 
   findById(id: number): Promise<Equipo | null>;
+
+  // Usado exclusivamente por GET /equipos/:id. Incluye cliente, sucursal, área,
+  // trabajador, los componentes de registro_hardware y el software
+  // instalado.
+  findDetailById(id: number): Promise<EquipoDetail | null>;
 
   create(data: CreateEquipoDto): Promise<Equipo>;
 

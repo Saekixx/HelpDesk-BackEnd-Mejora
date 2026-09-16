@@ -25,6 +25,7 @@ import { ToggleStatusEquipoUseCase } from '@/equipos/application/use-cases/toggl
 import { GetEquiposQueryDto } from '../dtos/get-equipos-query.dto';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
+import { EquipoDetailResponseDto } from '../dtos/equipo-detail-response.dto';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
 import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
@@ -104,14 +105,16 @@ export class EquipoController {
     RolEnum.SOPORTE_INSITU,
     RolEnum.SOPORTE_REMOTO,
   )
-  @ApiOperation({ summary: 'Obtener un equipo por id' })
+  @ApiOperation({
+    summary: 'Obtener el detalle de un equipo por id',
+    description:
+      'Retorna el equipo con sus relaciones (cliente, sucursal, área, trabajador), los componentes de hardware separados en actuales e historial, y el software instalado. Alimenta la vista de detalle del equipo en el frontend.',
+  })
   @ApiParam({ name: 'id', description: 'ID numérico del equipo', example: 1 })
   @ApiResponse({
     status: 200,
     description: 'Equipo obtenido exitosamente.',
-    schema: {
-      example: { message: 'Equipo obtenido exitosamente', data: EQUIPO_EJEMPLO },
-    },
+    type: EquipoDetailResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Token inválido, expirado o ausente.' })
   @ApiResponse({ status: 403, description: 'El rol del usuario no tiene permiso de lectura.' })

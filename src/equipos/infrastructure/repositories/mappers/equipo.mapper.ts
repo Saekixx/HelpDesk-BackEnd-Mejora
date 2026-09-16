@@ -1,9 +1,16 @@
 import { equipos as PrismaEquipo } from '@prisma/client';
 import {
+  ComponenteHardware,
   Equipo,
+  EquipoDetail,
   EquipoListItem,
   RelacionSummary,
+  SoftwareInstalado,
 } from '@/equipos/domain/entities/equipo.entity';
+// Tipo derivado de Prisma.equiposGetPayload en el propio repositorio (fuente
+// única de verdad: el include real y este tipo nunca pueden desincronizarse,
+// que es justo lo que causaba el error 'Property software is missing').
+import type { PrismaEquipoDetalleCompleto } from '../equipo-prisma.repository';
 
 type PrismaEquipoConDetalle = PrismaEquipo & {
   clientes: { id_cliente: number; nombre_principal: string } | null;
@@ -64,6 +71,62 @@ export class EquipoMapper {
             `${entity.usuarios.nombre} ${entity.usuarios.apellido}`,
           )
         : null,
+    };
+  }
+
+
+  // Genera el código legible del equipo a partir de su id. No existe como
+  // columna en la base de datos: se deriva en cada lectura.
+  static formatCodigo(idEquipo: number): string {
+    return `EQ-${idEquipo}`;
+  }
+
+  private static toComponenteHardware(
+    rh: PrismaEquipoDetalleCompleto['registro_hardware'][number],
+  ): ComponenteHardware {
+    return {
+      id_RH: rh.id_RH,
+      tipo: rh.tipo ?? null,
+      marca: rh.marca ?? null,
+      descripcion: rh.descripcion,
+      serie: rh.serie,
+      proveedor: rh.proveedor,
+      fecha_instalacion: rh.fecha_instalacion,
+      url_factura: rh.url_factura ?? null,
+      // is_active es opcional en el schema; null se trata como componente
+      // vigente para no perder registros antiguos previos a la migración.
+      is_active: rh.is_active ?? true,
+    };
+  }
+
+  static toDetail(entity: PrismaEquipoDetalleCompleto): EquipoDetail {
+    const listItem = EquipoMapper.toListItem(entity);
+
+    const componentes = entity.registro_hardware.map(
+      EquipoMapper.toComponenteHardware,
+    );
+
+    const software: SoftwareInstalado[] = entity.software_equipos.map((se) => ({
+      id_software_equipos: se.id_software_equipos,
+      id_software: se.software.id_software,
+      nombre: se.software.nombre_software,
+      vencimiento: se.software.fecha_caducidad,
+      licencia_asignada: se.licencia_asignada ?? null,
+      fecha_instalacion: se.fecha_instalacion ?? null,
+      observaciones: se.observaciones ?? null,
+      is_active: se.is_active ?? true,
+    }));
+
+    return {
+      ...listItem,
+      codigo: EquipoMapper.formatCodigo(entity.id_equipo),
+      hardware: {
+        // is_active null se considera componente actual (ver
+        // toComponenteHardware).
+        componentes_actuales: componentes.filter((c) => c.is_active),
+        historial: componentes.filter((c) => !c.is_active),
+      },
+      software,
     };
   }
 }

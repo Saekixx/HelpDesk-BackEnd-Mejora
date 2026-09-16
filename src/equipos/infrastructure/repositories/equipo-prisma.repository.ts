@@ -4,7 +4,7 @@ import {
   EquipoRepositoryPort,
   PaginatedEquiposResult,
 } from '@/equipos/domain/ports/equipo.repository.port';
-import { Equipo } from '@/equipos/domain/entities/equipo.entity';
+import { Equipo, EquipoDetail } from '@/equipos/domain/entities/equipo.entity';
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
 import { CreateEquipoDto } from '@/equipos/domain/dto/create-equipo.dto';
 import { UpdateEquipoDto } from '@/equipos/domain/dto/update-equipo.dto';
@@ -12,13 +12,33 @@ import { EquipoNotFoundException } from '@/equipos/domain/exceptions/equipo.exce
 import { EquipoMapper } from './mappers/equipo.mapper';
 import { Prisma } from '@prisma/client';
 
-// Relaciones resumidas incluidas en el listado paginado (GET /equipos).
-const INCLUDE_RESUMEN: Prisma.equiposInclude = {
+const INCLUDE_RESUMEN = {
   clientes: { select: { id_cliente: true, nombre_principal: true } },
   sucursales: { select: { id_sucursal: true, nombre_sucursal: true } },
   area: { select: { id_area: true, nombre_area: true } },
   usuarios: { select: { id_usuario: true, nombre: true, apellido: true } },
-};
+} satisfies Prisma.equiposInclude;
+
+
+const INCLUDE_DETALLE = {
+  ...INCLUDE_RESUMEN,
+  registro_hardware: {
+    orderBy: { fecha_instalacion: 'desc' },
+  },
+  software_equipos: {
+    include: {
+      software: true,
+    },
+    orderBy: {
+      fecha_instalacion: 'desc',
+    },
+  },
+} satisfies Prisma.equiposInclude;
+
+
+export type PrismaEquipoDetalleCompleto = Prisma.equiposGetPayload<{
+  include: typeof INCLUDE_DETALLE;
+}>;
 
 @Injectable()
 export class EquipoPrismaRepository implements EquipoRepositoryPort {
@@ -78,6 +98,15 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     });
     if (!entity) return null;
     return EquipoMapper.toDomain(entity);
+  }
+
+  async findDetailById(id: number): Promise<EquipoDetail | null> {
+    const entity = await this.prisma.equipos.findUnique({
+      where: { id_equipo: id },
+      include: INCLUDE_DETALLE,
+    });
+    if (!entity) return null;
+    return EquipoMapper.toDetail(entity);
   }
 
   async create(data: CreateEquipoDto): Promise<Equipo> {

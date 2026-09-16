@@ -9,11 +9,14 @@ import {
   IsBoolean,
   IsOptional,
   IsDate,
+  IsNotEmptyObject,
+  ValidateNested,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateClienteDto } from '@/clientes/application/dto/create-cliente.dto';
 import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
+import { SucursalAnidadaHttpDto } from './sucursal-anidada.dto';
 
 export class CreateClienteRequestDto implements CreateClienteDto {
   @ApiProperty({
@@ -114,4 +117,40 @@ export class CreateClienteRequestDto implements CreateClienteDto {
   @IsOptional()
   @IsBoolean({ message: 'is_active debe ser un valor booleano' })
   readonly is_active?: boolean;
+
+  @ApiProperty({
+    description:
+      'Sucursal principal del cliente, creada de forma simultánea al registrar el cliente',
+    type: SucursalAnidadaHttpDto,
+    example: {
+      nombre: 'Sucursal Central',
+      encargado: 'Juan Pérez',
+      telefono: '+51987654321',
+      correo: 'sucursal.central@acme.com',
+      direccion: 'Jr. Los Pinos 456',
+    },
+  })
+  @IsNotEmptyObject({}, { message: 'La sucursal principal es obligatoria' })
+  @ValidateNested()
+  @Type(() => SucursalAnidadaHttpDto)
+  readonly sucursal_principal: SucursalAnidadaHttpDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Sucursales adicionales del cliente, creadas de forma simultánea al registrar el cliente',
+    type: [SucursalAnidadaHttpDto],
+    example: [
+      {
+        nombre: 'Sucursal Norte',
+        encargado: 'Carlos Mendoza',
+        telefono: '+51912345678',
+        correo: 'norte@acme.com',
+        direccion: 'Av. Los Olivos 789',
+      },
+    ],
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SucursalAnidadaHttpDto)
+  readonly sucursales_adicionales?: SucursalAnidadaHttpDto[];
 }

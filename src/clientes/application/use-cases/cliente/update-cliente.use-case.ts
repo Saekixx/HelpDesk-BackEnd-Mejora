@@ -2,13 +2,47 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   CLIENTE_REPOSITORY,
   ClienteRepositoryPort,
+  ActualizarClienteSucursalesInput,
 } from '@/clientes/domain/ports/cliente.repository.port';
-import { Cliente } from '@/clientes/domain/entities/cliente.entity';
+import {
+  Cliente,
+  ClienteDetail,
+} from '@/clientes/domain/entities/cliente.entity';
 import { UpdateClienteDto } from '@/clientes/application/dto/update-cliente.dto';
 import {
   ClienteNotFoundException,
   DocumentoAlreadyInUseException,
 } from '@/clientes/domain/exceptions/cliente.exceptions';
+import {
+  SucursalAnidadaDto,
+  UpdateSucursalAnidadaDto,
+  SucursalAnidadaPersistData,
+  UpdateSucursalAnidadaPersistData,
+} from '@/clientes/domain/dto/sucursal-anidada.dto';
+
+function toSucursalPersistData(
+  sucursal: SucursalAnidadaDto,
+): SucursalAnidadaPersistData {
+  return {
+    nombre_sucursal: sucursal.nombre,
+    encargado: sucursal.encargado ?? '',
+    telefono: sucursal.telefono ?? '',
+    correo: sucursal.correo ?? '',
+    direccion: sucursal.direccion ?? '',
+  };
+}
+
+function toUpdateSucursalPersistData(
+  sucursal: UpdateSucursalAnidadaDto,
+): UpdateSucursalAnidadaPersistData {
+  const data: UpdateSucursalAnidadaPersistData = {};
+  if (sucursal.nombre !== undefined) data.nombre_sucursal = sucursal.nombre;
+  if (sucursal.encargado !== undefined) data.encargado = sucursal.encargado;
+  if (sucursal.telefono !== undefined) data.telefono = sucursal.telefono;
+  if (sucursal.correo !== undefined) data.correo = sucursal.correo;
+  if (sucursal.direccion !== undefined) data.direccion = sucursal.direccion;
+  return data;
+}
 
 @Injectable()
 export class UpdateClienteUseCase {
@@ -17,7 +51,7 @@ export class UpdateClienteUseCase {
     private readonly clienteRepository: ClienteRepositoryPort,
   ) {}
 
-  async execute(id: number, dto: UpdateClienteDto): Promise<Cliente> {
+  async execute(id: number, dto: UpdateClienteDto): Promise<ClienteDetail> {
     const currentCliente = await this.clienteRepository.findById(id);
     if (!currentCliente) throw new ClienteNotFoundException();
 
@@ -56,6 +90,13 @@ export class UpdateClienteUseCase {
       is_active: currentCliente.is_active,
     });
 
-    return await this.clienteRepository.update(id, updatedCliente);
+    const sucursales: ActualizarClienteSucursalesInput = {
+      principal: dto.sucursal_principal
+        ? toUpdateSucursalPersistData(dto.sucursal_principal)
+        : undefined,
+      adicionales: dto.sucursales_adicionales?.map(toSucursalPersistData),
+    };
+
+    return await this.clienteRepository.update(id, updatedCliente, sucursales);
   }
 }

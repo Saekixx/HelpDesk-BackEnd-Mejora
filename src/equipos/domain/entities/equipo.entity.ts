@@ -62,3 +62,43 @@ export interface EquipoListItem extends Equipo {
   area: RelacionSummary | null;
   trabajador: RelacionSummary | null;
 }
+
+// Un componente registrado en registro_hardware para el equipo.
+export interface ComponenteHardware {
+  id_RH: number;
+  tipo: string | null;
+  marca: string | null;
+  descripcion: string;
+  serie: string;
+  proveedor: string;
+  fecha_instalacion: Date;
+  url_factura: string | null;
+  // true = instalado actualmente | false = retirado (historial)
+  is_active: boolean;
+}
+
+// Software instalado, combinando el catálogo `software` con la asignación
+// `software_equipos`.
+export interface SoftwareInstalado {
+  id_software_equipos: number;
+  id_software: number;
+  nombre: string;
+  // Corresponde a la columna `fecha_caducidad` del catálogo de software.
+  vencimiento: Date;
+  licencia_asignada: string | null;
+  fecha_instalacion: Date | null;
+  observaciones: string | null;
+  is_active: boolean;
+}
+
+// Forma enriquecida de Equipo usada por GET /equipos/:id. Se arma en la capa de persistencia
+// a partir de includes de Prisma sobre registro_hardware y software_equipos.
+export interface EquipoDetail extends EquipoListItem {
+  // Valor derivado de id_equipo (ej. "EQ-1042").
+  codigo: string;
+  hardware: {
+    componentes_actuales: ComponenteHardware[];
+    historial: ComponenteHardware[];
+  };
+  software: SoftwareInstalado[];
+}

@@ -3,7 +3,7 @@ import {
   EQUIPO_REPOSITORY,
   EquipoRepositoryPort,
 } from '@/equipos/domain/ports/equipo.repository.port';
-import { Equipo } from '@/equipos/domain/entities/equipo.entity';
+import { EquipoDetail } from '@/equipos/domain/entities/equipo.entity';
 import { EquipoNotFoundException } from '@/equipos/domain/exceptions/equipo.exceptions';
 
 @Injectable()
@@ -13,8 +13,9 @@ export class GetEquipoByIdUseCase {
     private readonly equipoRepository: EquipoRepositoryPort,
   ) {}
 
-  async execute(id: number): Promise<Equipo> {
-    const equipo = await this.equipoRepository.findById(id);
+  async execute(id: number): Promise<EquipoDetail> {
+    const equipo = await this.equipoRepository.findDetailById(id);
+
     if (!equipo) throw new EquipoNotFoundException();
     return equipo;
   }
