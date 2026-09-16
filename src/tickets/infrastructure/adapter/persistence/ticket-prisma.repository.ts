@@ -54,6 +54,8 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
     return tickets_estado[normalizedKey as keyof typeof tickets_estado];
   }
 
+  // src/tickets/infrastructure/adapter/persistence/ticket-prisma.repository.ts
+
   async findAllWhitFilters(
     filters: TicketFilterCriteria,
   ): Promise<PaginatedTicketsResult> {
@@ -67,7 +69,6 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
 
     const where: Prisma.ticketsWhereInput = {
       ...(parsedEstado && { estado: parsedEstado }),
-      ...(id_cliente && { id_cliente: Number(id_cliente) }),
       ...(search && {
         OR: [
           { pin: { contains: search } },
@@ -75,8 +76,10 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
           { detalle: { contains: search } },
         ],
       }),
-      ...((id_sucursal || id_area) && {
+      // Filtrar cliente, sucursal y área a través de la relación equipos
+      ...((id_cliente || id_sucursal || id_area) && {
         equipos: {
+          ...(id_cliente && { id_cliente: Number(id_cliente) }),
           ...(id_sucursal && { id_sucursal: Number(id_sucursal) }),
           ...(id_area && { id_area: Number(id_area) }),
         },
@@ -97,14 +100,14 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
             select: {
               id_equipo: true,
               tipo: true,
+              clientes: {
+                select: { id_cliente: true, nombre_principal: true },
+              },
               sucursales: {
                 select: { id_sucursal: true, nombre_sucursal: true },
               },
               area: { select: { id_area: true, nombre_area: true } },
             },
-          },
-          clientes: {
-            select: { id_cliente: true, nombre_principal: true },
           },
           usuarios_tickets_id_soporteTousuarios: {
             select: { id_usuario: true, nombre: true, apellido: true },

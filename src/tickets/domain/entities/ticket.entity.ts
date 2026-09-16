@@ -13,12 +13,9 @@ export interface TicketProps {
   detalle: string;
   estado?: EstadoTicket;
   id_equipo: number;
-  id_cliente: number;
   id_trabajador: number;
   id_soporte?: number;
-  id_software?: number;
   es_software?: boolean;
-  imagen_url?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -46,12 +43,9 @@ export class Ticket {
     this.detalle = props.detalle;
     this.estado = props.estado ?? EstadoTicket.PENDIENTE;
     this.id_equipo = props.id_equipo;
-    this.id_cliente = props.id_cliente;
     this.id_trabajador = props.id_trabajador;
     this.id_soporte = props.id_soporte;
-    this.id_software = props.id_software;
     this.es_software = props.es_software ?? false;
-    this.imagen_url = props.imagen_url;
     this.createdAt = props.createdAt ?? new Date();
     this.updatedAt = props.updatedAt ?? new Date();
   }
