@@ -3,6 +3,7 @@ import { FindAllPlanesUseCase } from '@/planes/application/use-cases/find-all-pl
 import { FindByIdPlanesUseCase } from '@/planes/application/use-cases/find-by-id-plan.usecase';
 import { TogglePlanStatusUseCase } from '@/planes/application/use-cases/toggle-plan-status.use-case';
 import { UpdatePlanUseCase } from '@/planes/application/use-cases/update-plan.usecase';
+import { GetPlanOptionsUseCase } from '@/planes/application/use-cases/get-plan-options.usacase';
 import {
   Body,
   Controller,
@@ -15,6 +16,7 @@ import {
 import {
   ApiPlanesTag,
   ApiFindAllPlanesSwagger,
+  ApiGetPlanOptionsSwagger,
   ApiFindByIdPlanSwagger,
   ApiCreatePlanSwagger,
   ApiUpdatePlanSwagger,
@@ -29,6 +31,7 @@ export class PlanController {
   constructor(
     private readonly findAllPlanesUseCase: FindAllPlanesUseCase,
     private readonly findByIdPlanesUseCase: FindByIdPlanesUseCase,
+    private readonly getPlanOptionsUseCase: GetPlanOptionsUseCase,
     private readonly createPlanUseCase: CreatePlanUseCase,
     private readonly updatePlanUseCase: UpdatePlanUseCase,
     private readonly togglePlanStatusUseCase: TogglePlanStatusUseCase,
@@ -40,6 +43,16 @@ export class PlanController {
     const data = await this.findAllPlanesUseCase.execute();
     return {
       message: 'Planes obtenidos exitosamente',
+      data,
+    };
+  }
+
+  @Get('options')
+  @ApiGetPlanOptionsSwagger()
+  async getPlanOptions() {
+    const data = await this.getPlanOptionsUseCase.execute();
+    return {
+      message: 'Opciones de planes obtenidas exitosamente',
       data,
     };
   }

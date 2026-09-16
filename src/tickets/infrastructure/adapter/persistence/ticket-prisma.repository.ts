@@ -54,8 +54,7 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
     return tickets_estado[normalizedKey as keyof typeof tickets_estado];
   }
 
-  // src/tickets/infrastructure/adapter/persistence/ticket-prisma.repository.ts
-
+  // Implementación del método findAllWhitFilters con soporte para filtros de cliente, sucursal y área
   async findAllWhitFilters(
     filters: TicketFilterCriteria,
   ): Promise<PaginatedTicketsResult> {

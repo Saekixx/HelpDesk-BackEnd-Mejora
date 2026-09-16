@@ -8,6 +8,7 @@ import { FindByIdPlanesUseCase } from './application/use-cases/find-by-id-plan.u
 import { FindAllPlanesUseCase } from './application/use-cases/find-all-planes.usecase';
 import { CreatePlanUseCase } from './application/use-cases/create-plan.usecase';
 import { PlanController } from './infrastructure/controllers/plan.controller';
+import { GetPlanOptionsUseCase } from './application/use-cases/get-plan-options.usacase';
 
 @Module({
   imports: [CommonModule],
@@ -17,6 +18,7 @@ import { PlanController } from './infrastructure/controllers/plan.controller';
     CreatePlanUseCase,
     FindAllPlanesUseCase,
     FindByIdPlanesUseCase,
+    GetPlanOptionsUseCase,
     UpdatePlanUseCase,
     TogglePlanStatusUseCase,
 

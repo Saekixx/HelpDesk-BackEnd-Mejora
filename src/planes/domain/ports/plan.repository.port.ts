@@ -1,3 +1,4 @@
+import { PlanOptionDto } from '../dtos/get-plan-options.dto';
 import { Plan } from '../entities/plan.entity';
 
 export const PLAN_REPOSITORY = 'PLAN_REPOSITORY';
@@ -8,4 +9,6 @@ export interface PlanRepositoryPort {
   findAll(): Promise<Plan[]>;
 
   findById(id: number): Promise<Plan | null>;
+
+  getPlanOptions(): Promise<PlanOptionDto[]>;
 }

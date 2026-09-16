@@ -4,6 +4,7 @@ import { PlanRepositoryPort } from '@/planes/domain/ports/plan.repository.port';
 import { Plan } from '@/planes/domain/entities/plan.entity';
 import { PlanMapper } from './mappers/plan.mapper';
 import { Prisma } from '@prisma/client';
+import { PlanOptionDto } from '../../dtos/get-plan-options.response.dto';
 
 @Injectable()
 export class PlanPrismaRepository implements PlanRepositoryPort {
@@ -37,5 +38,20 @@ export class PlanPrismaRepository implements PlanRepositoryPort {
     });
     if (!entity) return null;
     return PlanMapper.toDomain(entity);
+  }
+
+  async getPlanOptions(): Promise<PlanOptionDto[]> {
+    const entities = await this.prisma.planes.findMany({
+      where: { is_active: true },
+      select: {
+        id_plan: true,
+        tipo: true,
+      },
+    });
+
+    return entities.map((entity) => ({
+      id: entity.id_plan,
+      nombre: entity.tipo,
+    }));
   }
 }

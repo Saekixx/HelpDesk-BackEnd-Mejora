@@ -20,6 +20,17 @@ export const ApiFindAllPlanesSwagger = () =>
     }),
   );
 
+export const ApiGetPlanOptionsSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener opciones reducidas de planes para selectores',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Opciones de planes obtenidas exitosamente.',
+    }),
+  );
+
 export const ApiFindByIdPlanSwagger = () =>
   applyDecorators(
     ApiOperation({ summary: 'Obtener plan por ID' }),
