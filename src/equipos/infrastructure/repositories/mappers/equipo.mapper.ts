@@ -86,24 +86,36 @@ export class EquipoMapper {
   ): ComponenteHardware {
     return {
       id_RH: rh.id_RH,
-      tipo: rh.tipo ?? null,
-      marca: rh.marca ?? null,
+      // tipo, marca y url_factura NO son columnas de registro_hardware:
+      // vienen de la tabla `hardware` relacionada (vía id_hardware). Si el
+      // registro no tiene hardware asociado, no hay forma de saberlos (null).
+      tipo: rh.hardware?.tipo_equipo ?? null,
+      marca: rh.hardware?.marca ?? null,
+      url_factura: rh.hardware?.url_factura ?? null,
       descripcion: rh.descripcion,
       serie: rh.serie,
       proveedor: rh.proveedor,
       fecha_instalacion: rh.fecha_instalacion,
-      url_factura: rh.url_factura ?? null,
-      // is_active es opcional en el schema; null se trata como componente
-      // vigente para no perder registros antiguos previos a la migración.
-      is_active: rh.is_active ?? true,
+      // is_actual SÍ es una columna propia de registro_hardware (distinta
+      // de hardware.is_active). null se trata como "actual" (ver el
+      // filtro !== false en toDetail).
+      is_active: rh.is_actual ?? true,
     };
   }
 
+  // Usado únicamente por GET /equipos/:id (vista de detalle), donde el
+  // repositorio incluye registro_hardware -> hardware y
+  // software_equipos -> software.
   static toDetail(entity: PrismaEquipoDetalleCompleto): EquipoDetail {
     const listItem = EquipoMapper.toListItem(entity);
 
-    const componentes = entity.registro_hardware.map(
-      EquipoMapper.toComponenteHardware,
+    // componentes_actuales: is_actual !== false (true o null).
+    // historial: is_actual === false.
+    const actuales = entity.registro_hardware.filter(
+      (rh) => rh.is_actual !== false,
+    );
+    const historicos = entity.registro_hardware.filter(
+      (rh) => rh.is_actual === false,
     );
 
     const software: SoftwareInstalado[] = entity.software_equipos.map((se) => ({
@@ -121,10 +133,8 @@ export class EquipoMapper {
       ...listItem,
       codigo: EquipoMapper.formatCodigo(entity.id_equipo),
       hardware: {
-        // is_active null se considera componente actual (ver
-        // toComponenteHardware).
-        componentes_actuales: componentes.filter((c) => c.is_active),
-        historial: componentes.filter((c) => !c.is_active),
+        componentes_actuales: actuales.map(EquipoMapper.toComponenteHardware),
+        historial: historicos.map(EquipoMapper.toComponenteHardware),
       },
       software,
     };

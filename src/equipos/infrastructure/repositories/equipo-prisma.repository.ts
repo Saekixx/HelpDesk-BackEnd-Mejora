@@ -23,6 +23,9 @@ const INCLUDE_RESUMEN = {
 const INCLUDE_DETALLE = {
   ...INCLUDE_RESUMEN,
   registro_hardware: {
+    include: {
+      hardware: true,
+    },
     orderBy: { fecha_instalacion: 'desc' },
   },
   software_equipos: {
