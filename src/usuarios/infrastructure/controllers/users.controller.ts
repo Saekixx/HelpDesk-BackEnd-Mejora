@@ -25,6 +25,7 @@ import {
   ApiCreateUserSwagger,
   ApiFindAllUsersSwagger,
   ApiFindUserByIdSwagger,
+  ApiFindUserOptionsSwagger,
   ApiToggleUserStatusSwagger,
   ApiUpdateProfileSwagger,
   ApiUpdateUserSwagger,
@@ -33,6 +34,8 @@ import { ToggleUserStatusUseCase } from '@/usuarios/application/use-cases/toggle
 import { AssignRolUseCase } from '@/usuarios/application/use-cases/assign-rol.use-case';
 import { UpdateUserDto } from '../dtos/update-user.request.dto';
 import { UpdateUserUseCase } from '@/usuarios/application/use-cases/update-user.use-case';
+import { GetUserOptionUseCase } from '@/usuarios/application/use-cases/get-user-option.use-case';
+import { UserSelectFilterDto } from '../dtos/user-select-filter-dto';
 
 @ApiTags('Usuarios')
 @Controller('usuario')
@@ -45,7 +48,15 @@ export class UsersController {
     private readonly getUsersUseCase: GetUsersUseCase,
     private readonly assignRolUseCase: AssignRolUseCase,
     private readonly toggleUserStatusUseCase: ToggleUserStatusUseCase,
+    private readonly getUserOptionUseCase: GetUserOptionUseCase,
   ) {}
+
+  @Get('options')
+  @UseGuards(JwtAuthGuard)
+  @ApiFindUserOptionsSwagger()
+  async findOptions(@Query() filters: UserSelectFilterDto) {
+    return await this.getUserOptionUseCase.execute(filters);
+  }
 
   @Get()
   @ApiFindAllUsersSwagger()

@@ -25,6 +25,7 @@ import { SendResetPasswordEmailUseCase } from '@/mail/application/send-reset-pas
 import { MailModule } from '@/mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
+import { GetUserOptionUseCase } from './application/use-cases/get-user-option.use-case';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ConfigModule } from '@nestjs/config';
     AssignRolUseCase,
     ToggleUserStatusUseCase,
     GetRolesUseCase,
+    GetUserOptionUseCase,
 
     // Mapeo de Puertos a Implementaciones de Prisma
     {

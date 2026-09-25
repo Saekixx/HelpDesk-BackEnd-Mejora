@@ -4,12 +4,14 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
 import { UpdateUserDto } from '../dtos/update-user.request.dto';
 import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
+import { UserOptions } from '../dtos/user-options.dto';
 
 export function ApiFindAllUsersSwagger() {
   return applyDecorators(
@@ -366,6 +368,58 @@ export function ApiToggleUserStatusSwagger() {
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'Usuario no encontrado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+  );
+}
+
+export function ApiFindUserOptionsSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Obtener opciones de usuarios para selectores / autocompletado',
+      description:
+        'Retorna una lista simplificada de trabajadores activos ({ id, nombre }) optimizada para alimentar elementos desplegables (<select>). Permite filtrar por coincidencia de texto (nombre, apellido o correo) y por contexto organizacional (empresa, sucursal, área).',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      type: String,
+      description:
+        'Texto de búsqueda por nombre, apellido o correo electrónico',
+      example: 'Juan',
+    }),
+    ApiQuery({
+      name: 'id_empresa',
+      required: false,
+      type: Number,
+      description:
+        'Filtrar trabajadores pertenecientes a una empresa específica',
+      example: 1,
+    }),
+    ApiQuery({
+      name: 'id_sucursal',
+      required: false,
+      type: Number,
+      description:
+        'Filtrar trabajadores pertenecientes a una sucursal específica',
+      example: 2,
+    }),
+    ApiQuery({
+      name: 'id_area',
+      required: false,
+      type: Number,
+      description: 'Filtrar trabajadores pertenecientes a un área específica',
+      example: 3,
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Opciones de usuarios obtenidas exitosamente.',
+      type: UserOptions,
+      isArray: true,
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,

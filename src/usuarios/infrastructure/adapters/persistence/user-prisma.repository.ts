@@ -8,6 +8,8 @@ import { User } from '@/usuarios/domain/entities/user.entity';
 import { UserFilterCriteria } from '@/usuarios/domain/criteria/user-filter.criteria';
 import { UserMapper } from './mappers/user.mapper';
 import { Prisma } from '@prisma/client';
+import { UserSelectFilterDto } from '../../dtos/user-select-filter-dto';
+import { UserOptions } from '../../dtos/user-options.dto';
 
 @Injectable()
 export class UserPrismaRepository implements UserRepositoryPort {
@@ -116,5 +118,39 @@ export class UserPrismaRepository implements UserRepositoryPort {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async findActiveWorkers(
+    filters: UserSelectFilterDto,
+  ): Promise<UserOptions[]> {
+    const { search, id_sucursal, id_area, id_cliente } = filters;
+
+    const targetClienteId = id_cliente;
+
+    const where: Prisma.usuariosWhereInput = {
+      is_active: true,
+      ...(id_sucursal && { id_sucursal }),
+      ...(id_area && { id_area }),
+      ...(targetClienteId && { id_cliente: targetClienteId }),
+    };
+
+    if (search) {
+      where.OR = [
+        { nombre: { contains: search } },
+        { apellido: { contains: search } },
+      ];
+    }
+
+    const entities = await this.prisma.usuarios.findMany({
+      where,
+      select: {
+        id_usuario: true,
+        nombre: true,
+        apellido: true,
+      },
+      take: 20,
+    });
+
+    return entities.map((entity) => UserMapper.toUserOptions(entity));
   }
 }

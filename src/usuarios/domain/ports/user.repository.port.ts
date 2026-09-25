@@ -1,6 +1,8 @@
 import { User } from '../entities/user.entity.js';
 import { UserFilterCriteria } from '../criteria/user-filter.criteria.js';
 import { UserResponseCriteria } from '../criteria/user-response.criteria.js';
+import { UserOptions } from '../criteria/user-options.dto.js';
+import { UserSelectCriteria } from '../criteria/user-select-criteria.js';
 
 // Resultado de la paginación de usuarios
 export interface PaginatedUsersResult {
@@ -27,4 +29,7 @@ export interface UserRepositoryPort {
   findAllWithFilters(
     filters: UserFilterCriteria,
   ): Promise<PaginatedUsersResult>;
+
+  // Metodo para obtener usuarios con rol trabajador y que esten activos
+  findActiveWorkers(filters: UserSelectCriteria): Promise<UserOptions[]>;
 }

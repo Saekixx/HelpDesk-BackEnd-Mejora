@@ -14,7 +14,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AssignRolDTO } from '../dtos/assign-rol.use-case';
+import { AssignRolDTO } from '../dtos/assign-rol.dto';
 
 @Injectable()
 export class AssignRolUseCase {

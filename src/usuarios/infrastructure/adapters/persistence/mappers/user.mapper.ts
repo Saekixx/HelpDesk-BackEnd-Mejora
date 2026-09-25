@@ -1,13 +1,21 @@
 import { usuarios as PrismaUsuario } from '@prisma/client';
 import { UserResponseDto } from '@/usuarios/application/dtos/user-response.dto';
 import { User } from '@/usuarios/domain/entities/user.entity';
+import { UserOptions } from '@/usuarios/domain/criteria/user-options.dto';
 
-// Tipo extendido para consultas de Prisma con relaciones
+// Tipo para consultas de Prisma que incluyen relaciones con otras tablas
 export type PrismaUserWithRelations = PrismaUsuario & {
   rol?: { nombre: string } | null;
   clientes?: { nombre_principal: string } | null;
   sucursales?: { nombre_sucursal: string } | null;
   area?: { nombre_area: string } | null;
+};
+
+// Tipo para consultas de Prisma que solo devuelven opciones de usuario
+type PrismaUserSelectOption = {
+  id_usuario: number;
+  nombre: string;
+  apellido: string;
 };
 
 export class UserMapper {
@@ -65,6 +73,13 @@ export class UserMapper {
       nombre_cliente: entity.clientes?.nombre_principal || null,
       nombre_sucursal: entity.sucursales?.nombre_sucursal || null,
       nombre_area: entity.area?.nombre_area || null,
+    };
+  }
+
+  static toUserOptions(entity: PrismaUserSelectOption): UserOptions {
+    return {
+      id: entity.id_usuario,
+      nombre: `${entity.nombre} ${entity.apellido}`,
     };
   }
 }

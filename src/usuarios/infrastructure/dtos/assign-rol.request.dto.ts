@@ -1,4 +1,4 @@
-import { AssignRolDTO } from '@/usuarios/application/dtos/assign-rol.use-case';
+import { AssignRolDTO } from '@/usuarios/application/dtos/assign-rol.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
