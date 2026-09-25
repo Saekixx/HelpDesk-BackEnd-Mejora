@@ -19,7 +19,6 @@ const INCLUDE_RESUMEN = {
   usuarios: { select: { id_usuario: true, nombre: true, apellido: true } },
 } satisfies Prisma.equiposInclude;
 
-
 const INCLUDE_DETALLE = {
   ...INCLUDE_RESUMEN,
   registro_hardware: {
@@ -38,7 +37,6 @@ const INCLUDE_DETALLE = {
   },
 } satisfies Prisma.equiposInclude;
 
-
 export type PrismaEquipoDetalleCompleto = Prisma.equiposGetPayload<{
   include: typeof INCLUDE_DETALLE;
 }>;
@@ -47,9 +45,7 @@ export type PrismaEquipoDetalleCompleto = Prisma.equiposGetPayload<{
 export class EquipoPrismaRepository implements EquipoRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(
-    filters: GetEquiposFilterDto,
-  ): Promise<PaginatedEquiposResult> {
+  async findAll(filters: GetEquiposFilterDto): Promise<PaginatedEquiposResult> {
     const {
       page = 1,
       limit = 10,
@@ -202,6 +198,20 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
 
   async existsByNumSerie(num_serie: string): Promise<boolean> {
     const count = await this.prisma.equipos.count({ where: { num_serie } });
+    return count > 0;
+  }
+
+  async isEquipoOwnedByUsuario(
+    idEquipo: number,
+    idTrabajador: number,
+  ): Promise<boolean> {
+    const count = await this.prisma.equipos.count({
+      where: {
+        id_equipo: Number(idEquipo),
+        id_trabajador: Number(idTrabajador),
+      },
+    });
+
     return count > 0;
   }
 }

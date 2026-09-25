@@ -30,6 +30,6 @@ export interface UserRepositoryPort {
     filters: UserFilterCriteria,
   ): Promise<PaginatedUsersResult>;
 
-  // Metodo para obtener usuarios con rol trabajador y que esten activos
-  findActiveWorkers(filters: UserSelectCriteria): Promise<UserOptions[]>;
+  // Metodo para obtener usuarios por rol y que esten activos
+  findActiveRolUsers(filters: UserSelectCriteria): Promise<UserOptions[]>;
 }

@@ -45,16 +45,16 @@ export class EquipoMapper {
   static toListItem(entity: PrismaEquipoConDetalle): EquipoListItem {
     const equipo = EquipoMapper.toDomain(entity);
 
-    const toSummary = (
-      id?: number,
-      nombre?: string,
-    ): RelacionSummary | null =>
+    const toSummary = (id?: number, nombre?: string): RelacionSummary | null =>
       id !== undefined && nombre !== undefined ? { id, nombre } : null;
 
     return {
       ...equipo,
       cliente: entity.clientes
-        ? toSummary(entity.clientes.id_cliente, entity.clientes.nombre_principal)
+        ? toSummary(
+            entity.clientes.id_cliente,
+            entity.clientes.nombre_principal,
+          )
         : null,
       sucursal: entity.sucursales
         ? toSummary(
@@ -73,7 +73,6 @@ export class EquipoMapper {
         : null,
     };
   }
-
 
   // Genera el código legible del equipo a partir de su id. No existe como
   // columna en la base de datos: se deriva en cada lectura.

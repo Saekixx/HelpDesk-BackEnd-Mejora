@@ -14,6 +14,6 @@ export class GetUserOptionUseCase {
   ) {}
 
   async execute(filters: UserSelectFilter): Promise<UserOption[]> {
-    return await this.userRepository.findActiveWorkers(filters);
+    return await this.userRepository.findActiveRolUsers(filters);
   }
 }

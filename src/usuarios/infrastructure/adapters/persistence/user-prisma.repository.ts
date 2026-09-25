@@ -120,18 +120,21 @@ export class UserPrismaRepository implements UserRepositoryPort {
     };
   }
 
-  async findActiveWorkers(
+  async findActiveRolUsers(
     filters: UserSelectFilterDto,
   ): Promise<UserOptions[]> {
-    const { search, id_sucursal, id_area, id_cliente } = filters;
-
-    const targetClienteId = id_cliente;
+    const { search, id_sucursal, id_area, id_cliente, rol } = filters;
 
     const where: Prisma.usuariosWhereInput = {
       is_active: true,
       ...(id_sucursal && { id_sucursal }),
       ...(id_area && { id_area }),
-      ...(targetClienteId && { id_cliente: targetClienteId }),
+      ...(id_cliente && { id_cliente }),
+      ...(rol && {
+        rol: {
+          nombre: rol,
+        },
+      }),
     };
 
     if (search) {

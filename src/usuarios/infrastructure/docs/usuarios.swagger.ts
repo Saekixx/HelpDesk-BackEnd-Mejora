@@ -393,14 +393,6 @@ export function ApiFindUserOptionsSwagger() {
       example: 'Juan',
     }),
     ApiQuery({
-      name: 'id_empresa',
-      required: false,
-      type: Number,
-      description:
-        'Filtrar trabajadores pertenecientes a una empresa específica',
-      example: 1,
-    }),
-    ApiQuery({
       name: 'id_sucursal',
       required: false,
       type: Number,

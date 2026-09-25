@@ -1,0 +1,5 @@
+export interface CloseTicketCommand {
+  id_ticket: number;
+  usuario_id: number;
+  rol_usuario: string;
+}

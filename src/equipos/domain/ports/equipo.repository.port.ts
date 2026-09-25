@@ -37,4 +37,7 @@ export interface EquipoRepositoryPort {
   toggleStatus(id: number): Promise<Equipo>;
 
   existsByNumSerie(num_serie: string): Promise<boolean>;
+
+  // Verifica si un equipo pertenece a un usuario
+  isEquipoOwnedByUsuario(idEquipo: number, idUsuario: number): Promise<boolean>;
 }

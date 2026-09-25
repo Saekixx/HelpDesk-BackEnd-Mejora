@@ -1,6 +1,7 @@
 import {
   tickets as PrismaTicket,
   tickets_estado as PrismaEstadoTicket,
+  Prisma,
 } from '@prisma/client';
 import { Ticket, EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 import { TicketResponseCriteria } from '@/tickets/domain/criteria/ticket-response.criteria';
@@ -22,17 +23,18 @@ export class TicketMapper {
     });
   }
 
-  static toPersistence(domain: Ticket): Partial<PrismaTicket> {
+  static toPersistence(domain: Ticket): Prisma.ticketsUncheckedCreateInput {
     return {
-      ...(domain.id_tickets !== undefined && { id_tickets: domain.id_tickets }),
+      ...(domain.id_tickets !== undefined && {
+        id_tickets: Number(domain.id_tickets),
+      }),
       pin: domain.pin,
       asunto: domain.asunto,
       detalle: domain.detalle,
       estado: domain.estado as unknown as PrismaEstadoTicket,
-      id_equipo: domain.id_equipo,
-      // Se eliminó id_cliente ya que pertenece a 'equipos', no a 'tickets'
-      id_trabajador: domain.id_trabajador,
-      id_soporte: domain.id_soporte ?? null,
+      id_equipo: Number(domain.id_equipo),
+      id_trabajador: Number(domain.id_trabajador),
+      id_soporte: domain.id_soporte ? Number(domain.id_soporte) : null,
       es_software: domain.es_software,
       created_at: domain.createdAt,
       updated_at: domain.updatedAt,
@@ -43,7 +45,7 @@ export class TicketMapper {
     const trabajador = raw.usuarios_tickets_id_trabajadorTousuarios;
     const soporte = raw.usuarios_tickets_id_soporteTousuarios;
     const equipo = raw.equipos;
-    const cliente = equipo?.clientes; // Navegamos desde equipos -> clientes
+    const cliente = equipo?.clientes;
 
     return {
       id_tickets: raw.id_tickets,

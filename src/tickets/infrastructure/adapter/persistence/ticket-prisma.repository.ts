@@ -25,7 +25,7 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
     }
 
     const created = await this.prisma.tickets.create({
-      data: data as Prisma.ticketsCreateInput,
+      data: data,
     });
     return TicketMapper.toDomain(created);
   }
