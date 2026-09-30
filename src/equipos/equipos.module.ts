@@ -8,6 +8,8 @@ import { GetEquipoByIdUseCase } from './application/use-cases/get-equipo-by-id.u
 import { CreateEquipoUseCase } from './application/use-cases/create-equipo.use-case';
 import { UpdateEquipoUseCase } from './application/use-cases/update-equipo.use-case';
 import { ToggleStatusEquipoUseCase } from './application/use-cases/toggle-status-equipo.use-case';
+import { AgregarComponenteEquipoUseCase } from './application/use-cases/agregar-componente-equipo.use-case';
+import { ReemplazarComponenteEquipoUseCase } from './application/use-cases/reemplazar-componente-equipo.use-case';
 import { EquipoController } from './infrastructure/controllers/equipo.controller';
 
 @Module({
@@ -19,6 +21,8 @@ import { EquipoController } from './infrastructure/controllers/equipo.controller
     CreateEquipoUseCase,
     UpdateEquipoUseCase,
     ToggleStatusEquipoUseCase,
+    AgregarComponenteEquipoUseCase,
+    ReemplazarComponenteEquipoUseCase,
     {
       provide: EQUIPO_REPOSITORY,
       useClass: EquipoPrismaRepository,

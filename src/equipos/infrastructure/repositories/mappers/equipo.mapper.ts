@@ -80,7 +80,7 @@ export class EquipoMapper {
     return `EQ-${idEquipo}`;
   }
 
-  private static toComponenteHardware(
+  static toComponenteHardware(
     rh: PrismaEquipoDetalleCompleto['registro_hardware'][number],
   ): ComponenteHardware {
     return {

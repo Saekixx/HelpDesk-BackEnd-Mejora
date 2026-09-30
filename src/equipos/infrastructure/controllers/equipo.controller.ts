@@ -22,9 +22,13 @@ import { GetEquipoByIdUseCase } from '@/equipos/application/use-cases/get-equipo
 import { CreateEquipoUseCase } from '@/equipos/application/use-cases/create-equipo.use-case';
 import { UpdateEquipoUseCase } from '@/equipos/application/use-cases/update-equipo.use-case';
 import { ToggleStatusEquipoUseCase } from '@/equipos/application/use-cases/toggle-status-equipo.use-case';
+import { AgregarComponenteEquipoUseCase } from '@/equipos/application/use-cases/agregar-componente-equipo.use-case';
+import { ReemplazarComponenteEquipoUseCase } from '@/equipos/application/use-cases/reemplazar-componente-equipo.use-case';
 import { GetEquiposQueryDto } from '../dtos/get-equipos-query.dto';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
+import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
+import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
 import { EquipoDetailResponseDto } from '../dtos/equipo-detail-response.dto';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
@@ -44,6 +48,18 @@ const EQUIPO_EJEMPLO = {
   is_active: true,
 };
 
+const COMPONENTE_EJEMPLO = {
+  id_RH: 12,
+  tipo: 'Memoria RAM',
+  marca: 'Kingston',
+  descripcion: 'Ampliación de memoria RAM solicitada por el usuario',
+  serie: 'SN-RAM-2026-00456',
+  proveedor: 'Tecnoglobal S.A.C.',
+  fecha_instalacion: '2026-09-29T15:30:00.000Z',
+  url_factura: null,
+  is_active: true,
+};
+
 @ApiTags('Equipos')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RoleGuard)
@@ -55,6 +71,8 @@ export class EquipoController {
     private readonly createEquipoUseCase: CreateEquipoUseCase,
     private readonly updateEquipoUseCase: UpdateEquipoUseCase,
     private readonly toggleStatusEquipoUseCase: ToggleStatusEquipoUseCase,
+    private readonly agregarComponenteEquipoUseCase: AgregarComponenteEquipoUseCase,
+    private readonly reemplazarComponenteEquipoUseCase: ReemplazarComponenteEquipoUseCase,
   ) {}
 
   @Get()
@@ -202,5 +220,92 @@ export class EquipoController {
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     const data = await this.toggleStatusEquipoUseCase.execute(id);
     return { message: 'Estado del equipo actualizado exitosamente', data };
+  }
+
+  @Post(':id/componentes')
+  @Roles(RolEnum.ADMINISTRADOR)
+  @ApiOperation({
+    summary: 'Agregar un componente de hardware a un equipo',
+    description:
+      'Asocia un componente de hardware existente al equipo y lo registra como componente actual en el historial de hardware, con la fecha de instalación en el momento de la solicitud.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID numérico del equipo al que se agrega el componente',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Componente agregado exitosamente.',
+    schema: {
+      example: {
+        message: 'Componente agregado exitosamente',
+        data: COMPONENTE_EJEMPLO,
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Token inválido, expirado o ausente.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'El rol del usuario no tiene permiso administrativo.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'El equipo o el componente de hardware no existe.',
+  })
+  async agregarComponente(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AgregarComponenteHttpDto,
+  ) {
+    const data = await this.agregarComponenteEquipoUseCase.execute(id, dto);
+    return { message: 'Componente agregado exitosamente', data };
+  }
+
+  @Post(':id/componentes/reemplazar')
+  @Roles(RolEnum.ADMINISTRADOR)
+  @ApiOperation({
+    summary: 'Reemplazar un componente de hardware de un equipo',
+    description:
+      'Reemplaza de forma transaccional un componente actual del equipo: el registro saliente pasa al historial (is_actual = false) y se crea el nuevo componente como actual, con la fecha de instalación en el momento de la solicitud. Si algo falla, no se aplica ningún cambio.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID numérico del equipo cuyo componente se reemplaza',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Componente reemplazado exitosamente.',
+    schema: {
+      example: {
+        message: 'Componente reemplazado exitosamente',
+        data: COMPONENTE_EJEMPLO,
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Token inválido, expirado o ausente.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'El rol del usuario no tiene permiso administrativo.',
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'El equipo o el hardware nuevo no existe, o el componente saliente no está instalado actualmente en el equipo.',
+  })
+  async reemplazarComponente(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ReemplazarComponenteHttpDto,
+  ) {
+    const data = await this.reemplazarComponenteEquipoUseCase.execute(id, dto);
+    return { message: 'Componente reemplazado exitosamente', data };
   }
 }

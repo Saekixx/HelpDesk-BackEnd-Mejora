@@ -4,11 +4,21 @@ import {
   EquipoRepositoryPort,
   PaginatedEquiposResult,
 } from '@/equipos/domain/ports/equipo.repository.port';
-import { Equipo, EquipoDetail } from '@/equipos/domain/entities/equipo.entity';
+import {
+  ComponenteHardware,
+  Equipo,
+  EquipoDetail,
+} from '@/equipos/domain/entities/equipo.entity';
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
 import { CreateEquipoDto } from '@/equipos/domain/dto/create-equipo.dto';
 import { UpdateEquipoDto } from '@/equipos/domain/dto/update-equipo.dto';
-import { EquipoNotFoundException } from '@/equipos/domain/exceptions/equipo.exceptions';
+import { AgregarComponenteDto } from '@/equipos/domain/dto/agregar-componente.dto';
+import { ReemplazarComponenteDto } from '@/equipos/domain/dto/reemplazar-componente.dto';
+import {
+  ComponenteHardwareNotFoundException,
+  ComponenteNoInstaladoException,
+  EquipoNotFoundException,
+} from '@/equipos/domain/exceptions/equipo.exceptions';
 import { EquipoMapper } from './mappers/equipo.mapper';
 import { Prisma } from '@prisma/client';
 
@@ -213,5 +223,75 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     });
 
     return count > 0;
+  }
+
+  async agregarComponente(
+    id_equipo: number,
+    dto: AgregarComponenteDto,
+  ): Promise<ComponenteHardware> {
+    const [equipo, hardware] = await Promise.all([
+      this.prisma.equipos.count({ where: { id_equipo } }),
+      this.prisma.hardware.count({ where: { id_hardware: dto.id_hardware } }),
+    ]);
+    if (!equipo) throw new EquipoNotFoundException();
+    if (!hardware) throw new ComponenteHardwareNotFoundException();
+
+    const registro = await this.prisma.registro_hardware.create({
+      data: {
+        id_equipo,
+        id_hardware: dto.id_hardware,
+        serie: dto.serie,
+        proveedor: dto.proveedor,
+        descripcion: dto.descripcion,
+        is_actual: true,
+        fecha_instalacion: new Date(),
+      },
+      include: { hardware: true },
+    });
+    return EquipoMapper.toComponenteHardware(registro);
+  }
+
+  async reemplazarComponente(
+    id_equipo: number,
+    dto: ReemplazarComponenteDto,
+  ): Promise<ComponenteHardware> {
+    // Todo ocurre en una sola transacción: si falla la creación del nuevo
+    // registro, el saliente no queda marcado como histórico.
+    return this.prisma.$transaction(async (tx) => {
+      const equipo = await tx.equipos.count({ where: { id_equipo } });
+      if (!equipo) throw new EquipoNotFoundException();
+
+      const hardwareNuevo = await tx.hardware.count({
+        where: { id_hardware: dto.id_hardware_nuevo },
+      });
+      if (!hardwareNuevo) throw new ComponenteHardwareNotFoundException();
+
+      // Búsqueda directa por la PK; id_equipo e is_actual garantizan que el
+      // registro pertenezca a este equipo y siga instalado.
+      const saliente = await tx.registro_hardware.findUnique({
+        where: { id_RH: dto.id_RH_saliente, id_equipo, is_actual: true },
+        select: { id_RH: true },
+      });
+      if (!saliente) throw new ComponenteNoInstaladoException();
+
+      await tx.registro_hardware.update({
+        where: { id_RH: saliente.id_RH },
+        data: { is_actual: false, updated_at: new Date() },
+      });
+
+      const nuevo = await tx.registro_hardware.create({
+        data: {
+          id_equipo,
+          id_hardware: dto.id_hardware_nuevo,
+          serie: dto.serie,
+          proveedor: dto.proveedor,
+          descripcion: dto.descripcion,
+          is_actual: true,
+          fecha_instalacion: new Date(),
+        },
+        include: { hardware: true },
+      });
+      return EquipoMapper.toComponenteHardware(nuevo);
+    });
   }
 }

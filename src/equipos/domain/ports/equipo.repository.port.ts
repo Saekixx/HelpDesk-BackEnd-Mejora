@@ -1,4 +1,5 @@
 import {
+  ComponenteHardware,
   Equipo,
   EquipoDetail,
   EquipoListItem,
@@ -6,6 +7,8 @@ import {
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
 import { CreateEquipoDto } from '../dto/create-equipo.dto';
 import { UpdateEquipoDto } from '../dto/update-equipo.dto';
+import { AgregarComponenteDto } from '../dto/agregar-componente.dto';
+import { ReemplazarComponenteDto } from '../dto/reemplazar-componente.dto';
 
 export const EQUIPO_REPOSITORY = 'EQUIPO_REPOSITORY';
 
@@ -40,4 +43,21 @@ export interface EquipoRepositoryPort {
 
   // Verifica si un equipo pertenece a un usuario
   isEquipoOwnedByUsuario(idEquipo: number, idUsuario: number): Promise<boolean>;
+
+  // Asocia un componente de hardware existente a un equipo, registrándolo como
+  // componente actual en registro_hardware. Lanza EquipoNotFoundException o
+  // ComponenteHardwareNotFoundException si el equipo o el hardware no existen.
+  agregarComponente(
+    id_equipo: number,
+    dto: AgregarComponenteDto,
+  ): Promise<ComponenteHardware>;
+
+  // Reemplaza de forma transaccional un componente actual del equipo: marca el
+  // registro saliente como histórico (is_actual = false) y crea el nuevo como
+  // actual. Lanza EquipoNotFoundException, ComponenteHardwareNotFoundException
+  // (hardware nuevo) o ComponenteNoInstaladoException (saliente no instalado).
+  reemplazarComponente(
+    id_equipo: number,
+    dto: ReemplazarComponenteDto,
+  ): Promise<ComponenteHardware>;
 }
