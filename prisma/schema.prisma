@@ -79,6 +79,7 @@ model clientes {
 
 model equipos {
   id_equipo         Int                 @id @default(autoincrement())
+  nombre_equipo     String?             @db.VarChar(100)
   tipo              String              @db.VarChar(50)
   marca             String              @db.VarChar(50)
   num_serie         String?             @unique(map: "num_serie") @db.VarChar(100)

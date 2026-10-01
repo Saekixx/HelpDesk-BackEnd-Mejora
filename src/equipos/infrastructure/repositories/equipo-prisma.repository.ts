@@ -8,6 +8,7 @@ import {
   ComponenteHardware,
   Equipo,
   EquipoDetail,
+  EquipoListItem,
 } from '@/equipos/domain/entities/equipo.entity';
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
 import { CreateEquipoDto } from '@/equipos/domain/dto/create-equipo.dto';
@@ -46,6 +47,11 @@ const INCLUDE_DETALLE = {
     },
   },
 } satisfies Prisma.equiposInclude;
+
+// Una FK solo se conecta si es un entero válido (> 0). null, undefined o 0 se
+// omiten para no enviar `connect: { id: null }`, que Prisma rechaza.
+const isValidId = (id?: number | null): id is number =>
+  typeof id === 'number' && Number.isInteger(id) && id > 0;
 
 export type PrismaEquipoDetalleCompleto = Prisma.equiposGetPayload<{
   include: typeof INCLUDE_DETALLE;
@@ -118,34 +124,36 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     return EquipoMapper.toDetail(entity);
   }
 
-  async create(data: CreateEquipoDto): Promise<Equipo> {
+  async create(data: CreateEquipoDto): Promise<EquipoListItem> {
     const created = await this.prisma.equipos.create({
       data: {
         tipo: data.tipo,
         marca: data.marca,
+        nombre_equipo: data.nombre_equipo,
         num_serie: data.num_serie,
         nombre_usuario: data.nombre_usuario,
         ult_revision: data.ult_revision,
         rev_programada: data.rev_programada,
         is_active: data.is_active ?? true,
-        ...(data.id_trabajador !== undefined && {
+        ...(isValidId(data.id_trabajador) && {
           usuarios: { connect: { id_usuario: data.id_trabajador } },
         }),
-        ...(data.id_cliente !== undefined && {
+        ...(isValidId(data.id_cliente) && {
           clientes: { connect: { id_cliente: data.id_cliente } },
         }),
-        ...(data.id_sucursal !== undefined && {
+        ...(isValidId(data.id_sucursal) && {
           sucursales: { connect: { id_sucursal: data.id_sucursal } },
         }),
-        ...(data.id_area !== undefined && {
+        ...(isValidId(data.id_area) && {
           area: { connect: { id_area: data.id_area } },
         }),
       },
+      include: INCLUDE_RESUMEN,
     });
-    return EquipoMapper.toDomain(created);
+    return EquipoMapper.toListItem(created);
   }
 
-  async update(id: number, data: UpdateEquipoDto): Promise<Equipo> {
+  async update(id: number, data: UpdateEquipoDto): Promise<EquipoListItem> {
     const exists = await this.prisma.equipos.findUnique({
       where: { id_equipo: id },
     });
@@ -156,6 +164,9 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       data: {
         ...(data.tipo !== undefined && { tipo: data.tipo }),
         ...(data.marca !== undefined && { marca: data.marca }),
+        ...(data.nombre_equipo !== undefined && {
+          nombre_equipo: data.nombre_equipo,
+        }),
         ...(data.num_serie !== undefined && { num_serie: data.num_serie }),
         ...(data.nombre_usuario !== undefined && {
           nombre_usuario: data.nombre_usuario,
@@ -189,8 +200,9 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
             : { disconnect: true },
         }),
       },
+      include: INCLUDE_RESUMEN,
     });
-    return EquipoMapper.toDomain(updated);
+    return EquipoMapper.toListItem(updated);
   }
 
   async toggleStatus(id: number): Promise<Equipo> {

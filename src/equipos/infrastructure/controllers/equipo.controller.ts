@@ -39,6 +39,7 @@ const EQUIPO_EJEMPLO = {
   id_equipo: 1,
   tipo: 'Laptop',
   marca: 'Dell',
+  nombre_equipo: 'PC-Contabilidad-01',
   num_serie: 'SN-2026-00123',
   nombre_usuario: 'Carlos Ramírez',
   id_trabajador: 5,
@@ -46,6 +47,14 @@ const EQUIPO_EJEMPLO = {
   id_sucursal: 1,
   id_area: 1,
   is_active: true,
+};
+
+// Relaciones resumidas que devuelven el listado, la creación y la edición.
+const RELACIONES_EJEMPLO = {
+  cliente: { id: 1, nombre: 'Acme Corp SAC' },
+  sucursal: { id: 1, nombre: 'Sucursal Central' },
+  area: { id: 1, nombre: 'Sistemas' },
+  trabajador: { id: 5, nombre: 'Juan Pérez' },
 };
 
 const COMPONENTE_EJEMPLO = {
@@ -96,10 +105,7 @@ export class EquipoController {
           data: [
             {
               ...EQUIPO_EJEMPLO,
-              cliente: { id: 1, nombre: 'Acme Corp SAC' },
-              sucursal: { id: 1, nombre: 'Sucursal Central' },
-              area: { id: 1, nombre: 'Sistemas' },
-              trabajador: { id: 5, nombre: 'Juan Pérez' },
+              ...RELACIONES_EJEMPLO,
             },
           ],
           meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
@@ -153,7 +159,10 @@ export class EquipoController {
     status: 201,
     description: 'Equipo creado exitosamente.',
     schema: {
-      example: { message: 'Equipo creado exitosamente', data: EQUIPO_EJEMPLO },
+      example: {
+        message: 'Equipo creado exitosamente',
+        data: { ...EQUIPO_EJEMPLO, ...RELACIONES_EJEMPLO },
+      },
     },
   })
   @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
@@ -177,7 +186,10 @@ export class EquipoController {
     status: 200,
     description: 'Equipo actualizado exitosamente.',
     schema: {
-      example: { message: 'Equipo actualizado exitosamente', data: EQUIPO_EJEMPLO },
+      example: {
+        message: 'Equipo actualizado exitosamente',
+        data: { ...EQUIPO_EJEMPLO, ...RELACIONES_EJEMPLO },
+      },
     },
   })
   @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })

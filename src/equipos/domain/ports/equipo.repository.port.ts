@@ -32,9 +32,11 @@ export interface EquipoRepositoryPort {
   // instalado.
   findDetailById(id: number): Promise<EquipoDetail | null>;
 
-  create(data: CreateEquipoDto): Promise<Equipo>;
+  // create y update devuelven el equipo con sus relaciones resumidas (cliente,
+  // sucursal, área y trabajador asignado), igual que el listado.
+  create(data: CreateEquipoDto): Promise<EquipoListItem>;
 
-  update(id: number, data: UpdateEquipoDto): Promise<Equipo>;
+  update(id: number, data: UpdateEquipoDto): Promise<EquipoListItem>;
 
   // Activa/desactiva un equipo (soft toggle sobre is_active)
   toggleStatus(id: number): Promise<Equipo>;

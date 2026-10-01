@@ -6,6 +6,7 @@ import {
   IsInt,
   IsBoolean,
   IsDate,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateEquipoDto } from '@/equipos/domain/dto/create-equipo.dto';
@@ -20,6 +21,18 @@ export class CreateEquipoHttpDto implements CreateEquipoDto {
   @IsString({ message: 'La marca debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'La marca es obligatoria' })
   readonly marca: string;
+
+  @ApiPropertyOptional({
+    description: 'Nombre o identificador del equipo',
+    example: 'PC-Contabilidad-01',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString({ message: 'El nombre del equipo debe ser una cadena de texto' })
+  @MaxLength(100, {
+    message: 'El nombre del equipo no puede exceder los 100 caracteres',
+  })
+  readonly nombre_equipo?: string;
 
   @ApiPropertyOptional({
     description: 'Número de serie del equipo (único)',

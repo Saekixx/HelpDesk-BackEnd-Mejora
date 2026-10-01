@@ -3,7 +3,7 @@ import {
   EQUIPO_REPOSITORY,
   EquipoRepositoryPort,
 } from '@/equipos/domain/ports/equipo.repository.port';
-import { Equipo } from '@/equipos/domain/entities/equipo.entity';
+import { EquipoListItem } from '@/equipos/domain/entities/equipo.entity';
 import { UpdateEquipoDto } from '@/equipos/domain/dto/update-equipo.dto';
 import {
   EquipoNotFoundException,
@@ -17,7 +17,7 @@ export class UpdateEquipoUseCase {
     private readonly equipoRepository: EquipoRepositoryPort,
   ) {}
 
-  async execute(id: number, dto: UpdateEquipoDto): Promise<Equipo> {
+  async execute(id: number, dto: UpdateEquipoDto): Promise<EquipoListItem> {
     const existing = await this.equipoRepository.findById(id);
     if (!existing) throw new EquipoNotFoundException();
 

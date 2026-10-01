@@ -4,6 +4,7 @@
 export interface CreateEquipoDto {
   tipo: string;
   marca: string;
+  nombre_equipo?: string;
   num_serie?: string;
   nombre_usuario?: string;
   ult_revision?: Date;

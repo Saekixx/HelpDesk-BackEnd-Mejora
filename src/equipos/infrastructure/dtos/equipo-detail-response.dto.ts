@@ -166,6 +166,13 @@ export class EquipoDetailResponseDto {
   marca: string;
 
   @ApiPropertyOptional({
+    description: 'Nombre o identificador del equipo',
+    example: 'PC-Contabilidad-01',
+    nullable: true,
+  })
+  nombre_equipo: string | null;
+
+  @ApiPropertyOptional({
     description: 'Número de serie del equipo',
     example: 'SN-2026-00123',
     nullable: true,
@@ -174,7 +181,7 @@ export class EquipoDetailResponseDto {
 
   @ApiPropertyOptional({
     description:
-      'Nombre del usuario final del equipo, tal como fue registrado en texto libre.',
+      'Nombre del usuario final del equipo, tal como fue registrado en texto libre. El usuario asignado se obtiene del campo `trabajador`.',
     example: 'Carlos Ramírez',
     nullable: true,
   })
@@ -219,7 +226,8 @@ export class EquipoDetailResponseDto {
   area: RelacionResumenDto | null;
 
   @ApiPropertyOptional({
-    description: 'Trabajador (usuario) al que está asignado el equipo',
+    description:
+      'Trabajador (usuario) asignado al equipo, obtenido por la relación id_trabajador → usuarios. `nombre` es el nombre completo (nombre y apellido).',
     type: RelacionResumenDto,
     nullable: true,
   })

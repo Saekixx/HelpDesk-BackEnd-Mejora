@@ -25,6 +25,7 @@ export class EquipoMapper {
       id_equipo: entity.id_equipo,
       tipo: entity.tipo,
       marca: entity.marca,
+      nombre_equipo: entity.nombre_equipo ?? undefined,
       num_serie: entity.num_serie ?? undefined,
       nombre_usuario: entity.nombre_usuario ?? undefined,
       ult_revision: entity.ult_revision ?? undefined,

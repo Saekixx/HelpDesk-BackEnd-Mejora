@@ -3,7 +3,7 @@ import {
   EQUIPO_REPOSITORY,
   EquipoRepositoryPort,
 } from '@/equipos/domain/ports/equipo.repository.port';
-import { Equipo } from '@/equipos/domain/entities/equipo.entity';
+import { EquipoListItem } from '@/equipos/domain/entities/equipo.entity';
 import { CreateEquipoDto } from '@/equipos/domain/dto/create-equipo.dto';
 import { EquipoAlreadyExistsException } from '@/equipos/domain/exceptions/equipo.exceptions';
 
@@ -14,7 +14,7 @@ export class CreateEquipoUseCase {
     private readonly equipoRepository: EquipoRepositoryPort,
   ) {}
 
-  async execute(dto: CreateEquipoDto): Promise<Equipo> {
+  async execute(dto: CreateEquipoDto): Promise<EquipoListItem> {
     if (dto.num_serie) {
       const numSerieEnUso = await this.equipoRepository.existsByNumSerie(
         dto.num_serie,

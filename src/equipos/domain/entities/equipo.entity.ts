@@ -2,6 +2,7 @@ export interface EquipoProps {
   id_equipo?: number;
   tipo: string;
   marca: string;
+  nombre_equipo?: string;
   num_serie?: string;
   nombre_usuario?: string;
   ult_revision?: Date;
@@ -19,6 +20,7 @@ export class Equipo {
   public readonly id_equipo?: number;
   public readonly tipo: string;
   public readonly marca: string;
+  public readonly nombre_equipo?: string;
   public readonly num_serie?: string;
   public readonly nombre_usuario?: string;
   public readonly ult_revision?: Date;
@@ -35,6 +37,7 @@ export class Equipo {
     this.id_equipo = props.id_equipo;
     this.tipo = props.tipo;
     this.marca = props.marca;
+    this.nombre_equipo = props.nombre_equipo;
     this.num_serie = props.num_serie;
     this.nombre_usuario = props.nombre_usuario;
     this.ult_revision = props.ult_revision;
