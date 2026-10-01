@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-
 import { AuthModule } from './auth/auth.module';
 import { UsuariosModule } from './usuarios/users.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { PlanesModule } from './planes/planes.module';
+import { SoftwareModule } from './software/software.module';
 import { EquiposModule } from './equipos/equipos.module';
+import { HardwareModule } from './hardware/hardware.module';
 import { CommonModule } from './common/common.module';
 import { MailModule } from './mail/mail.module';
 import { ChatModule } from './chat/chat.module';
@@ -43,7 +44,9 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     UsuariosModule,
     ClientesModule,
     PlanesModule,
+    SoftwareModule,
     EquiposModule,
+    HardwareModule,
     MailModule,
     ChatModule,
     TicketModule,

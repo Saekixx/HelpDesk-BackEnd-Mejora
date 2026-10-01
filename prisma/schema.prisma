@@ -162,19 +162,21 @@ model rol {
   usuarios   usuarios[]
 }
 
-model software {
-  id_software       Int                @id @default(autoincrement())
-  nombre_software   String             @db.VarChar(100)
-  licencia          String             @db.VarChar(100)
-  correo            String             @db.VarChar(100)
-  password          String             @db.VarChar(255)
-  fecha_instalacion DateTime           @db.Date
-  fecha_caducidad   DateTime           @db.Date
-  proveedor         String             @db.VarChar(100)
-  is_active         Boolean?           @default(true)
-  created_at        DateTime?          @default(now()) @db.DateTime(0)
-  updated_at        DateTime?          @default(now()) @db.DateTime(0)
-  software_equipos  software_equipos[]
+model Software {
+  idSoftware       Int                @id @default(autoincrement()) @map("id_software")
+  nombreSoftware   String             @map("nombre_software") @db.VarChar(100)
+  licencia         String             @db.VarChar(100)
+  correo           String             @db.VarChar(100)
+  password         String             @db.VarChar(255)
+  fechaInstalacion DateTime           @map("fecha_instalacion") @db.Date
+  fechaCaducidad   DateTime           @map("fecha_caducidad") @db.Date
+  proveedor        String             @db.VarChar(100)
+  isActive         Boolean?           @default(true) @map("is_active")
+  createdAt        DateTime?          @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime?          @default(now()) @map("updated_at") @db.DateTime(0)
+  softwareEquipos  software_equipos[]
+
+  @@map("software")
 }
 
 model software_equipos {
@@ -188,7 +190,7 @@ model software_equipos {
   created_at          DateTime? @default(now()) @db.DateTime(0)
   updated_at          DateTime? @default(now()) @db.DateTime(0)
   equipos             equipos   @relation(fields: [id_equipo], references: [id_equipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_equipos")
-  software            software  @relation(fields: [id_software], references: [id_software], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_software")
+  software            Software  @relation(fields: [id_software], references: [idSoftware], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_software")
 
   @@index([id_equipo], map: "fk_se_equipos")
   @@index([id_software], map: "fk_se_software")
@@ -273,7 +275,7 @@ enum clientes_tipo_cliente {
 
 enum citas_soporte_estado {
   Pendiente
-  En_Camino    @map("En Camino")
+  En_Camino   @map("En Camino")
   Completada
   Cancelada
   Reprogramada
