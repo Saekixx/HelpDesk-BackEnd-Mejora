@@ -119,9 +119,9 @@ export class EquipoMapper {
 
     const software: SoftwareInstalado[] = entity.software_equipos.map((se) => ({
       id_software_equipos: se.id_software_equipos,
-      id_software: se.software.id_software,
-      nombre: se.software.nombre_software,
-      vencimiento: se.software.fecha_caducidad,
+      id_software: se.software.idSoftware,
+      nombre: se.software.nombreSoftware,
+      vencimiento: se.software.fechaCaducidad,
       licencia_asignada: se.licencia_asignada ?? null,
       fecha_instalacion: se.fecha_instalacion ?? null,
       observaciones: se.observaciones ?? null,
