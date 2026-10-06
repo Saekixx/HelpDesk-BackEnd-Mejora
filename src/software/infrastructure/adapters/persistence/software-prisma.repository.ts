@@ -5,6 +5,7 @@ import { Software } from '@/software/domain/entities/software.entity';
 import { SoftwareMapper } from './mappers/software.mapper';
 import { Prisma } from '@prisma/client';
 import { SoftwareOptionDto } from '@/software/domain/dtos/get-software.dto';
+import { FilterSoftwareDto } from '@/software/application/dtos/filter-software.dto';
 
 @Injectable()
 export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
@@ -27,9 +28,50 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
     return SoftwareMapper.toDomain(created);
   }
 
-  async findAll(): Promise<Software[]> {
-    const entities = await this.prisma.software.findMany();
-    return entities.map(SoftwareMapper.toDomain);
+  async findAll(filterDto: FilterSoftwareDto): Promise<{
+    data: Software[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const { search, is_active, page = 1, limit = 10 } = filterDto;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.SoftwareWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { nombreSoftware: { contains: search } },
+        { proveedor: { contains: search } },
+      ];
+    }
+
+    if (is_active !== undefined) {
+      where.isActive = is_active;
+    }
+
+    const [total, entities] = await Promise.all([
+      this.prisma.software.count({ where }),
+      this.prisma.software.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      data: entities.map(SoftwareMapper.toDomain),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findById(id: number): Promise<Software | null> {

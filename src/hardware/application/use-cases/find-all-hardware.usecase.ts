@@ -1,9 +1,9 @@
-import { Hardware } from '@/hardware/domain/entities/hardware.entity';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   HARDWARE_REPOSITORY,
   HardwareRepositoryPort,
 } from '@/hardware/domain/ports/hardware.repository.port';
-import { Inject, Injectable } from '@nestjs/common';
+import { FilterHardwareDto } from '../dtos/filter-hardware.dto';
 
 @Injectable()
 export class FindAllHardwareUseCase {
@@ -12,7 +12,7 @@ export class FindAllHardwareUseCase {
     private readonly hardwareRepository: HardwareRepositoryPort,
   ) {}
 
-  async execute(): Promise<Hardware[]> {
-    return this.hardwareRepository.findAll();
+  async execute(filterDto: FilterHardwareDto) {
+    return this.hardwareRepository.findAll(filterDto);
   }
 }

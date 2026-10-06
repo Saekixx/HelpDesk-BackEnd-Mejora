@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CreateHardwareRequestDto } from '../dtos/create-hardware.request.dto';
 import { UpdateHardwareRequestDto } from '../dtos/update-hardware.request.dto';
@@ -13,7 +14,41 @@ export const ApiHardwareTag = () => ApiTags('Hardware');
 
 export const ApiFindAllHardwareSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Listar todos los equipos de hardware' }),
+    ApiOperation({
+      summary: 'Listar todos los equipos de hardware con filtros y paginación',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      type: String,
+      description: 'Buscar por tipo, marca, número de serie o proveedor',
+    }),
+    ApiQuery({
+      name: 'tipo',
+      required: false,
+      type: String,
+      description: 'Filtrar por tipo de hardware (ej. RAM, SSD, Procesador)',
+    }),
+    ApiQuery({
+      name: 'is_active',
+      required: false,
+      type: Boolean,
+      description: 'Filtrar por estado activo (true/false)',
+    }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      type: Number,
+      example: 1,
+      description: 'Número de página',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      type: Number,
+      example: 10,
+      description: 'Cantidad de registros por página',
+    }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Lista de hardware obtenida exitosamente.',

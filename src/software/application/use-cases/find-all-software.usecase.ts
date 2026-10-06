@@ -1,9 +1,9 @@
-import { Software } from '@/software/domain/entities/software.entity';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   SOFTWARE_REPOSITORY,
   SoftwareRepositoryPort,
 } from '@/software/domain/ports/software.repository.port';
-import { Inject, Injectable } from '@nestjs/common';
+import { FilterSoftwareDto } from '../dtos/filter-software.dto';
 
 @Injectable()
 export class FindAllSoftwareUseCase {
@@ -12,7 +12,7 @@ export class FindAllSoftwareUseCase {
     private readonly softwareRepository: SoftwareRepositoryPort,
   ) {}
 
-  async execute(): Promise<Software[]> {
-    return this.softwareRepository.findAll();
+  async execute(filterDto: FilterSoftwareDto) {
+    return this.softwareRepository.findAll(filterDto);
   }
 }
