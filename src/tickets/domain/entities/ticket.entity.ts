@@ -4,6 +4,7 @@ import { AsignadoState } from './states/asignado.state';
 import { EnProgresoState } from './states/en-progreso.state';
 import { CerradoState } from './states/cerrado.state';
 import { ReabiertoState } from './states/reabierto.state';
+import { DerivadoInsituState } from './states/derivado-insitu.state';
 
 export enum EstadoTicket {
   PENDIENTE = 'Pendiente',
@@ -11,6 +12,7 @@ export enum EstadoTicket {
   EN_PROGRESO = 'En Progreso',
   REABIERTO = 'Reabierto',
   CERRADO = 'Cerrado',
+  DERIVADO_INSITU = 'Derivado Insitu',
 }
 
 export enum RolUsuario {
@@ -127,6 +129,10 @@ export class Ticket {
     return esCliente && this.id_trabajador === usuarioId;
   }
 
+  public derivarInsitu(): void {
+    this._state.derivarInsitu(this);
+  }
+
   public asignarSoporte(idSoporte: number): void {
     this._state.asignarSoporte(this, idSoporte);
   }
@@ -155,8 +161,11 @@ export class Ticket {
         return new CerradoState();
       case EstadoTicket.REABIERTO:
         return new ReabiertoState();
+      case EstadoTicket.DERIVADO_INSITU:
+        return new DerivadoInsituState();
       default:
         return new PendienteState();
     }
   }
 }
+

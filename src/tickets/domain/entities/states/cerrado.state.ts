@@ -21,4 +21,8 @@ export class CerradoState implements TicketState {
   reabrir(ticket: Ticket): void {
     ticket.changeState(new ReabiertoState());
   }
+
+  derivarInsitu(): void {
+    throw new InvalidStateTransitionException(this.name, 'derivarInsitu');
+  }
 }

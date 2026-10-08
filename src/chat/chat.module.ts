@@ -16,6 +16,8 @@ import { SendMessageUseCase } from './application/use-cases/send-message.use-cas
 import { GetHistoryUseCase } from './application/use-cases/get-history.use-case';
 
 import { ChatGateway } from './infrastructure/websockets/chat.gateway';
+import { ITicketRepository } from './domain/ports/ticket.repository.port';
+import { PrismaTicketRepository } from './infrastructure/persistence/repositories/prisma-ticket.repository';
 
 @Module({
   imports: [
@@ -24,6 +26,10 @@ import { ChatGateway } from './infrastructure/websockets/chat.gateway';
     ]),
   ],
   providers: [
+    {
+      provide: ITicketRepository,
+      useClass: PrismaTicketRepository,
+    },
     {
       provide: IMessageRepository,
       useClass: MongoMessageRepository,

@@ -2,6 +2,7 @@ import { TicketState } from './ticket-state.interface';
 import { Ticket } from '../ticket.entity';
 import { CerradoState } from './cerrado.state';
 import { InvalidStateTransitionException } from '../../exceptions/invalid-state-transition.exception';
+import { DerivadoInsituState } from './derivado-insitu.state';
 
 export class EnProgresoState implements TicketState {
   readonly name = 'En Progreso';
@@ -21,5 +22,9 @@ export class EnProgresoState implements TicketState {
 
   reabrir(): void {
     throw new InvalidStateTransitionException(this.name, 'reabrir');
+  }
+
+  derivarInsitu(ticket: Ticket): void {
+    ticket.changeState(new DerivadoInsituState());
   }
 }

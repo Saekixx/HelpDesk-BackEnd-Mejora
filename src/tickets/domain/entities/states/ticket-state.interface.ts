@@ -7,4 +7,5 @@ export interface TicketState {
   iniciarChat(ticket: Ticket): void;
   cerrar(ticket: Ticket): void;
   reabrir(ticket: Ticket): void;
+  derivarInsitu(ticket: Ticket): void;
 }

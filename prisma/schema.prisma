@@ -285,6 +285,7 @@ enum tickets_estado {
   Pendiente
   Asignado
   En_Progreso @map("En Progreso")
+  Derivado_InSitu @map("Derivado InSitu")
   Reabierto
   Cerrado
 }

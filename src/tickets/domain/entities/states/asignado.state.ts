@@ -24,4 +24,8 @@ export class AsignadoState implements TicketState {
   reabrir(): void {
     throw new InvalidStateTransitionException(this.name, 'reabrir');
   }
+
+  derivarInsitu(): void {
+    throw new InvalidStateTransitionException(this.name, 'derivarInsitu');
+  }
 }
