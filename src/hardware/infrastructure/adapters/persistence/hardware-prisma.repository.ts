@@ -1,10 +1,11 @@
-import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
-import { HardwareOptionDto } from '@/hardware/domain/dtos/get-hardware.dto';
-import { Hardware } from '@/hardware/domain/entities/hardware.entity';
-import { HardwareRepositoryPort } from '@/hardware/domain/ports/hardware.repository.port';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
+import { HardwareRepositoryPort } from '@/hardware/domain/ports/hardware.repository.port';
+import { Hardware } from '@/hardware/domain/entities/hardware.entity';
 import { HardwareMapper } from './mappers/hardware.mapper';
+import { Prisma } from '@prisma/client';
+import { HardwareOptionDto } from '@/hardware/domain/dtos/get-hardware.dto';
+import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.dto';
 
 @Injectable()
 export class HardwarePrismaRepository implements HardwareRepositoryPort {
@@ -27,9 +28,56 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
     return HardwareMapper.toDomain(created);
   }
 
-  async findAll(): Promise<Hardware[]> {
-    const entities = await this.prisma.hardware.findMany();
-    return entities.map(HardwareMapper.toDomain);
+  async findAll(filterDto: FilterHardwareDto): Promise<{
+    data: Hardware[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const { search, tipo, is_active, page = 1, limit = 10 } = filterDto;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.hardwareWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { tipo_equipo: { contains: search } },
+        { marca: { contains: search } },
+        { numero_serie: { contains: search } },
+        { proveedor: { contains: search } },
+      ];
+    }
+
+    if (tipo) {
+      where.tipo_equipo = { contains: tipo };
+    }
+
+    if (is_active !== undefined) {
+      where.is_active = is_active;
+    }
+
+    const [total, entities] = await Promise.all([
+      this.prisma.hardware.count({ where }),
+      this.prisma.hardware.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+      }),
+    ]);
+
+    return {
+      data: entities.map(HardwareMapper.toDomain),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findById(id: number): Promise<Hardware | null> {
@@ -47,12 +95,13 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
         id_hardware: true,
         tipo_equipo: true,
         marca: true,
+        numero_serie: true,
       },
     });
 
     return entities.map((entity) => ({
       id: entity.id_hardware,
-      nombre: `${entity.tipo_equipo} - ${entity.marca}`,
+      nombre: `${entity.tipo_equipo} ${entity.marca ?? ''} (${entity.numero_serie})`.trim(),
     }));
   }
 }

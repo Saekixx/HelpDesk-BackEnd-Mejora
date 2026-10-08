@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CreateSoftwareRequestDto } from '../dtos/create-software.request.dto';
 import { UpdateSoftwareRequestDto } from '../dtos/update-software.request.dto';
@@ -13,7 +14,38 @@ export const ApiSoftwareTag = () => ApiTags('Software');
 
 export const ApiFindAllSoftwareSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Listar todos los software' }),
+    ApiOperation({
+      summary:
+        'Obtener un listado paginado de software, con filtro opcional por texto de búsqueda y estado activo/inactivo.',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      type: String,
+      description: 'Término de búsqueda (tipo, marca, modelo o nombre del software)',
+      example: 'Microsoft Office',
+    }),
+    ApiQuery({
+      name: 'is_active',
+      required: false,
+      type: Boolean,
+      description: 'Filtrar por estado activo/inactivo',
+      example: true,
+    }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      type: Number,
+      example: 1,
+      description: 'Número de página',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      type: Number,
+      example: 10,
+      description: 'Cantidad de registros por página',
+    }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Lista de software obtenida exitosamente.',

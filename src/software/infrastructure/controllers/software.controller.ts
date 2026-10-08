@@ -12,6 +12,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiSoftwareTag,
@@ -24,6 +25,7 @@ import {
 } from '../docs/software.swagger';
 import { CreateSoftwareRequestDto } from '../dtos/create-software.request.dto';
 import { UpdateSoftwareRequestDto } from '../dtos/update-software.request.dto';
+import { FindAllSoftwareQueryDto } from '../dtos/find-all-software.query.dto';
 
 @ApiSoftwareTag()
 @Controller('software')
@@ -39,11 +41,13 @@ export class SoftwareController {
 
   @Get()
   @ApiFindAllSoftwareSwagger()
-  async findAll() {
-    const data = await this.findAllSoftwareUseCase.execute();
+  async findAll(@Query() query: FindAllSoftwareQueryDto) {
+    const result = await this.findAllSoftwareUseCase.execute(query);
+
     return {
       message: 'Software obtenidos exitosamente',
-      data,
+      data: result.data,
+      meta: result.meta,
     };
   }
 
@@ -70,10 +74,9 @@ export class SoftwareController {
   @Post('create')
   @ApiCreateSoftwareSwagger()
   async create(@Body() dto: CreateSoftwareRequestDto) {
-    const data = await this.createSoftwareUseCase.execute(dto);
+    await this.createSoftwareUseCase.execute(dto);
     return {
       message: 'Software registrado exitosamente',
-      data,
     };
   }
 
@@ -83,16 +86,16 @@ export class SoftwareController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSoftwareRequestDto,
   ) {
-    const data = await this.updateSoftwareUseCase.execute(id, dto);
+    await this.updateSoftwareUseCase.execute(id, dto);
     return {
       message: 'Software actualizado exitosamente',
-      data,
     };
   }
 
   @Patch(':id/status')
   @ApiToggleSoftwareStatusSwagger()
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
-    return await this.toggleSoftwareStatusUseCase.execute(id);
+    const message = await this.toggleSoftwareStatusUseCase.execute(id);
+    return { message };
   }
 }

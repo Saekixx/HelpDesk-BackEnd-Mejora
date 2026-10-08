@@ -1,9 +1,3 @@
-import { CreateHardwareUseCase } from '@/hardware/application/use-cases/create-hardware.usecase';
-import { FindAllHardwareUseCase } from '@/hardware/application/use-cases/find-all-hardware.usecase';
-import { FindByIdHardwareUseCase } from '@/hardware/application/use-cases/find-by-id-hardware.usecase';
-import { GetHardwareUseCase } from '@/hardware/application/use-cases/get-hardware.usecase';
-import { ToggleHardwareStatusUseCase } from '@/hardware/application/use-cases/toggle-hardware-status.usecase';
-import { UpdateHardwareUseCase } from '@/hardware/application/use-cases/update-hardware.usecase';
 import {
   Body,
   Controller,
@@ -12,7 +6,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
+import { CreateHardwareUseCase } from '@/hardware/application/use-cases/create-hardware.usecase';
+import { FindAllHardwareUseCase } from '@/hardware/application/use-cases/find-all-hardware.usecase';
+import { FindByIdHardwareUseCase } from '@/hardware/application/use-cases/find-by-id-hardware.usecase';
+import { GetHardwareUseCase } from '@/hardware/application/use-cases/get-hardware.usecase';
+import { ToggleHardwareStatusUseCase } from '@/hardware/application/use-cases/toggle-hardware-status.usecase';
+import { UpdateHardwareUseCase } from '@/hardware/application/use-cases/update-hardware.usecase';
 import {
   ApiHardwareTag,
   ApiFindAllHardwareSwagger,
@@ -24,6 +25,7 @@ import {
 } from '../docs/hardware.swagger';
 import { CreateHardwareRequestDto } from '../dtos/create-hardware.request.dto';
 import { UpdateHardwareRequestDto } from '../dtos/update-hardware.request.dto';
+import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.dto';
 
 @ApiHardwareTag()
 @Controller('hardware')
@@ -39,11 +41,13 @@ export class HardwareController {
 
   @Get()
   @ApiFindAllHardwareSwagger()
-  async findAll() {
-    const data = await this.findAllHardwareUseCase.execute();
+  async findAll(@Query() query: FilterHardwareDto) {
+    const result = await this.findAllHardwareUseCase.execute(query);
+
     return {
       message: 'Hardware obtenidos exitosamente',
-      data,
+      data: result.data,
+      meta: result.meta,
     };
   }
 
@@ -67,13 +71,12 @@ export class HardwareController {
     };
   }
 
-  @Post('create')
+  @Post()
   @ApiCreateHardwareSwagger()
   async create(@Body() dto: CreateHardwareRequestDto) {
-    const data = await this.createHardwareUseCase.execute(dto);
+    await this.createHardwareUseCase.execute(dto);
     return {
       message: 'Hardware registrado exitosamente',
-      data,
     };
   }
 
@@ -83,16 +86,16 @@ export class HardwareController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateHardwareRequestDto,
   ) {
-    const data = await this.updateHardwareUseCase.execute(id, dto);
+    await this.updateHardwareUseCase.execute(id, dto);
     return {
       message: 'Hardware actualizado exitosamente',
-      data,
     };
   }
 
-  @Patch(':id/status')
+  @Patch(':id/toggle-status')
   @ApiToggleHardwareStatusSwagger()
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
-    return await this.toggleHardwareStatusUseCase.execute(id);
+    const message = await this.toggleHardwareStatusUseCase.execute(id);
+    return { message };
   }
 }
