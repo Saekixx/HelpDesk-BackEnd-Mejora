@@ -9,6 +9,7 @@ import {
 type PrismaSucursalConDetalle = PrismaSucursal & {
   _count: { area: number };
   clientes: { id_cliente: number; nombre_principal: string } | null;
+  zonas: { id_zona: number; nombre_zona: string } | null;
 };
 
 export class SucursalMapper {
@@ -22,6 +23,7 @@ export class SucursalMapper {
       correo: entity.correo ?? undefined,
       is_active: entity.is_active ?? true,
       id_cliente: entity.id_cliente ?? 0,
+      id_zona: entity.id_zona ?? 0,
       createdAt: entity.created_at ?? undefined,
       updatedAt: entity.updated_at ?? undefined,
     });
@@ -38,6 +40,12 @@ export class SucursalMapper {
         ? {
             id_cliente: entity.clientes.id_cliente,
             nombre: entity.clientes.nombre_principal,
+          }
+        : null,
+      zona: entity.zonas
+        ? {
+            id_zona: entity.zonas.id_zona,
+            nombre: entity.zonas.nombre_zona,
           }
         : null,
     };

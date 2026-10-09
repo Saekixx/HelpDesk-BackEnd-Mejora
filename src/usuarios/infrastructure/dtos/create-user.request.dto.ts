@@ -1,12 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateUserDto } from '@/usuarios/application/dtos/create-user.dto';
 import {
+  IsArray,
   IsEmail,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  MinLength,
 } from 'class-validator';
 
 export class CreateUserRequestDto implements CreateUserDto {
@@ -73,4 +74,18 @@ export class CreateUserRequestDto implements CreateUserDto {
   @IsOptional()
   @IsNumber({}, { message: 'El ID de área debe ser un número entero' })
   readonly id_area?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'IDs de las zonas geográficas asignadas (obligatorio cuando el rol es SOPORTE_INSITU)',
+    example: [1, 2],
+    type: [Number],
+  })
+  @IsOptional()
+  @IsArray({ message: 'zonas_ids debe ser un arreglo de números' })
+  @IsInt({
+    each: true,
+    message: 'Cada elemento de zonas_ids debe ser un número entero',
+  })
+  readonly zonas_ids?: number[];
 }

@@ -48,11 +48,7 @@ export class ClienteController {
   ) {}
 
   @Get()
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
   @ApiFindAllClientesSwagger()
   async findAll(@Query() query: GetClientesQueryDto) {
     const data = await this.getClientesUseCase.execute(query);
@@ -62,25 +58,15 @@ export class ClienteController {
     };
   }
 
-  // NOTA: '/options' debe declararse antes de ':id' para que no sea
-  // interpretado como un parámetro de ruta.
   @Get('/options')
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
   @ApiGetClientesOptionsSwagger()
   async getClientesOptions() {
     return await this.getClientesOptionsUseCase.execute();
   }
 
   @Get(':id')
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
   @ApiFindClienteByIdSwagger()
   async findOne(
     @Param('id', ParseIntPipe) id: number,

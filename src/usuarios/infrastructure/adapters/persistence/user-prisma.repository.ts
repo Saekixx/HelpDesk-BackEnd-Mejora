@@ -15,20 +15,52 @@ import { UserOptions } from '../../dtos/user-options.dto';
 export class UserPrismaRepository implements UserRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(user: User): Promise<User> {
+  async save(user: User, zonasIds?: number[]): Promise<User> {
     const data = UserMapper.toPersistence(user);
 
+    // Si es actualización
     if (user.id_usuario) {
       const updated = await this.prisma.usuarios.update({
         where: { id_usuario: user.id_usuario },
-        data,
+        data: {
+          ...data,
+          // Si enviaron un arreglo con zonas, las reemplazamos
+          ...(zonasIds && zonasIds.length > 0
+            ? {
+                tecnicos_zonas: {
+                  deleteMany: {}, // Borra las zonas anteriores
+                  createMany: {
+                    data: zonasIds.map((id_zona) => ({ id_zona })),
+                  },
+                },
+              }
+            : zonasIds && zonasIds.length === 0
+              ? {
+                  tecnicos_zonas: {
+                    deleteMany: {}, // Si mandaron explícitamente [], desasigna todas las zonas
+                  },
+                }
+              : {}), // Si es undefined, no toca nada
+        },
       });
       return UserMapper.toDomain(updated);
     }
 
+    // Si es creación nueva
     const created = await this.prisma.usuarios.create({
-      data: data as Prisma.usuariosCreateInput,
+      data: {
+        ...(data as Prisma.usuariosCreateInput),
+        ...(zonasIds &&
+          zonasIds.length > 0 && {
+            tecnicos_zonas: {
+              createMany: {
+                data: zonasIds.map((id_zona) => ({ id_zona })),
+              },
+            },
+          }),
+      },
     });
+
     return UserMapper.toDomain(created);
   }
 

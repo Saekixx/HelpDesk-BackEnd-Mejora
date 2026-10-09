@@ -45,15 +45,22 @@ export class CreateUserUseCase {
     let finalIdCliente: number | null = null;
     let finalIdSucursal: number | null = null;
     let finalIdArea: number | null = null;
+    let finalZonasIds: number[] | undefined = undefined;
 
     const rolNombre = existingRol.nombre.toUpperCase();
 
     switch (rolNombre) {
       case 'ADMINISTRADOR':
+        break;
       case 'SOPORTE_INSITU':
+        if (!dto.zonas_ids || dto.zonas_ids.length === 0)
+          throw new BadRequestException(
+            `El rol ${rolNombre} requiere asignar al menos una zona de cobertura`,
+          );
+        finalZonasIds = dto.zonas_ids;
+        break;
       case 'SOPORTE_REMOTO':
         break;
-
       case 'CLIENTE_EMPRESA':
         if (!dto.id_cliente) {
           throw new BadRequestException(
@@ -100,6 +107,7 @@ export class CreateUserUseCase {
       id_cliente: finalIdCliente,
       id_sucursal: finalIdSucursal,
       id_area: finalIdArea,
+      zonas_ids: finalZonasIds ?? null,
     };
 
     const emailToken = this.jwtService.sign(pendingUserData, {

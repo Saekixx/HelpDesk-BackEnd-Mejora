@@ -7,6 +7,7 @@ export interface SucursalProps {
   correo: string;
   is_active: boolean;
   id_cliente: number;
+  id_zona: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -20,6 +21,7 @@ export class Sucursal {
   public readonly correo: string;
   public readonly is_active: boolean;
   public readonly id_cliente: number;
+  public readonly id_zona: number;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -32,6 +34,7 @@ export class Sucursal {
     this.correo = props.correo;
     this.is_active = props.is_active;
     this.id_cliente = props.id_cliente;
+    this.id_zona = props.id_zona;
     this.createdAt = props.createdAt ?? new Date();
     this.updatedAt = props.updatedAt ?? new Date();
   }
@@ -41,4 +44,5 @@ export interface SucursalListItem extends Sucursal {
   // Cantidad total de áreas de la sucursal (Prisma: _count.area)
   total_areas: number;
   cliente: { id_cliente: number; nombre: string } | null;
+  zona: { id_zona: number; nombre: string } | null;
 }

@@ -95,7 +95,10 @@ export class CreateClienteRequestDto implements CreateClienteDto {
   })
   readonly fecha_finalizacion_plan: Date;
 
-  @ApiProperty({ description: 'Costo negociado con el cliente', example: 1500.5 })
+  @ApiProperty({
+    description: 'Costo negociado con el cliente',
+    example: 1500.5,
+  })
   @IsNumber({}, { message: 'El costo negociado debe ser un número' })
   @Min(0, { message: 'El costo negociado no puede ser negativo' })
   readonly costo_negociado: number;

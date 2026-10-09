@@ -20,14 +20,15 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
   async findAll(
     filters: GetSucursalesFilterDto,
   ): Promise<PaginatedSucursalesResult> {
+    // Desestructuramos los filtros y asignamos valores predeterminados a page y limit
     const { page = 1, limit = 10, search, is_active, id_cliente } = filters;
-
+    // Construimos el objeto `where` para la consulta de Prisma según los filtros proporcionados
     const where: Prisma.sucursalesWhereInput = {};
 
-    if (id_cliente !== undefined) {
-      where.id_cliente = id_cliente;
-    }
+    // Agregamos condiciones al objeto `where` según los filtros proporcionados
+    if (id_cliente !== undefined) where.id_cliente = id_cliente;
 
+    // Agregamos condiciones de búsqueda si se proporciona el filtro `search`
     if (search) {
       where.OR = [
         { nombre_sucursal: { contains: search } },
@@ -36,12 +37,12 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
       ];
     }
 
-    if (is_active !== undefined) {
-      where.is_active = is_active;
-    }
-
+    // Agregamos condición de estado activo si se proporciona el filtro `is_active`
+    if (is_active !== undefined) where.is_active = is_active;
+    // Calculamos el número de registros a omitir según la página y el límite
     const skip = (page - 1) * limit;
 
+    // Ejecutamos la consulta de Prisma para obtener las sucursales y el total de registros que coinciden con los filtros
     const [entities, total] = await Promise.all([
       this.prisma.sucursales.findMany({
         where,
@@ -49,10 +50,13 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
         take: limit,
         orderBy: { created_at: 'desc' },
         include: {
+          // Incluimos información relacionada de clientes y zonas, así como el conteo de áreas asociadas a cada sucursal
           clientes: { select: { id_cliente: true, nombre_principal: true } },
+          zonas: { select: { id_zona: true, nombre_zona: true } },
           _count: { select: { area: true } },
         },
       }),
+      // Ejecutamos la consulta de Prisma para contar el total de registros que coinciden con los filtros
       this.prisma.sucursales.count({ where }),
     ]);
 
@@ -82,7 +86,7 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
         direccion: data.direccion,
         correo: data.correo,
         is_active: data.is_active ?? true,
-        clientes: { connect: { id_cliente: data.id_cliente } },
+        id_zona: data.id_zona,
       },
     });
     return SucursalMapper.toDomain(created);
@@ -105,8 +109,9 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
         ...(data.direccion !== undefined && { direccion: data.direccion }),
         ...(data.correo !== undefined && { correo: data.correo }),
         ...(data.id_cliente !== undefined && {
-          clientes: { connect: { id_cliente: data.id_cliente } },
+          id_cliente: data.id_cliente,
         }),
+        ...(data.id_zona !== undefined && { id_zona: data.id_zona }),
       },
     });
     return SucursalMapper.toDomain(updated);

@@ -72,6 +72,7 @@ export class UpdateUserUseCase {
     let finalIdCliente: number | null = null;
     let finalIdSucursal: number | null = null;
     let finalIdArea: number | null = null;
+    let finalZonasIds: number[] | undefined = undefined;
 
     const rolNombre = existingRol.nombre.toUpperCase();
 
@@ -79,7 +80,21 @@ export class UpdateUserUseCase {
       case 'ADMINISTRADOR':
       case 'SOPORTE_INSITU':
       case 'SOPORTE_REMOTO':
-      case 'SOPORTE_TECNICO':
+        break;
+
+      case 'SOPORTE_INSITU':
+        // Si mandan un array vacío al actualizar, se lanza error
+        if (
+          dto.zonas_ids !== undefined &&
+          dto.zonas_ids !== null &&
+          dto.zonas_ids.length === 0
+        ) {
+          throw new BadRequestException(
+            'El rol SOPORTE_INSITU requiere asignar al menos una zona de cobertura',
+          );
+        }
+        // Si no enviaron el campo en el DTO, se mantiene undefined para no modificar sus zonas
+        finalZonasIds = dto.zonas_ids ?? undefined;
         break;
 
       case 'CLIENTE_EMPRESA':
@@ -156,7 +171,10 @@ export class UpdateUserUseCase {
     });
 
     // Guardar cambios en BD
-    const savedUser = await this.userRepository.save(updatedUser);
+    const savedUser = await this.userRepository.save(
+      updatedUser,
+      finalZonasIds,
+    );
 
     // Retornar omitiendo la contraseña
     const { password, ...userWithoutPassword } = savedUser;

@@ -7,4 +7,5 @@ export interface CreateUserDto {
   id_cliente?: number | null;
   id_sucursal?: number | null;
   id_area?: number | null;
+  zonas_ids?: number[] | null;
 }

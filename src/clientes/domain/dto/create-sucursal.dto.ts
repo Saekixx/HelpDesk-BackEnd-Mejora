@@ -8,5 +8,6 @@ export interface CreateSucursalDto {
   direccion: string;
   correo: string;
   id_cliente: number;
+  id_zona: number;
   is_active?: boolean;
 }

@@ -6,6 +6,8 @@ import {
   IsBoolean,
   IsOptional,
   IsNotEmpty,
+  IsArray,
+  IsInt,
 } from 'class-validator';
 
 export class UpdateUserDto implements UpdateUserDto {
@@ -91,4 +93,19 @@ export class UpdateUserDto implements UpdateUserDto {
   @IsOptional()
   @IsNumber({}, { message: 'El ID de área debe ser un número entero' })
   id_area?: number | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Lista de IDs de zonas asignadas al técnico presencial (SOPORTE_INSITU). Si se envía un arreglo vacío ([]), se remueven todas las asignaciones.',
+    example: [1, 3],
+    type: [Number],
+    nullable: true,
+  })
+  @IsOptional()
+  @IsArray({ message: 'zonas_ids debe ser un arreglo de números' })
+  @IsInt({
+    each: true,
+    message: 'Cada elemento de zonas_ids debe ser un número entero',
+  })
+  zonas_ids?: number[] | null;
 }

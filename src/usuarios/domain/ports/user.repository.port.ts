@@ -17,7 +17,7 @@ export interface PaginatedUsersResult {
 export const USER_REPOSITORY = 'USER_REPOSITORY';
 
 export interface UserRepositoryPort {
-  save(user: User): Promise<User>;
+  save(user: User, zonasIds?: number[]): Promise<User>;
 
   findByCorreo(correo: string): Promise<User | null>;
 

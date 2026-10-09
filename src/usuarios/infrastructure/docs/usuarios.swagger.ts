@@ -35,6 +35,11 @@ export function ApiFindAllUsersSwagger() {
                 apellido: 'Pérez',
                 correo: 'juan.perez@empresa.com',
                 is_active: true,
+                nombre_rol: 'SOPORTE_INSITU',
+                zonas: [
+                  { id_zona: 1, nombre_zona: 'Lima Centro / San Isidro' },
+                  { id_zona: 2, nombre_zona: 'Lima Norte' },
+                ],
               },
             ],
             meta: {
@@ -77,6 +82,8 @@ export function ApiFindUserByIdSwagger() {
             nombre: 'Juan',
             apellido: 'Pérez',
             correo: 'juan.perez@empresa.com',
+            nombre_rol: 'SOPORTE_INSITU',
+            zonas: [{ id_zona: 1, nombre_zona: 'Lima Centro / San Isidro' }],
           },
         },
       },
@@ -104,7 +111,8 @@ export function ApiCreateUserSwagger() {
       description: `
 Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según su **Rol**:
 
-* **ADMINISTRADOR / SOPORTE_INSITU / SOPORTE_REMOTO:** No requieren relaciones externas (\`id_cliente\`, \`id_sucursal\`, \`id_area\`).
+* **ADMINISTRADOR / SOPORTE_REMOTO:** No requieren relaciones externas (\`id_cliente\`, \`id_sucursal\`, \`id_area\`, \`zonas_ids\`).
+* **SOPORTE_INSITU:** Requiere obligatoriamente asignar al menos una zona de cobertura geográfica en \`zonas_ids\`.
 * **CLIENTE_EMPRESA:** Requiere obligatoriamente \`id_cliente\`.
 * **CLIENTE_SUCURSAL:** Requiere obligatoriamente \`id_cliente\` e \`id_sucursal\`.
 * **CLIENTE_TRABAJADOR:** Requiere obligatoriamente \`id_cliente\`, \`id_sucursal\` e \`id_area\`.
@@ -119,15 +127,16 @@ Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según
           message: 'Usuario creado exitosamente',
           data: {
             id_usuario: 2,
-            nombre: 'Juan',
-            apellido: 'Pérez',
-            correo: 'juan.perez@empresa.com',
-            telefono: '+51987654321',
+            nombre: 'Luis',
+            apellido: 'Torres',
+            correo: 'luis.insitu@zaint.com',
+            telefono: '+51999888772',
             is_active: true,
-            id_rol: 2,
-            id_cliente: 1,
-            id_sucursal: 1,
-            id_area: 3,
+            id_rol: 3,
+            id_cliente: null,
+            id_sucursal: null,
+            id_area: null,
+            zonas_ids: [1, 2],
           },
         },
       },
@@ -135,11 +144,11 @@ Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
       description:
-        'Datos de entrada inválidos o incumplimiento de las relaciones requeridas por el Rol especificado.',
+        'Datos de entrada inválidos o incumplimiento de las relaciones requeridas por el Rol especificado (ej. omitir zonas_ids para SOPORTE_INSITU).',
       schema: {
         example: {
           message:
-            'El rol CLIENTE_TRABAJADOR requiere cliente/empresa, sucursal y área',
+            'El rol SOPORTE_INSITU requiere asignar al menos una zona de cobertura',
           error: 'Bad Request',
           statusCode: 400,
         },
@@ -170,9 +179,10 @@ export function ApiUpdateUserSwagger() {
     ApiOperation({
       summary: 'Actualizar un usuario por ID (Gestión Administrativa)',
       description: `
-Permite a un administrador modificar la información, rol o asignaciones corporativas de un usuario por su ID. 
+Permite a un administrador modificar la información, rol, zonas de cobertura o asignaciones corporativas de un usuario por su ID. 
 
-Opcionalmente permite restablecer la contraseña a la clave por defecto (\`123456\`) enviando \`resetPassword: true\`.
+* Si el rol es **SOPORTE_INSITU**, se pueden actualizar las zonas geográficas enviando \`zonas_ids: [1, 2]\`. Si se envía \`[]\`, se removerán las zonas asignadas. Si no se incluye el parámetro, se mantendrán las actuales.
+* Opcionalmente permite restablecer la contraseña a la clave por defecto (\`123456\`) enviando \`resetPassword: true\`.
       `,
     }),
     ApiParam({
@@ -188,16 +198,17 @@ Opcionalmente permite restablecer la contraseña a la clave por defecto (\`12345
         example: {
           message: 'Usuario actualizado exitosamente',
           data: {
-            id_usuario: 1,
-            nombre: 'Juan Carlos',
-            apellido: 'Pérez López',
-            correo: 'juan.perez@empresa.com',
-            telefono: '+51987654321',
+            id_usuario: 3,
+            nombre: 'Luis Alberto',
+            apellido: 'Torres López',
+            correo: 'luis.insitu@zaint.com',
+            telefono: '+51999888772',
             is_active: true,
-            id_rol: 2,
-            id_cliente: 1,
+            id_rol: 3,
+            id_cliente: null,
             id_sucursal: null,
             id_area: null,
+            zonas_ids: [1, 2],
           },
         },
       },
@@ -208,7 +219,8 @@ Opcionalmente permite restablecer la contraseña a la clave por defecto (\`12345
         'Datos de entrada no válidos o violaciones de reglas de asignación por rol.',
       schema: {
         example: {
-          message: 'El rol CLIENTE_EMPRESA requiere cliente/empresa',
+          message:
+            'El rol SOPORTE_INSITU requiere asignar al menos una zona de cobertura',
           error: 'Bad Request',
           statusCode: 400,
         },
@@ -284,7 +296,7 @@ export function ApiAssignRolSwagger() {
     ApiOperation({
       summary: 'Asignar o reasignar rol a un usuario',
       description:
-        'Actualiza el rol del usuario ajustando obligatoriamente sus relaciones corporativas (cliente, sucursal, área) según la jerarquía del nuevo rol.',
+        'Actualiza el rol del usuario ajustando obligatoriamente sus relaciones corporativas (cliente, sucursal, área, zonas) según la jerarquía del nuevo rol.',
     }),
     ApiParam({
       name: 'id',

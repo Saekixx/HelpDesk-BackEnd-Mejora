@@ -58,6 +58,13 @@ export class CreateSucursalHttpDto implements CreateSucursalDto {
   @IsInt({ message: 'El ID de cliente debe ser un número entero' })
   readonly id_cliente: number;
 
+  @ApiProperty({
+    description: 'ID de la zona geográfica a la que pertenece la sucursal',
+    example: 1,
+  })
+  @IsInt({ message: 'El ID de zona debe ser un número entero' })
+  readonly id_zona: number;
+
   @ApiPropertyOptional({
     description: 'Estado activo de la sucursal',
     default: true,
