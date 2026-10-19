@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CommonModule } from '@/common/common.module';
 import { AuthModule } from '@/auth/auth.module';
 import { EQUIPO_REPOSITORY } from './domain/ports/equipo.repository.port';
-import { EquipoPrismaRepository } from './infrastructure/repositories/equipo-prisma.repository';
+import { EquipoPrismaRepository } from './infrastructure/adapters/persistence/equipo-prisma.repository';
 import { GetEquiposUseCase } from './application/use-cases/get-equipos.use-case';
 import { GetEquipoByIdUseCase } from './application/use-cases/get-equipo-by-id.use-case';
 import { CreateEquipoUseCase } from './application/use-cases/create-equipo.use-case';
