@@ -2,6 +2,7 @@ import { applyDecorators, HttpStatus } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiProduces,
@@ -13,6 +14,7 @@ import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
 import { UpdateUserDto } from '../dtos/update-user.request.dto';
 import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
 import { UserOptions } from '../dtos/user-options.dto';
+import { ProcessBulkUsersRequestDto } from '../dtos/process-bulk-users.request.dto';
 
 export function ApiFindAllUsersSwagger() {
   return applyDecorators(
@@ -481,6 +483,213 @@ export function ApiDownloadBulkUserTemplateSwagger() {
       status: HttpStatus.OK,
       description: 'Plantilla generada exitosamente.',
       schema: { type: 'string', format: 'binary' },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
+    }),
+  );
+}
+
+export function ApiValidateBulkUsersSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Pre-validar una carga masiva de usuarios',
+      description: `
+Analiza un archivo **.xlsx** o **.csv** (con las columnas de la plantilla) contra la base de datos **sin crear ningún usuario**. Máximo 5 MB y 1000 filas.
+
+Validaciones por fila:
+* **Correo:** obligatorio, con formato válido, no registrado en el sistema y no repetido dentro del archivo.
+* **Rol:** debe existir en el sistema.
+* **Sucursal:** debe existir y pertenecer a la empresa (\`id_cliente\`) indicada; de lo contrario la fila queda en \`ERROR\` con la observación \`Sede Inexistente\`. Es obligatoria para los roles CLIENTE_SUCURSAL y CLIENTE_TRABAJADOR.
+* **Área:** si se indica, debe pertenecer a la sucursal de la fila. Es obligatoria para el rol CLIENTE_TRABAJADOR.
+
+Si una fila tiene varios errores, las observaciones se concatenan separadas por \`; \`.
+      `,
+    }),
+    ApiConsumes('multipart/form-data'),
+    ApiBody({
+      schema: {
+        type: 'object',
+        required: ['file', 'id_cliente'],
+        properties: {
+          file: {
+            type: 'string',
+            format: 'binary',
+            description: 'Archivo .xlsx o .csv con los usuarios a cargar',
+          },
+          id_cliente: {
+            type: 'integer',
+            example: 1,
+            description: 'ID de la empresa (cliente) destino',
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Validación completada (puede incluir filas con error).',
+      schema: {
+        example: {
+          status: 200,
+          message: 'Validación de la carga masiva completada',
+          data: {
+            totalRegistros: 3,
+            validos: 1,
+            conError: 2,
+            detalles: [
+              {
+                fila: 2,
+                estado: 'VALIDO',
+                observacion: 'Registro válido',
+                nombreCompleto: 'Ana Torres',
+                correo: 'ana.torres@empresa.com',
+                rol: 'CLIENTE_TRABAJADOR',
+                sucursal: 'Sede Lima',
+              },
+              {
+                fila: 3,
+                estado: 'ERROR',
+                observacion: 'Sede Inexistente',
+                nombreCompleto: 'Luis Rojas',
+                correo: 'luis.rojas@empresa.com',
+                rol: 'CLIENTE_SUCURSAL',
+                sucursal: 'Sede Fantasma',
+              },
+              {
+                fila: 4,
+                estado: 'ERROR',
+                observacion: 'Correo ya registrado; Rol inexistente',
+                nombreCompleto: 'Rosa Díaz',
+                correo: 'juan.perez@empresa.com',
+                rol: 'SUPERVISOR',
+                sucursal: '',
+              },
+            ],
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Archivo ausente, formato no admitido, sin las columnas requeridas, vacío o con más de 1000 filas; o id_cliente inválido.',
+      schema: {
+        example: {
+          message:
+            'Archivo de carga masiva inválido: faltan las columnas: sucursal, area',
+          error: 'Bad Request',
+          statusCode: 400,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'La empresa indicada en id_cliente no existe.',
+    }),
+    ApiResponse({
+      status: HttpStatus.PAYLOAD_TOO_LARGE,
+      description: 'El archivo supera el tamaño máximo de 5 MB.',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
+    }),
+  );
+}
+
+export function ApiProcessBulkUsersSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Procesar una carga masiva de usuarios',
+      description: `
+Registra en la empresa indicada (\`id_cliente\`) los usuarios aprobados en la pre-validación (\`POST /usuario/carga-masiva/validar\`).
+
+* **Revalidación en servidor:** el listado se vuelve a validar con las mismas reglas de la pre-validación (correo único, rol, sucursal y área de la empresa). Las filas que no pasen se omiten y se reportan con su observación; las demás se registran.
+* **Atomicidad:** todos los usuarios válidos se crean en una sola transacción. Si falla el registro (por ejemplo, un correo tomado por otro proceso) no se crea ninguno.
+* **Relaciones:** se asignan \`id_rol\`, \`id_cliente\` y, según el rol, \`id_sucursal\` e \`id_area\` (CLIENTE_EMPRESA: solo empresa; CLIENTE_SUCURSAL: empresa y sucursal; CLIENTE_TRABAJADOR: empresa, sucursal y área).
+* **Credenciales:** las cuentas se crean activas con una contraseña aleatoria que nadie conoce. Con \`enviarCredenciales: true\` cada usuario recibe un correo con un enlace (válido 24 horas) para definir su contraseña. Con \`false\` no se envía nada y el usuario puede usar "Olvidé mi contraseña".
+* Un fallo al enviar un correo no revierte la creación del usuario; se informa en \`credencialesEnviadas\` de cada fila.
+* Máximo 1000 usuarios por solicitud.
+      `,
+    }),
+    ApiBody({ type: ProcessBulkUsersRequestDto }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description:
+        'Carga procesada. Puede incluir filas omitidas por error de validación.',
+      schema: {
+        example: {
+          status: 201,
+          message:
+            'Carga masiva procesada: 2 usuario(s) creado(s), 1 con error',
+          data: {
+            totalRecibidos: 3,
+            creados: 2,
+            conError: 1,
+            enviarCredenciales: true,
+            credencialesEnviadas: 1,
+            credencialesFallidas: 1,
+            detalles: [
+              {
+                fila: 2,
+                estado: 'CREADO',
+                observacion: 'Usuario creado',
+                nombreCompleto: 'Ana Torres',
+                correo: 'ana.torres@empresa.com',
+                rol: 'CLIENTE_TRABAJADOR',
+                sucursal: 'Sede Lima',
+                credencialesEnviadas: true,
+              },
+              {
+                fila: 3,
+                estado: 'CREADO',
+                observacion:
+                  'Usuario creado, pero no se pudo enviar el correo de acceso',
+                nombreCompleto: 'Luis Rojas',
+                correo: 'luis.rojas@empresa.com',
+                rol: 'CLIENTE_SUCURSAL',
+                sucursal: 'Sede Arequipa',
+                credencialesEnviadas: false,
+              },
+              {
+                fila: 4,
+                estado: 'ERROR',
+                observacion: 'Sede Inexistente',
+                nombreCompleto: 'Rosa Díaz',
+                correo: 'rosa.diaz@empresa.com',
+                rol: 'CLIENTE_SUCURSAL',
+                sucursal: 'Sede Fantasma',
+                credencialesEnviadas: null,
+              },
+            ],
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Cuerpo inválido: id_cliente no válido, enviarCredenciales no booleano, listado vacío o con más de 1000 usuarios.',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'La empresa indicada en id_cliente no existe.',
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'Un correo fue registrado por otro proceso durante la carga; no se creó ningún usuario. Vuelve a validar e inténtalo de nuevo.',
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,

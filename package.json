@@ -39,6 +39,7 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "exceljs": "^4.4.0",
     "ioredis": "^5.11.1",
     "mongoose": "^9.10.1",
     "mysql2": "^3.24.3",

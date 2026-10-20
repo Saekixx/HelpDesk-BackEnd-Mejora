@@ -18,3 +18,12 @@ export class InvalidBulkFileException extends DomainException {
     super(`Archivo de carga masiva inválido: ${reason}`, 400);
   }
 }
+
+export class UsersBatchConflictException extends DomainException {
+  constructor() {
+    super(
+      'No se registró ningún usuario: alguno de los correos fue registrado por otro proceso. Vuelve a validar la carga e inténtalo de nuevo.',
+      409,
+    );
+  }
+}

@@ -9,6 +9,7 @@ import { UserFilterCriteria } from '@/usuarios/domain/criteria/user-filter.crite
 import { UserStatsCriteria } from '@/usuarios/domain/criteria/user-stats.criteria';
 import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { UserMapper } from './mappers/user.mapper';
+import { UsersBatchConflictException } from '@/usuarios/domain/exceptions/user.exceptions';
 import { Prisma } from '@prisma/client';
 import { UserSelectFilterDto } from '../../dtos/user-select-filter-dto';
 import { UserOptions } from '../../dtos/user-options.dto';
@@ -78,6 +79,29 @@ export class UserPrismaRepository implements UserRepositoryPort {
     return UserMapper.toDomain(created);
   }
 
+  async saveMany(users: User[]): Promise<User[]> {
+    try {
+      // Una sola transacción: si falla un insert se revierten todos
+      const created = await this.prisma.$transaction(
+        users.map((user) =>
+          this.prisma.usuarios.create({
+            data: UserMapper.toPersistence(user) as Prisma.usuariosCreateInput,
+          }),
+        ),
+      );
+      return created.map((entity) => UserMapper.toDomain(entity));
+    } catch (error) {
+      // P2002: violación de unicidad (correo registrado entre la validación y el registro)
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new UsersBatchConflictException();
+      }
+      throw error;
+    }
+  }
+
   async findByCorreo(correo: string): Promise<User | null> {
     const entity = await this.prisma.usuarios.findUnique({
       where: { correo },
@@ -99,6 +123,17 @@ export class UserPrismaRepository implements UserRepositoryPort {
       where: { correo },
     });
     return count > 0;
+  }
+
+  async findExistingCorreos(correos: string[]): Promise<string[]> {
+    if (correos.length === 0) return [];
+
+    const users = await this.prisma.usuarios.findMany({
+      where: { correo: { in: correos } },
+      select: { correo: true },
+    });
+
+    return users.map((user) => (user.correo ?? '').toLowerCase());
   }
 
   async findAllWithFilters(

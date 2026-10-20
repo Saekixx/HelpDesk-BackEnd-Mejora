@@ -3,19 +3,20 @@ export enum BulkUserStatus {
   ERROR = 'ERROR',
 }
 
+// Detalle de la validación de una fila del archivo
 export interface BulkUserRowResultDto {
-  fila: number;
+  fila: number; // Número de fila en la hoja original (la 1 es el encabezado)
   estado: BulkUserStatus;
   observacion: string;
-  nombre: string;
+  nombreCompleto: string;
   correo: string;
   rol: string;
   sucursal: string;
 }
 
 export interface BulkUserValidationResultDto {
-  total: number;
+  totalRegistros: number;
   validos: number;
-  errores: number;
-  filas: BulkUserRowResultDto[];
+  conError: number;
+  detalles: BulkUserRowResultDto[];
 }

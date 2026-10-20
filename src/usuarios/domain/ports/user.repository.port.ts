@@ -20,11 +20,17 @@ export const USER_REPOSITORY = 'USER_REPOSITORY';
 export interface UserRepositoryPort {
   save(user: User, zonasIds?: number[]): Promise<User>;
 
+  // Registra varios usuarios de forma atómica: o se crean todos o no se crea ninguno
+  saveMany(users: User[]): Promise<User[]>;
+
   findByCorreo(correo: string): Promise<User | null>;
 
   findById(id: number): Promise<User | null>;
 
   existsByCorreo(correo: string): Promise<boolean>;
+
+  // Devuelve, en minúsculas, los correos de la lista que ya están registrados (una sola consulta)
+  findExistingCorreos(correos: string[]): Promise<string[]>;
 
   // Método para obtener usuarios con filtros y paginación
   findAllWithFilters(

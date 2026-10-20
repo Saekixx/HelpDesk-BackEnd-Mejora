@@ -2,14 +2,19 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Query,
   StreamableFile,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
@@ -34,7 +39,9 @@ import {
   ApiGetUserStatsSwagger,
   ApiToggleUserStatusSwagger,
   ApiUpdateProfileSwagger,
+  ApiProcessBulkUsersSwagger,
   ApiUpdateUserSwagger,
+  ApiValidateBulkUsersSwagger,
 } from '../docs/usuarios.swagger';
 import { ToggleUserStatusUseCase } from '@/usuarios/application/use-cases/toggle-user-status.use-case';
 import { AssignRolUseCase } from '@/usuarios/application/use-cases/assign-rol.use-case';
@@ -44,6 +51,13 @@ import { GetUserOptionUseCase } from '@/usuarios/application/use-cases/get-user-
 import { UserSelectFilterDto } from '../dtos/user-select-filter-dto';
 import { GetUserStatsUseCase } from '@/usuarios/application/use-cases/get-user-stats.use-case';
 import { GetBulkUserTemplateUseCase } from '@/usuarios/application/use-cases/get-bulk-user-template.use-case';
+import { ValidateBulkUsersUseCase } from '@/usuarios/application/use-cases/validate-bulk-users.use-case';
+import { ProcessBulkUsersUseCase } from '@/usuarios/application/use-cases/process-bulk-users.use-case';
+import type { BulkUploadedFile } from '@/usuarios/application/dtos/validate-bulk-users.dto';
+import { ValidateBulkUsersRequestDto } from '../dtos/validate-bulk-users.request.dto';
+import { ProcessBulkUsersRequestDto } from '../dtos/process-bulk-users.request.dto';
+
+const MAX_BULK_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 @ApiTags('Usuarios')
 @Controller('usuario')
@@ -59,6 +73,8 @@ export class UsersController {
     private readonly getUserOptionUseCase: GetUserOptionUseCase,
     private readonly getUserStatsUseCase: GetUserStatsUseCase,
     private readonly getBulkUserTemplateUseCase: GetBulkUserTemplateUseCase,
+    private readonly validateBulkUsersUseCase: ValidateBulkUsersUseCase,
+    private readonly processBulkUsersUseCase: ProcessBulkUsersUseCase,
   ) {}
 
   @Get('options')
@@ -92,6 +108,46 @@ export class UsersController {
       type: mimeType,
       disposition: `attachment; filename="${filename}"`,
     });
+  }
+
+  // Pre-validación: no crea ni modifica usuarios, solo analiza el archivo contra la BD
+  @Post('carga-masiva/validar')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_BULK_FILE_SIZE } }),
+  )
+  @ApiValidateBulkUsersSwagger()
+  async validateBulkUsers(
+    @UploadedFile() file: BulkUploadedFile | undefined,
+    @Body() body: ValidateBulkUsersRequestDto,
+  ) {
+    const data = await this.validateBulkUsersUseCase.execute({
+      file,
+      idCliente: body.id_cliente,
+    });
+    return {
+      message: 'Validación de la carga masiva completada',
+      data,
+    };
+  }
+
+  // Registro definitivo: revalida el lote en servidor y crea los usuarios en una sola transacción
+  @Post('carga-masiva/procesar')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
+  @ApiProcessBulkUsersSwagger()
+  async processBulkUsers(@Body() body: ProcessBulkUsersRequestDto) {
+    const data = await this.processBulkUsersUseCase.execute({
+      idCliente: body.id_cliente,
+      enviarCredenciales: body.enviarCredenciales,
+      usuarios: body.usuarios,
+    });
+    return {
+      message: `Carga masiva procesada: ${data.creados} usuario(s) creado(s), ${data.conError} con error`,
+      data,
+    };
   }
 
   @Get()
