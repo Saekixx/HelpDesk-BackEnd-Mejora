@@ -3,6 +3,7 @@ import { UserFilterCriteria } from '../criteria/user-filter.criteria.js';
 import { UserResponseCriteria } from '../criteria/user-response.criteria.js';
 import { UserOptions } from '../criteria/user-options.dto.js';
 import { UserSelectCriteria } from '../criteria/user-select-criteria.js';
+import { UserStatsCriteria } from '../criteria/user-stats.criteria.js';
 
 // Resultado de la paginación de usuarios
 export interface PaginatedUsersResult {
@@ -32,4 +33,7 @@ export interface UserRepositoryPort {
 
   // Metodo para obtener usuarios por rol y que esten activos
   findActiveRolUsers(filters: UserSelectCriteria): Promise<UserOptions[]>;
+
+  // Método para obtener las estadísticas generales de usuarios
+  getUserStats(): Promise<UserStatsCriteria>;
 }

@@ -12,3 +12,9 @@ export class EmailAlreadyInUseException extends DomainException {
     super('El correo electrónico ya está en uso', 409);
   }
 }
+
+export class InvalidBulkFileException extends DomainException {
+  constructor(reason: string) {
+    super(`Archivo de carga masiva inválido: ${reason}`, 400);
+  }
+}

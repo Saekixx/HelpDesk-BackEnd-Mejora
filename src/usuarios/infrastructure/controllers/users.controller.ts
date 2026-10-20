@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -16,6 +17,9 @@ import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
 import { CreateUserUseCase } from '@/usuarios/application/use-cases/create-user.use-case';
 import { UpdateProfileUseCase } from '@/usuarios/application/use-cases/update-profile.use-case';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
+import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
+import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
+import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { CurrentUser } from '@/auth/infrastructure/decorators/current-user.decorator';
 import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
 import { GetUsersUseCase } from '@/usuarios/application/use-cases/get-users.use-case';
@@ -23,9 +27,11 @@ import { GetUserByIdUseCase } from '@/usuarios/application/use-cases/get-user-by
 import {
   ApiAssignRolSwagger,
   ApiCreateUserSwagger,
+  ApiDownloadBulkUserTemplateSwagger,
   ApiFindAllUsersSwagger,
   ApiFindUserByIdSwagger,
   ApiFindUserOptionsSwagger,
+  ApiGetUserStatsSwagger,
   ApiToggleUserStatusSwagger,
   ApiUpdateProfileSwagger,
   ApiUpdateUserSwagger,
@@ -36,6 +42,8 @@ import { UpdateUserDto } from '../dtos/update-user.request.dto';
 import { UpdateUserUseCase } from '@/usuarios/application/use-cases/update-user.use-case';
 import { GetUserOptionUseCase } from '@/usuarios/application/use-cases/get-user-option.use-case';
 import { UserSelectFilterDto } from '../dtos/user-select-filter-dto';
+import { GetUserStatsUseCase } from '@/usuarios/application/use-cases/get-user-stats.use-case';
+import { GetBulkUserTemplateUseCase } from '@/usuarios/application/use-cases/get-bulk-user-template.use-case';
 
 @ApiTags('Usuarios')
 @Controller('usuario')
@@ -49,6 +57,8 @@ export class UsersController {
     private readonly assignRolUseCase: AssignRolUseCase,
     private readonly toggleUserStatusUseCase: ToggleUserStatusUseCase,
     private readonly getUserOptionUseCase: GetUserOptionUseCase,
+    private readonly getUserStatsUseCase: GetUserStatsUseCase,
+    private readonly getBulkUserTemplateUseCase: GetBulkUserTemplateUseCase,
   ) {}
 
   @Get('options')
@@ -56,6 +66,32 @@ export class UsersController {
   @ApiFindUserOptionsSwagger()
   async findOptions(@Query() filters: UserSelectFilterDto) {
     return await this.getUserOptionUseCase.execute(filters);
+  }
+
+  // Debe declararse antes de @Get(':id') para que 'estadisticas' no se interprete como un id
+  @Get('estadisticas')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
+  @ApiGetUserStatsSwagger()
+  async getEstadisticas() {
+    const data = await this.getUserStatsUseCase.execute();
+    return {
+      message: 'Estadísticas de usuarios obtenidas exitosamente',
+      data,
+    };
+  }
+
+  @Get('carga-masiva/plantilla')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
+  @ApiDownloadBulkUserTemplateSwagger()
+  async downloadBulkUserTemplate() {
+    const { buffer, filename, mimeType } =
+      await this.getBulkUserTemplateUseCase.execute();
+    return new StreamableFile(buffer, {
+      type: mimeType,
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   @Get()

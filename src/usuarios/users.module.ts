@@ -1,10 +1,12 @@
 import { forwardRef, Get, Module } from '@nestjs/common';
 import { USER_REPOSITORY } from './domain/ports/user.repository.port';
 import { ROL_REPOSITORY } from './domain/ports/rol.repository.port';
+import { BULK_USER_FILE_PORT } from './domain/ports/bulk-user-file.port';
 
 // Repositorios de Prisma
 import { UserPrismaRepository } from './infrastructure/adapters/persistence/user-prisma.repository';
 import { RolPrismaRepository } from './infrastructure/adapters/persistence/rol-prisma.repository';
+import { ExcelJsBulkUserFileAdapter } from './infrastructure/adapters/files/exceljs-bulk-user-file.adapter';
 
 // Controladores y Casos de Uso
 import { UsersController } from './infrastructure/controllers/users.controller';
@@ -26,6 +28,8 @@ import { MailModule } from '@/mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { GetUserOptionUseCase } from './application/use-cases/get-user-option.use-case';
+import { GetUserStatsUseCase } from './application/use-cases/get-user-stats.use-case';
+import { GetBulkUserTemplateUseCase } from './application/use-cases/get-bulk-user-template.use-case';
 
 @Module({
   imports: [
@@ -51,6 +55,8 @@ import { GetUserOptionUseCase } from './application/use-cases/get-user-option.us
     ToggleUserStatusUseCase,
     GetRolesUseCase,
     GetUserOptionUseCase,
+    GetUserStatsUseCase,
+    GetBulkUserTemplateUseCase,
 
     // Mapeo de Puertos a Implementaciones de Prisma
     {
@@ -60,6 +66,10 @@ import { GetUserOptionUseCase } from './application/use-cases/get-user-option.us
     {
       provide: ROL_REPOSITORY,
       useClass: RolPrismaRepository,
+    },
+    {
+      provide: BULK_USER_FILE_PORT,
+      useClass: ExcelJsBulkUserFileAdapter,
     },
   ],
   exports: [USER_REPOSITORY, ROL_REPOSITORY],

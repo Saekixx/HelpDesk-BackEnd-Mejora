@@ -4,6 +4,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiProduces,
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
@@ -428,6 +429,66 @@ export function ApiFindUserOptionsSwagger() {
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
+    }),
+  );
+}
+
+export function ApiGetUserStatsSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Obtener estadísticas generales de usuarios',
+      description:
+        'Retorna el total de usuarios (con su desglose de activos e inactivos), la cantidad de personal técnico (administradores y soporte) y la cantidad de cuentas de clientes (empresa, sucursal y trabajador).',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Estadísticas de usuarios obtenidas exitosamente.',
+      schema: {
+        example: {
+          message: 'Estadísticas de usuarios obtenidas exitosamente',
+          data: {
+            totalUsuarios: { cantidad: 25, activos: 22, inactivos: 3 },
+            personalTecnico: { cantidad: 8 },
+            cuentasClientes: { cantidad: 17 },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
+    }),
+  );
+}
+
+export function ApiDownloadBulkUserTemplateSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Descargar la plantilla de carga masiva de usuarios',
+      description:
+        'Descarga un archivo Excel (.xlsx) con las columnas base (nombre, apellido, correo, rol, sucursal, area), una lista desplegable de roles y una hoja de instrucciones.',
+    }),
+    ApiProduces(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Plantilla generada exitosamente.',
+      schema: { type: 'string', format: 'binary' },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
     }),
   );
 }
