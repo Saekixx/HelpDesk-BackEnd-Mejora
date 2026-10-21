@@ -50,7 +50,7 @@ export class AreaController {
   @Roles(
     RolEnum.ADMINISTRADOR,
     RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
+    RolEnum.SOPORTE_TECNICO,
   )
   @ApiFindAllAreasSwagger()
   async findAll(@Query() query: GetAreasQueryDto) {
@@ -65,7 +65,7 @@ export class AreaController {
   @Roles(
     RolEnum.ADMINISTRADOR,
     RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
+    RolEnum.SOPORTE_TECNICO,
   )
   @ApiGetAreasOptionsSwagger()
   async getAreasOptions(@Param('id', ParseIntPipe) id: number) {
@@ -76,7 +76,7 @@ export class AreaController {
   @Roles(
     RolEnum.ADMINISTRADOR,
     RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
+    RolEnum.SOPORTE_TECNICO,
   )
   @ApiFindAreaByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {

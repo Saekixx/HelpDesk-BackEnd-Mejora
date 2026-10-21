@@ -11,7 +11,9 @@ export interface BulkUserRowResultDto {
   nombreCompleto: string;
   correo: string;
   rol: string;
+  empresa: string;
   sucursal: string;
+  estadoUsuario: string; // ACTIVO / INACTIVO efectivo (vacío en el archivo = ACTIVO)
 }
 
 export interface BulkUserValidationResultDto {

@@ -68,8 +68,10 @@ export class ProcessBulkUsersUseCase {
       apellido: (item.apellido ?? '').trim(),
       correo: (item.correo ?? '').trim(),
       rol: (item.rol ?? '').trim(),
+      empresa: (item.empresa ?? '').trim(),
       sucursal: (item.sucursal ?? '').trim(),
       area: (item.area ?? '').trim(),
+      estado: (item.estado ?? '').trim(),
     }));
     const context = await this.rowValidator.buildContext(dto.idCliente, rows);
     const validations = this.rowValidator.validateRows(rows, context);
@@ -84,8 +86,9 @@ export class ProcessBulkUsersUseCase {
       ? await this.userRepository.saveMany(creatable.map((c) => c.user))
       : [];
 
+    // Los usuarios INACTIVOS no pueden iniciar sesión: no se les envía correo de primer acceso
     const envios = dto.enviarCredenciales
-      ? await this.sendCredentials(savedUsers)
+      ? await this.sendCredentials(savedUsers.filter((u) => u.is_active))
       : new Map<string, boolean>();
 
     const detalles = validations.map((validation) =>
@@ -129,7 +132,7 @@ export class ProcessBulkUsersUseCase {
         correo: validation.row.correo.toLowerCase(),
         password,
         telefono: '',
-        is_active: true,
+        is_active: validation.is_active,
         id_rol: validation.id_rol as number,
         id_cliente: idCliente,
         id_sucursal: validation.id_sucursal,
@@ -175,7 +178,7 @@ export class ProcessBulkUsersUseCase {
   }
 
   private toRowResult(
-    { row, errores }: BulkRowValidation,
+    { row, errores, is_active }: BulkRowValidation,
     enviarCredenciales: boolean,
     envios: Map<string, boolean>,
   ): BulkUserProcessRowDto {
@@ -192,6 +195,15 @@ export class ProcessBulkUsersUseCase {
         ...base,
         estado: BulkUserProcessStatus.ERROR,
         observacion: errores.join('; '),
+        credencialesEnviadas: null,
+      };
+    }
+
+    if (!is_active) {
+      return {
+        ...base,
+        estado: BulkUserProcessStatus.CREADO,
+        observacion: 'Usuario creado como INACTIVO',
         credencialesEnviadas: null,
       };
     }

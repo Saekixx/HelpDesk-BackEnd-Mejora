@@ -59,7 +59,7 @@ export class CreateUserUseCase {
           );
         finalZonasIds = dto.zonas_ids;
         break;
-      case 'SOPORTE_REMOTO':
+      case 'SOPORTE_TECNICO':
         break;
       case 'CLIENTE_EMPRESA':
         if (!dto.id_cliente) {

@@ -50,7 +50,7 @@ export class SucursalController {
   @Roles(
     RolEnum.ADMINISTRADOR,
     RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
+    RolEnum.SOPORTE_TECNICO,
   )
   @ApiFindAllSucursalesSwagger()
   async findAll(@Query() query: GetSucursalesQueryDto) {
@@ -65,7 +65,7 @@ export class SucursalController {
   @Roles(
     RolEnum.ADMINISTRADOR,
     RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
+    RolEnum.SOPORTE_TECNICO,
   )
   @ApiGetSucursalesOptionsSwagger()
   async getSucursalesOptions(@Param('id', ParseIntPipe) id: number) {
@@ -76,7 +76,7 @@ export class SucursalController {
   @Roles(
     RolEnum.ADMINISTRADOR,
     RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_REMOTO,
+    RolEnum.SOPORTE_TECNICO,
   )
   @ApiFindSucursalByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {

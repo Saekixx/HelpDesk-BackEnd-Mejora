@@ -3,6 +3,7 @@ import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import { BulkUserLookupPort } from '@/usuarios/domain/ports/bulk-user-lookup.port';
 import {
   BulkAreaLookup,
+  BulkClienteLookup,
   BulkSucursalLookup,
 } from '@/usuarios/domain/criteria/bulk-user-lookup.criteria';
 
@@ -10,11 +11,11 @@ import {
 export class BulkUserLookupPrismaRepository implements BulkUserLookupPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async existsCliente(idCliente: number): Promise<boolean> {
-    const count = await this.prisma.clientes.count({
+  async findCliente(idCliente: number): Promise<BulkClienteLookup | null> {
+    return this.prisma.clientes.findUnique({
       where: { id_cliente: idCliente },
+      select: { id_cliente: true, nombre_principal: true },
     });
-    return count > 0;
   }
 
   async findSucursalesByCliente(

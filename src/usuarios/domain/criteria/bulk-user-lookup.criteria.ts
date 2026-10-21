@@ -1,3 +1,9 @@
+// Datos mínimos de la empresa (cliente) destino de la carga masiva
+export interface BulkClienteLookup {
+  id_cliente: number;
+  nombre_principal: string;
+}
+
 // Datos mínimos de una sucursal necesarios para validar la carga masiva
 export interface BulkSucursalLookup {
   id_sucursal: number;

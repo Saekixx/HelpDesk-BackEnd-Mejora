@@ -13,7 +13,11 @@ import {
   ROL_REPOSITORY,
   RolRepositoryPort,
 } from '@/usuarios/domain/ports/rol.repository.port';
-import { BulkUserRow } from '@/usuarios/domain/criteria/bulk-user-row.criteria';
+import {
+  BULK_USER_ESTADO_POR_DEFECTO,
+  BulkUserEstado,
+  BulkUserRow,
+} from '@/usuarios/domain/criteria/bulk-user-row.criteria';
 
 const MAX_NOMBRE_LENGTH = 50; // usuarios.nombre / usuarios.apellido son VarChar(50)
 const MAX_CORREO_LENGTH = 255; // usuarios.correo es VarChar(255)
@@ -47,6 +51,7 @@ const normalize = (value: string): string =>
 
 // Datos de referencia cargados una sola vez por lote (no una consulta por fila)
 export interface BulkValidationContext {
+  empresaNormalizada: string; // nombre de la empresa destino, normalizado
   rolesPorNombre: Map<string, { id_rol: number; nombre: string }>;
   sucursalesPorNombre: Map<string, number[]>;
   areasPorSucursal: Map<number, Map<string, number>>; // id_sucursal -> (nombre normalizado -> id_area)
@@ -61,6 +66,7 @@ export interface BulkRowValidation {
   rol: string | null; // nombre canónico del rol en la BD
   id_sucursal: number | null;
   id_area: number | null;
+  is_active: boolean; // derivado de la columna "estado" (ACTIVO por defecto)
 }
 
 @Injectable()
@@ -79,7 +85,8 @@ export class BulkUserRowValidator {
     idCliente: number,
     rows: BulkUserRow[],
   ): Promise<BulkValidationContext> {
-    if (!(await this.bulkUserLookup.existsCliente(idCliente))) {
+    const cliente = await this.bulkUserLookup.findCliente(idCliente);
+    if (!cliente) {
       throw new ClienteNotFoundException();
     }
 
@@ -125,6 +132,7 @@ export class BulkUserRowValidator {
     }
 
     return {
+      empresaNormalizada: normalize(cliente.nombre_principal),
       rolesPorNombre,
       sucursalesPorNombre,
       areasPorSucursal,
@@ -181,7 +189,23 @@ export class BulkUserRowValidator {
       errores.push('Rol no permitido en la carga masiva de empresas');
     const rolValido = !!rol && ROLES_CARGA_MASIVA.includes(rolNormalizado);
 
-    // c) Sucursal perteneciente a la empresa
+    // c) Empresa (opcional): si se indica, debe ser la empresa seleccionada para la carga
+    if (row.empresa && normalize(row.empresa) !== context.empresaNormalizada) {
+      errores.push('Empresa no coincide con la empresa seleccionada');
+    }
+
+    // d) Estado (opcional): ACTIVO / INACTIVO; vacío = ACTIVO
+    const estado = (row.estado || BULK_USER_ESTADO_POR_DEFECTO)
+      .trim()
+      .toUpperCase();
+    const estadoValido = Object.values<string>(BulkUserEstado).includes(estado);
+    if (!estadoValido) {
+      errores.push(
+        `Estado inválido (use ${Object.values(BulkUserEstado).join(' o ')})`,
+      );
+    }
+
+    // e) Sucursal perteneciente a la empresa
     let sucursalIds: number[] | undefined;
     let sedeInexistente = false;
     if (row.sucursal) {
@@ -195,7 +219,7 @@ export class BulkUserRowValidator {
       errores.push(`Sucursal obligatoria para el rol ${rolNormalizado}`);
     }
 
-    // d) Área perteneciente a la sucursal (no se evalúa si la sede es inexistente, para no duplicar ruido)
+    // f) Área perteneciente a la sucursal (no se evalúa si la sede es inexistente, para no duplicar ruido)
     let idSucursal: number | null = sucursalIds?.[0] ?? null;
     let idArea: number | null = null;
     if (row.area) {
@@ -233,6 +257,7 @@ export class BulkUserRowValidator {
       rol: rol?.nombre ?? null,
       id_sucursal: idSucursal,
       id_area: idArea,
+      is_active: estado !== BulkUserEstado.INACTIVO,
     };
   }
 }

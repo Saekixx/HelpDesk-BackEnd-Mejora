@@ -114,7 +114,7 @@ export function ApiCreateUserSwagger() {
       description: `
 Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según su **Rol**:
 
-* **ADMINISTRADOR / SOPORTE_REMOTO:** No requieren relaciones externas (\`id_cliente\`, \`id_sucursal\`, \`id_area\`, \`zonas_ids\`).
+* **ADMINISTRADOR / SOPORTE_TECNICO:** No requieren relaciones externas (\`id_cliente\`, \`id_sucursal\`, \`id_area\`, \`zonas_ids\`).
 * **SOPORTE_INSITU:** Requiere obligatoriamente asignar al menos una zona de cobertura geográfica en \`zonas_ids\`.
 * **CLIENTE_EMPRESA:** Requiere obligatoriamente \`id_cliente\`.
 * **CLIENTE_SUCURSAL:** Requiere obligatoriamente \`id_cliente\` e \`id_sucursal\`.
@@ -474,7 +474,7 @@ export function ApiDownloadBulkUserTemplateSwagger() {
     ApiOperation({
       summary: 'Descargar la plantilla de carga masiva de usuarios',
       description:
-        'Descarga un archivo Excel (.xlsx) con las columnas base (nombre, apellido, correo, rol, sucursal, area), una lista desplegable de roles y una hoja de instrucciones.',
+        'Descarga un archivo Excel (.xlsx) con la hoja Usuarios y las columnas, en este orden: nombre, apellido, correo, rol, empresa, sucursal, area, estado. Incluye listas desplegables para rol y estado (ACTIVO / INACTIVO) y una hoja de instrucciones.',
     }),
     ApiProduces(
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -501,11 +501,13 @@ export function ApiValidateBulkUsersSwagger() {
     ApiOperation({
       summary: 'Pre-validar una carga masiva de usuarios',
       description: `
-Analiza un archivo **.xlsx** o **.csv** (con las columnas de la plantilla) contra la base de datos **sin crear ningún usuario**. Máximo 5 MB y 1000 filas.
+Analiza un archivo **.xlsx** o **.csv** (con las columnas de la plantilla; \`empresa\` y \`estado\` son opcionales) contra la base de datos **sin crear ningún usuario**. Máximo 5 MB y 1000 filas.
 
 Validaciones por fila:
 * **Correo:** obligatorio, con formato válido, no registrado en el sistema y no repetido dentro del archivo.
 * **Rol:** debe existir en el sistema.
+* **Empresa (opcional):** si se indica, debe coincidir con el nombre de la empresa de \`id_cliente\`.
+* **Estado (opcional):** \`ACTIVO\` o \`INACTIVO\`; si se deja vacío se asume \`ACTIVO\`. Cualquier otro valor deja la fila en \`ERROR\`.
 * **Sucursal:** debe existir y pertenecer a la empresa (\`id_cliente\`) indicada; de lo contrario la fila queda en \`ERROR\` con la observación \`Sede Inexistente\`. Es obligatoria para los roles CLIENTE_SUCURSAL y CLIENTE_TRABAJADOR.
 * **Área:** si se indica, debe pertenecer a la sucursal de la fila. Es obligatoria para el rol CLIENTE_TRABAJADOR.
 
@@ -550,7 +552,9 @@ Si una fila tiene varios errores, las observaciones se concatenan separadas por 
                 nombreCompleto: 'Ana Torres',
                 correo: 'ana.torres@empresa.com',
                 rol: 'CLIENTE_TRABAJADOR',
+                empresa: 'Empresa Demo S.A.C.',
                 sucursal: 'Sede Lima',
+                estadoUsuario: 'ACTIVO',
               },
               {
                 fila: 3,
@@ -559,7 +563,9 @@ Si una fila tiene varios errores, las observaciones se concatenan separadas por 
                 nombreCompleto: 'Luis Rojas',
                 correo: 'luis.rojas@empresa.com',
                 rol: 'CLIENTE_SUCURSAL',
+                empresa: 'Empresa Demo S.A.C.',
                 sucursal: 'Sede Fantasma',
+                estadoUsuario: 'ACTIVO',
               },
               {
                 fila: 4,
@@ -568,7 +574,9 @@ Si una fila tiene varios errores, las observaciones se concatenan separadas por 
                 nombreCompleto: 'Rosa Díaz',
                 correo: 'juan.perez@empresa.com',
                 rol: 'SUPERVISOR',
+                empresa: '',
                 sucursal: '',
+                estadoUsuario: 'ACTIVO',
               },
             ],
           },
@@ -618,7 +626,8 @@ Registra en la empresa indicada (\`id_cliente\`) los usuarios aprobados en la pr
 * **Revalidación en servidor:** el listado se vuelve a validar con las mismas reglas de la pre-validación (correo único, rol, sucursal y área de la empresa). Las filas que no pasen se omiten y se reportan con su observación; las demás se registran.
 * **Atomicidad:** todos los usuarios válidos se crean en una sola transacción. Si falla el registro (por ejemplo, un correo tomado por otro proceso) no se crea ninguno.
 * **Relaciones:** se asignan \`id_rol\`, \`id_cliente\` y, según el rol, \`id_sucursal\` e \`id_area\` (CLIENTE_EMPRESA: solo empresa; CLIENTE_SUCURSAL: empresa y sucursal; CLIENTE_TRABAJADOR: empresa, sucursal y área).
-* **Credenciales:** las cuentas se crean activas con una contraseña aleatoria que nadie conoce. Con \`enviarCredenciales: true\` cada usuario recibe un correo con un enlace (válido 24 horas) para definir su contraseña. Con \`false\` no se envía nada y el usuario puede usar "Olvidé mi contraseña".
+* **Estado:** cada usuario se crea \`ACTIVO\` o \`INACTIVO\` según su columna \`estado\` (por defecto \`ACTIVO\`). A los usuarios \`INACTIVO\` no se les envía correo de acceso.
+* **Credenciales:** las cuentas activas se crean con una contraseña aleatoria que nadie conoce. Con \`enviarCredenciales: true\` cada usuario recibe un correo con un enlace (válido 24 horas) para definir su contraseña. Con \`false\` no se envía nada y el usuario puede usar "Olvidé mi contraseña".
 * Un fallo al enviar un correo no revierte la creación del usuario; se informa en \`credencialesEnviadas\` de cada fila.
 * Máximo 1000 usuarios por solicitud.
       `,

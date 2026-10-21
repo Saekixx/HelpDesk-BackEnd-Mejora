@@ -4,6 +4,7 @@ import {
   BulkUserFilePort,
 } from '@/usuarios/domain/ports/bulk-user-file.port';
 import {
+  BulkUserEstado,
   BulkUserFileFormat,
   BulkUserRow,
   MAX_BULK_ROWS,
@@ -36,14 +37,18 @@ export class ValidateBulkUsersUseCase {
     const validations = this.rowValidator.validateRows(rows, context);
 
     const detalles: BulkUserRowResultDto[] = validations.map(
-      ({ row, errores }) => ({
+      ({ row, errores, is_active }) => ({
         fila: row.fila,
         estado: errores.length ? BulkUserStatus.ERROR : BulkUserStatus.VALIDO,
         observacion: errores.length ? errores.join('; ') : OBSERVACION_VALIDO,
         nombreCompleto: `${row.nombre} ${row.apellido}`.trim(),
         correo: row.correo,
         rol: row.rol,
+        empresa: row.empresa,
         sucursal: row.sucursal,
+        estadoUsuario: is_active
+          ? BulkUserEstado.ACTIVO
+          : BulkUserEstado.INACTIVO,
       }),
     );
 

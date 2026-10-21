@@ -48,7 +48,7 @@ export class ClienteController {
   ) {}
 
   @Get()
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindAllClientesSwagger()
   async findAll(@Query() filter: GetClientesQueryDto) {
     const { data, meta } = await this.getClientesUseCase.execute(filter);
@@ -59,14 +59,14 @@ export class ClienteController {
   }
 
   @Get('/options')
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiGetClientesOptionsSwagger()
   async getClientesOptions() {
     return await this.getClientesOptionsUseCase.execute();
   }
 
   @Get(':id')
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindClienteByIdSwagger()
   async findOne(
     @Param('id', ParseIntPipe) id: number,
