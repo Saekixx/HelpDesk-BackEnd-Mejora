@@ -13,6 +13,7 @@ export interface BulkUserRowResultDto {
   rol: string;
   empresa: string;
   sucursal: string;
+  area?: string;
   estadoUsuario: string; // ACTIVO / INACTIVO efectivo (vacío en el archivo = ACTIVO)
 }
 

@@ -554,6 +554,7 @@ Si una fila tiene varios errores, las observaciones se concatenan separadas por 
                 rol: 'CLIENTE_TRABAJADOR',
                 empresa: 'Empresa Demo S.A.C.',
                 sucursal: 'Sede Lima',
+                area: 'Contabilidad',
                 estadoUsuario: 'ACTIVO',
               },
               {
@@ -565,6 +566,7 @@ Si una fila tiene varios errores, las observaciones se concatenan separadas por 
                 rol: 'CLIENTE_SUCURSAL',
                 empresa: 'Empresa Demo S.A.C.',
                 sucursal: 'Sede Fantasma',
+                area: 'Contabilidad',
                 estadoUsuario: 'ACTIVO',
               },
               {
@@ -576,6 +578,7 @@ Si una fila tiene varios errores, las observaciones se concatenan separadas por 
                 rol: 'SUPERVISOR',
                 empresa: '',
                 sucursal: '',
+                area: '',
                 estadoUsuario: 'ACTIVO',
               },
             ],

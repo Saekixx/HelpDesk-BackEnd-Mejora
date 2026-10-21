@@ -46,6 +46,7 @@ export class ValidateBulkUsersUseCase {
         rol: row.rol,
         empresa: row.empresa,
         sucursal: row.sucursal,
+        area: row.area,
         estadoUsuario: is_active
           ? BulkUserEstado.ACTIVO
           : BulkUserEstado.INACTIVO,
