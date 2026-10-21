@@ -11,7 +11,10 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { MAX_BULK_ROWS } from '@/usuarios/domain/criteria/bulk-user-row.criteria';
+import {
+  BulkUserEstado,
+  MAX_BULK_ROWS,
+} from '@/usuarios/domain/criteria/bulk-user-row.criteria';
 
 const trim = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value;
@@ -47,6 +50,16 @@ export class BulkUserItemRequestDto {
   @IsString()
   rol: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Nombre de la empresa; si se envía debe coincidir con la empresa de id_cliente',
+    example: 'Empresa Demo S.A.C.',
+  })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  empresa?: string;
+
   @ApiPropertyOptional({ example: 'Sede Lima' })
   @IsOptional()
   @Transform(trim)
@@ -58,6 +71,16 @@ export class BulkUserItemRequestDto {
   @Transform(trim)
   @IsString()
   area?: string;
+
+  @ApiPropertyOptional({
+    description: 'ACTIVO o INACTIVO. Si se omite se asume ACTIVO',
+    enum: BulkUserEstado,
+    example: 'ACTIVO',
+  })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  estado?: string;
 }
 
 export class ProcessBulkUsersRequestDto {

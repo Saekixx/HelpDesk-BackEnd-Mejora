@@ -17,7 +17,7 @@ import { UserOptions } from '../../dtos/user-options.dto';
 const ROLES_TECNICOS: string[] = [
   RolEnum.ADMINISTRADOR,
   RolEnum.SOPORTE_INSITU,
-  RolEnum.SOPORTE_REMOTO,
+  RolEnum.SOPORTE_TECNICO,
 ];
 
 const ROLES_CLIENTES: string[] = [

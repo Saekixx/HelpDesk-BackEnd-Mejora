@@ -78,7 +78,8 @@ export class UpdateUserUseCase {
 
     switch (rolNombre) {
       case 'ADMINISTRADOR':
-      case 'SOPORTE_REMOTO':
+      case 'SOPORTE_INSITU':
+      case 'SOPORTE_TECNICO':
         break;
 
       case 'SOPORTE_INSITU':

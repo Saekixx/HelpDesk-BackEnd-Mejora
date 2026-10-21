@@ -53,7 +53,7 @@ export class EquipoController {
   ) {}
 
   @Get()
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindAllEquiposSwagger()
   async findAll(@Query() query: GetEquiposQueryDto) {
     const { data, ...meta } = await this.getEquiposUseCase.execute(query);
@@ -64,7 +64,7 @@ export class EquipoController {
   }
 
   @Get(':id')
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindEquipoByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const data = await this.getEquipoByIdUseCase.execute(id);

@@ -59,8 +59,8 @@ INSERT INTO area (nombre_area, contacto, telefono, correo, id_sucursal, is_activ
 ('Contabilidad', 'Ana Gomez', '01-444-5557', 'contabilidad@innovaciontech.com', 1, TRUE, NOW(), NOW());
 
 -- 7. Insertar Usuarios
--- ID 1: Administrador
--- ID 2: Soporte Técnico Remoto
+-- ID 1: Administrador 
+-- ID 2: Soporte Técnico Remoto (Ana López)
 -- ID 3: Soporte InSitu (Luis Torres)
 -- ID 4: Cliente Empresa (Carlos Mendoza)
 -- ID 5: Cliente Sucursal (María Vargas)

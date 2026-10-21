@@ -1,5 +1,6 @@
 import {
   BulkAreaLookup,
+  BulkClienteLookup,
   BulkSucursalLookup,
 } from '../criteria/bulk-user-lookup.criteria';
 
@@ -8,7 +9,8 @@ export const BULK_USER_LOOKUP_PORT = 'BULK_USER_LOOKUP_PORT';
 
 // Consultas de referencia (empresa, sucursales, áreas) usadas al pre-validar una carga masiva
 export interface BulkUserLookupPort {
-  existsCliente(idCliente: number): Promise<boolean>;
+  // Empresa destino de la carga; null si no existe
+  findCliente(idCliente: number): Promise<BulkClienteLookup | null>;
 
   // Sucursales que pertenecen estrictamente a la empresa indicada
   findSucursalesByCliente(idCliente: number): Promise<BulkSucursalLookup[]>;

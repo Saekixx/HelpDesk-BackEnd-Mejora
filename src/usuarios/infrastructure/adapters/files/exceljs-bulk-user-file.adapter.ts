@@ -5,7 +5,10 @@ import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { BulkUserFilePort } from '@/usuarios/domain/ports/bulk-user-file.port';
 import {
   BULK_USER_COLUMNS,
+  BULK_USER_ESTADO_POR_DEFECTO,
+  BULK_USER_OPTIONAL_COLUMNS,
   BulkUserColumn,
+  BulkUserEstado,
   BulkUserFileFormat,
   BulkUserRow,
 } from '@/usuarios/domain/criteria/bulk-user-row.criteria';
@@ -18,8 +21,16 @@ const COLUMN_GUIDE: Record<BulkUserColumn, [string, string]> = {
   apellido: ['Sí', 'Apellido del usuario.'],
   correo: ['Sí', 'Correo electrónico único; no debe estar registrado.'],
   rol: ['Sí', `Uno de: ${Object.values(RolEnum).join(', ')}.`],
+  empresa: [
+    'No',
+    'Nombre de la empresa. Si se indica, debe coincidir con la empresa seleccionada para la carga.',
+  ],
   sucursal: ['No', 'Nombre exacto de la sucursal registrada.'],
   area: ['No', 'Nombre exacto del área registrada.'],
+  estado: [
+    'No',
+    `Uno de: ${Object.values(BulkUserEstado).join(', ')}. Si se deja vacío se asume ${BULK_USER_ESTADO_POR_DEFECTO}.`,
+  ],
 };
 
 @Injectable()
@@ -36,8 +47,9 @@ export class ExcelJsBulkUserFileAdapter implements BulkUserFilePort {
     sheet.getRow(1).font = { bold: true };
     sheet.views = [{ state: 'frozen', ySplit: 1 }];
 
-    // Lista desplegable en la columna "rol" con los roles válidos
+    // Listas desplegables: "rol" (roles válidos) y "estado" (ACTIVO / INACTIVO)
     const rolColumn = BULK_USER_COLUMNS.indexOf('rol') + 1;
+    const estadoColumn = BULK_USER_COLUMNS.indexOf('estado') + 1;
     for (let row = 2; row <= MAX_TEMPLATE_ROWS + 1; row++) {
       sheet.getCell(row, rolColumn).dataValidation = {
         type: 'list',
@@ -46,6 +58,14 @@ export class ExcelJsBulkUserFileAdapter implements BulkUserFilePort {
         showErrorMessage: true,
         errorTitle: 'Rol inválido',
         error: 'Selecciona un rol de la lista.',
+      };
+      sheet.getCell(row, estadoColumn).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${Object.values(BulkUserEstado).join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Estado inválido',
+        error: 'Selecciona ACTIVO o INACTIVO.',
       };
     }
 
@@ -104,7 +124,10 @@ export class ExcelJsBulkUserFileAdapter implements BulkUserFilePort {
       if (BULK_USER_COLUMNS.includes(name)) columnIndex.set(name, index);
     });
 
-    const missing = BULK_USER_COLUMNS.filter((c) => !columnIndex.has(c));
+    // "empresa" y "estado" son opcionales: así siguen siendo válidas las plantillas anteriores
+    const missing = BULK_USER_COLUMNS.filter(
+      (c) => !columnIndex.has(c) && !BULK_USER_OPTIONAL_COLUMNS.includes(c),
+    );
     if (missing.length) {
       throw new InvalidBulkFileException(
         `faltan las columnas: ${missing.join(', ')}`,
@@ -115,10 +138,10 @@ export class ExcelJsBulkUserFileAdapter implements BulkUserFilePort {
     sheet.eachRow((row, fila) => {
       if (fila === 1) return;
       const values = Object.fromEntries(
-        BULK_USER_COLUMNS.map((c) => [
-          c,
-          row.getCell(columnIndex.get(c)!).text.trim(),
-        ]),
+        BULK_USER_COLUMNS.map((c) => {
+          const index = columnIndex.get(c);
+          return [c, index === undefined ? '' : row.getCell(index).text.trim()];
+        }),
       ) as Record<BulkUserColumn, string>;
       if (Object.values(values).some(Boolean)) rows.push({ fila, ...values });
     });
