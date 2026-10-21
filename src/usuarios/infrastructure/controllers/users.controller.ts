@@ -9,12 +9,13 @@ import {
   Patch,
   Post,
   Query,
-  StreamableFile,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
@@ -97,17 +98,21 @@ export class UsersController {
     };
   }
 
+  // Descarga binaria
   @Get('carga-masiva/plantilla')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(RolEnum.ADMINISTRADOR)
   @ApiDownloadBulkUserTemplateSwagger()
-  async downloadBulkUserTemplate() {
+  async downloadBulkUserTemplate(
+    @Res({ passthrough: false }) res: Response,
+  ): Promise<void> {
     const { buffer, filename, mimeType } =
       await this.getBulkUserTemplateUseCase.execute();
-    return new StreamableFile(buffer, {
-      type: mimeType,
-      disposition: `attachment; filename="${filename}"`,
-    });
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', buffer.length);
+    res.status(HttpStatus.OK).send(buffer);
   }
 
   // Pre-validación: no crea ni modifica usuarios, solo analiza el archivo contra la BD
