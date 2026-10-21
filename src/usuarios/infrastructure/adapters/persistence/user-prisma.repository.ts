@@ -138,6 +138,16 @@ export class UserPrismaRepository implements UserRepositoryPort {
           clientes: { select: { nombre_principal: true } },
           sucursales: { select: { nombre_sucursal: true } },
           area: { select: { nombre_area: true } },
+          tecnicos_zonas: {
+            include: {
+              zonas: {
+                select: {
+                  id_zona: true,
+                  nombre_zona: true,
+                },
+              },
+            },
+          },
         },
       }),
       this.prisma.usuarios.count({ where }),

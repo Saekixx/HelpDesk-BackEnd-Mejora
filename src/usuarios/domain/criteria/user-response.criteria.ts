@@ -21,4 +21,6 @@ export class UserResponseCriteria {
   nombre_cliente?: string | null;
   nombre_sucursal?: string | null;
   nombre_area?: string | null;
+
+  zonas?: { id_zona: number; nombre_zona: string }[];
 }

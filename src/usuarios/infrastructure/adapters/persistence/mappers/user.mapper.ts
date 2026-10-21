@@ -9,6 +9,12 @@ export type PrismaUserWithRelations = PrismaUsuario & {
   clientes?: { nombre_principal: string } | null;
   sucursales?: { nombre_sucursal: string } | null;
   area?: { nombre_area: string } | null;
+  tecnicos_zonas?: Array<{
+    zonas: {
+      id_zona: number;
+      nombre_zona: string;
+    };
+  }>;
 };
 
 // Tipo para consultas de Prisma que solo devuelven opciones de usuario
@@ -73,6 +79,14 @@ export class UserMapper {
       nombre_cliente: entity.clientes?.nombre_principal || null,
       nombre_sucursal: entity.sucursales?.nombre_sucursal || null,
       nombre_area: entity.area?.nombre_area || null,
+
+      // Mapeo seguro de las zonas
+      zonas: entity.tecnicos_zonas
+        ? entity.tecnicos_zonas.map((tz) => ({
+            id_zona: tz.zonas.id_zona,
+            nombre_zona: tz.zonas.nombre_zona,
+          }))
+        : [],
     };
   }
 
