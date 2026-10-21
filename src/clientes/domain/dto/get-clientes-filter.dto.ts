@@ -1,14 +1,19 @@
 // src/clientes/domain/dto/get-clientes-filter.dto.ts
 
-import { TipoCliente } from '../entities/cliente.entity';
+import { EstadoCliente, TipoCliente } from '../entities/cliente.entity';
 
 // Criterio de filtro de dominio para el listado paginado de clientes.
-// Los valores por defecto (page=1, limit=10) se resuelven en la capa que
-// consuma este filtro (use case / adaptador de persistencia).
+// Los valores por defecto (page=1, limit=10) se resuelven en el caso de uso
+// (GetClientesUseCase) antes de llegar al puerto del repositorio.
 export interface GetClientesFilterDto {
+  // Búsqueda parcial por nombre/razón social, número de documento o correo
   search?: string;
   tipo_cliente?: TipoCliente;
+  // true => "activo", false => "inactivo". Si se omite, retorna ambos.
   is_active?: boolean;
+  // Equivalente legible de `is_active` ("activo" | "inactivo"), usado por el
+  // Si llegan ambos, prevalece `is_active`.
+  estado?: EstadoCliente;
   page?: number;
   limit?: number;
 }

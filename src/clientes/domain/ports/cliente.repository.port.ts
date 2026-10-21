@@ -12,13 +12,18 @@ import {
 
 export const CLIENTE_REPOSITORY = 'CLIENTE_REPOSITORY';
 
-// Resultado paginado para el listado de clientes
-export interface PaginatedClientesResult {
-  data: ClienteListItem[];
+// Metadatos de paginación del listado de clientes
+export interface PaginationMeta {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+}
+
+// Resultado paginado para el listado de clientes: { data, meta }
+export interface PaginatedClientesResult {
+  data: ClienteListItem[];
+  meta: PaginationMeta;
 }
 
 // Sucursales a crear junto con el cliente (POST /clientes)
@@ -37,6 +42,10 @@ export interface ActualizarClienteSucursalesInput {
 }
 
 export interface ClienteRepositoryPort {
+  // Listado paginado de clientes (GET /clientes). Aplica los filtros
+  // opcionales (search, tipo_cliente, is_active) y la paginación
+  // (page, limit) del criterio recibido, y retorna cada cliente con la
+  // estructura de `ClienteListItem` junto con `meta` de paginación.
   findAll(filter: GetClientesFilterDto): Promise<PaginatedClientesResult>;
   findById(id: number): Promise<ClienteDetail | null>;
   create(

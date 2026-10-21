@@ -50,11 +50,11 @@ export class ClienteController {
   @Get()
   @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
   @ApiFindAllClientesSwagger()
-  async findAll(@Query() query: GetClientesQueryDto) {
-    const data = await this.getClientesUseCase.execute(query);
+  async findAll(@Query() filter: GetClientesQueryDto) {
+    const { data, meta } = await this.getClientesUseCase.execute(filter);
     return {
       message: 'Clientes obtenidos exitosamente',
-      data,
+      data: { data, meta },
     };
   }
 

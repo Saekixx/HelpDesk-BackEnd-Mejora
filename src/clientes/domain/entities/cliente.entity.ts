@@ -63,14 +63,29 @@ export class Cliente {
   }
 }
 
-export interface ClienteListItem extends Cliente {
-  // Cantidad total de sucursales del cliente (Prisma: _count.sucursales)
-  total_sucursales: number;
-  plan: { id_plan: number; nombre: string } | null;
+// Estado legible del cliente
+export type EstadoCliente = 'activo' | 'inactivo';
+
+// Vista de lista usada por GET /clientes (Listado Avanzado de Clientes).
+export interface ClienteListItem {
+  id_cliente: number;
+  // Nombre (persona natural) o Razón Social (persona jurídica)
+  nombre_principal: string;
+  // Rubro o sector económico (ej. "Sector Financiero & Banca")
+  rubro: string;
+  tipo_cliente: TipoCliente;
+  // RUC o DNI
+  numero_documento: string;
+  // Cantidad de sucursales asociadas
+  totalSucursales: number;
+  // Nombre del plan de soporte asignado.
+  // null si el cliente no tiene un plan asignado.
+  planSoporte: string | null;
+  estado: EstadoCliente;
 }
 
 
-// Resumen del plan contratado por el cliente (Prisma: relación `planes`)
+// Resumen del plan contratado por el cliente
 export interface PlanSummary {
   id_plan: number;
   nombre: string;
@@ -80,7 +95,7 @@ export interface PlanSummary {
   is_active?: boolean;
 }
 
-// Resumen de cada sucursal asociada al cliente (Prisma: relación `sucursales`)
+// Resumen de cada sucursal asociada al cliente
 export interface SucursalSummary {
   id_sucursal: number;
   nombre: string;

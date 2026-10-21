@@ -1,15 +1,29 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsInt, IsEnum, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsInt,
+  IsEnum,
+  IsIn,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
-import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
+import {
+  EstadoCliente,
+  TipoCliente,
+} from '@/clientes/domain/entities/cliente.entity';
 
 export class GetClientesQueryDto implements GetClientesFilterDto {
   @ApiPropertyOptional({
-    description: 'Término de búsqueda (nombre, documento o correo)',
+    description:
+      'Búsqueda parcial por nombre/razón social, documento (RUC/DNI) o correo',
     example: 'Acme',
   })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   search?: string;
 
@@ -40,6 +54,18 @@ export class GetClientesQueryDto implements GetClientesFilterDto {
   is_active?: boolean;
 
   @ApiPropertyOptional({
+    enum: ['activo', 'inactivo'],
+    description:
+      'Filtrar por estado ("activo" | "inactivo"). Equivale a is_active; si se envían ambos, prevalece is_active.',
+    example: 'activo',
+  })
+  @IsOptional()
+  @IsIn(['activo', 'inactivo'], {
+    message: 'El estado debe ser "activo" o "inactivo"',
+  })
+  estado?: EstadoCliente;
+
+  @ApiPropertyOptional({
     description: 'Número de página para la paginación',
     default: 1,
     example: 1,
@@ -52,14 +78,16 @@ export class GetClientesQueryDto implements GetClientesFilterDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Cantidad de registros por página',
+    description: 'Cantidad de registros por página (máximo 100)',
     default: 10,
     example: 10,
     minimum: 1,
+    maximum: 100,
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number = 10;
 }
