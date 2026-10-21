@@ -12,7 +12,7 @@ import {
 } from '@/clientes/domain/entities/cliente.entity';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
 import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
-import { ClienteMapper } from './mappers/cliente.mapper';
+import { ClienteMapper, CLIENTE_LIST_SELECT } from './mappers/cliente.mapper';
 import { Prisma, clientes_tipo_cliente } from '@prisma/client';
 import { OptionDto } from '../../dtos/options.response.dto';
 
@@ -23,25 +23,9 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
   async findAll(
     filter: GetClientesFilterDto,
   ): Promise<PaginatedClientesResult> {
-    const { page = 1, limit = 10, search, tipo_cliente, is_active } = filter;
+    const { page = 1, limit = 10 } = filter;
 
-    const where: Prisma.clientesWhereInput = {};
-
-    if (search) {
-      where.OR = [
-        { nombre_principal: { contains: search } },
-        { numero_documento: { contains: search } },
-        { correo: { contains: search } },
-      ];
-    }
-
-    if (tipo_cliente !== undefined) {
-      where.tipo_cliente = tipo_cliente as unknown as clientes_tipo_cliente;
-    }
-
-    if (is_active !== undefined) {
-      where.is_active = is_active;
-    }
+    const where = this.buildWhere(filter);
 
     const skip = (page - 1) * limit;
 
@@ -50,22 +34,56 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
         where,
         skip,
         take: limit,
-        orderBy: { created_at: 'desc' },
-        include: {
-          planes: { select: { id_plan: true, tipo: true } },
-          _count: { select: { sucursales: true } },
-        },
+        // id_cliente como desempate para que la paginación sea estable
+        orderBy: [{ created_at: 'desc' }, { id_cliente: 'desc' }],
+        select: CLIENTE_LIST_SELECT,
       }),
       this.prisma.clientes.count({ where }),
     ]);
 
     return {
       data: entities.map(ClienteMapper.toListItem),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
+  }
+
+  // Construye el criterio de filtrado del listado a partir de los query params.
+  // - search: coincidencia parcial (contains) en nombre/razón social
+  //   (`nombre_principal`), número de documento y correo. En MySQL la
+  //   comparación ya es insensible a mayúsculas por la collation de la
+  //   columna, por eso no se usa `mode: 'insensitive'` (solo existe en
+  //   PostgreSQL/MongoDB).
+  // - tipo_cliente: enum JURIDICA | NATURAL.
+  // - is_active / estado: clientes activos o inactivos (prevalece is_active).
+  private buildWhere(filter: GetClientesFilterDto): Prisma.clientesWhereInput {
+    const { search, tipo_cliente, is_active, estado } = filter;
+    const where: Prisma.clientesWhereInput = {};
+
+    const term = search?.trim();
+    if (term) {
+      where.OR = [
+        { nombre_principal: { contains: term } },
+        { numero_documento: { contains: term } },
+        { correo: { contains: term } },
+      ];
+    }
+
+    if (tipo_cliente !== undefined) {
+      where.tipo_cliente = tipo_cliente as unknown as clientes_tipo_cliente;
+    }
+
+    const activo =
+      is_active ?? (estado !== undefined ? estado === 'activo' : undefined);
+    if (activo !== undefined) {
+      where.is_active = activo;
+    }
+
+    return where;
   }
 
   async findById(id: number): Promise<ClienteDetail | null> {

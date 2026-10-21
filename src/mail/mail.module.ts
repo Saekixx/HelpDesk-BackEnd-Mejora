@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 // Casos de Uso de Email
 import { SendResetPasswordEmailUseCase } from './application/send-reset-password-email.use-case';
 import { SendVerificationEmailUseCase } from './application/send-verification-email.use-case';
+import { SendFirstAccessEmailUseCase } from './application/send-first-access-email.use-case';
 
 @Module({
   imports: [
@@ -34,11 +35,16 @@ import { SendVerificationEmailUseCase } from './application/send-verification-em
       },
     }),
   ],
-  providers: [SendResetPasswordEmailUseCase, SendVerificationEmailUseCase],
+  providers: [
+    SendResetPasswordEmailUseCase,
+    SendVerificationEmailUseCase,
+    SendFirstAccessEmailUseCase,
+  ],
   exports: [
     MailerModule,
     SendResetPasswordEmailUseCase,
     SendVerificationEmailUseCase,
+    SendFirstAccessEmailUseCase,
   ],
 })
 export class MailModule {}

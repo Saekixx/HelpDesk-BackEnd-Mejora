@@ -12,12 +12,24 @@ import {
   TipoCliente,
 } from '@/clientes/domain/entities/cliente.entity';
 
-// Forma del resultado de Prisma cuando el findAll incluye el conteo de
-// sucursales y los datos del plan (ver ClientePrismaRepository.findAll).
-type PrismaClienteConDetalle = PrismaCliente & {
-  _count: { sucursales: number };
-  planes: { id_plan: number; tipo: string } | null;
-};
+// Selección mínima que usa el listado paginado (GET /clientes): solo las
+// columnas que necesita ClienteListItem, el nombre del plan (planes.tipo) y el
+// conteo de sucursales. Se reutiliza en ClientePrismaRepository.findAll.
+export const CLIENTE_LIST_SELECT = {
+  id_cliente: true,
+  nombre_principal: true,
+  rubro: true,
+  tipo_cliente: true,
+  numero_documento: true,
+  is_active: true,
+  planes: { select: { tipo: true } },
+  _count: { select: { sucursales: true } },
+} satisfies Prisma.clientesSelect;
+
+// Forma del resultado de Prisma al consultar con CLIENTE_LIST_SELECT.
+export type PrismaClienteListRow = Prisma.clientesGetPayload<{
+  select: typeof CLIENTE_LIST_SELECT;
+}>;
 
 // Forma del resultado de Prisma cuando el findById incluye el plan completo
 // y el listado de sucursales (ver ClientePrismaRepository.findById).
@@ -49,16 +61,17 @@ export class ClienteMapper {
     });
   }
 
-  // Usado únicamente por el listado paginado (GET /clientes), donde el
-  // repositorio incluye _count.sucursales y la relación `planes`.
-  static toListItem(entity: PrismaClienteConDetalle): ClienteListItem {
-    const cliente = ClienteMapper.toDomain(entity);
+  // Usado únicamente por el listado paginado (GET /clientes).
+  static toListItem(entity: PrismaClienteListRow): ClienteListItem {
     return {
-      ...cliente,
-      total_sucursales: entity._count.sucursales,
-      plan: entity.planes
-        ? { id_plan: entity.planes.id_plan, nombre: entity.planes.tipo }
-        : null,
+      id_cliente: entity.id_cliente,
+      nombre_principal: entity.nombre_principal,
+      rubro: entity.rubro ?? '',
+      tipo_cliente: entity.tipo_cliente as unknown as TipoCliente,
+      numero_documento: entity.numero_documento ?? '',
+      totalSucursales: entity._count.sucursales,
+      planSoporte: entity.planes?.tipo ?? null,
+      estado: (entity.is_active ?? true) ? 'activo' : 'inactivo',
     };
   }
 

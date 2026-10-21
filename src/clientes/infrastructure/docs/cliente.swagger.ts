@@ -10,6 +10,7 @@ import {
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
 import { ClienteDetailResponseDto } from '../dtos/cliente-detail-response.dto';
+import { PaginatedClientesResponseDto } from '../dtos/cliente-list-response.dto';
 
 const CLIENTE_EJEMPLO = {
   id_cliente: 1,
@@ -26,6 +27,17 @@ const CLIENTE_EJEMPLO = {
   limite_equipos_contratado: 20,
   id_plan: 1,
   is_active: true,
+};
+
+const CLIENTE_LIST_ITEM_EJEMPLO = {
+  id_cliente: 1,
+  nombre_principal: 'Banco Andino S.A.',
+  rubro: 'Sector Financiero & Banca',
+  tipo_cliente: 'JURIDICA',
+  numero_documento: '20123456789',
+  totalSucursales: 3,
+  planSoporte: 'Plan Premium',
+  estado: 'activo',
 };
 
 const CLIENTE_DETAIL_EJEMPLO = {
@@ -65,23 +77,34 @@ const CLIENTE_DETAIL_EJEMPLO = {
 
 export function ApiFindAllClientesSwagger() {
   return applyDecorators(
+    ApiExtraModels(PaginatedClientesResponseDto),
     ApiOperation({
-      summary: 'Listar clientes',
+      summary: 'Listar clientes (Listado Avanzado)',
       description:
-        'Retorna un listado paginado de clientes (empresas), con filtro opcional por texto de búsqueda y estado activo/inactivo.',
+        'Retorna un listado paginado de clientes con id, nombre/razón social, rubro, tipo, documento, total de sucursales, plan de soporte y estado. Admite búsqueda parcial (nombre/razón social, documento o correo), filtro por tipo de cliente, estado (`is_active` o `estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
     }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Clientes obtenidos exitosamente.',
       schema: {
+        allOf: [
+          {
+            properties: {
+              message: { type: 'string' },
+              data: { $ref: getSchemaPath(PaginatedClientesResponseDto) },
+            },
+          },
+        ],
         example: {
           message: 'Clientes obtenidos exitosamente',
           data: {
-            data: [CLIENTE_EJEMPLO],
-            total: 1,
-            page: 1,
-            limit: 10,
-            totalPages: 1,
+            data: [CLIENTE_LIST_ITEM_EJEMPLO],
+            meta: {
+              total: 1,
+              page: 1,
+              limit: 10,
+              totalPages: 1,
+            },
           },
         },
       },
