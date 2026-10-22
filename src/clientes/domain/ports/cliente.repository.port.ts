@@ -2,6 +2,7 @@ import {
   Cliente,
   ClienteListItem,
   ClienteDetail,
+  ClienteDetailView,
 } from '../entities/cliente.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetClientesFilterDto } from '../dto/get-clientes-filter.dto';
@@ -49,6 +50,10 @@ export interface ClienteRepositoryPort {
   // estructura de `ClienteListItem` junto con `meta` de paginación.
   findAll(filter: GetClientesFilterDto): Promise<PaginatedClientesResult>;
   findById(id: number): Promise<ClienteDetail | null>;
+  // Detalle de un cliente específico (GET /clientes/:id):
+  // plan, contacto de enlace y solo las sucursales activas (la principal
+  // primero) con su total de equipos. Retorna null si el cliente no existe.
+  findDetailById(id: number): Promise<ClienteDetailView | null>;
   create(
     cliente: Cliente,
     sucursales: NuevoClienteSucursalesInput,
