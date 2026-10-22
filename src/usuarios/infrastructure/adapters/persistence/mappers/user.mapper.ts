@@ -1,15 +1,26 @@
-import { usuarios as PrismaUsuario } from '@prisma/client';
-import { UserResponseDto } from '@/usuarios/application/dtos/user-response.dto';
+import { Prisma, usuarios as PrismaUsuario } from '@prisma/client';
 import { User } from '@/usuarios/domain/entities/user.entity';
 import { UserOptions } from '@/usuarios/domain/criteria/user-options.dto';
+import { UserListItemCriteria } from '@/usuarios/domain/criteria/user-list-item.criteria';
 
-// Tipo para consultas de Prisma que incluyen relaciones con otras tablas
-export type PrismaUserWithRelations = PrismaUsuario & {
-  rol?: { nombre: string } | null;
-  clientes?: { nombre_principal: string } | null;
-  sucursales?: { nombre_sucursal: string } | null;
-  area?: { nombre_area: string } | null;
-};
+// Selección mínima del listado paginado (GET /usuario): solo las columnas de
+// UserListItemCriteria y el nombre de cada relación (nunca se trae el password).
+export const USER_LIST_SELECT = {
+  id_usuario: true,
+  nombre: true,
+  apellido: true,
+  correo: true,
+  is_active: true,
+  rol: { select: { nombre: true } },
+  clientes: { select: { nombre_principal: true } },
+  sucursales: { select: { nombre_sucursal: true } },
+  area: { select: { nombre_area: true } },
+} satisfies Prisma.usuariosSelect;
+
+// Forma del resultado de Prisma al consultar con USER_LIST_SELECT
+export type PrismaUserListRow = Prisma.usuariosGetPayload<{
+  select: typeof USER_LIST_SELECT;
+}>;
 
 // Tipo para consultas de Prisma que solo devuelven opciones de usuario
 type PrismaUserSelectOption = {
@@ -53,26 +64,18 @@ export class UserMapper {
     };
   }
 
-  static toResponseDto(entity: PrismaUserWithRelations): UserResponseDto {
+  // Usado únicamente por el listado paginado (GET /usuario)
+  static toListItem(entity: PrismaUserListRow): UserListItemCriteria {
     return {
       id_usuario: entity.id_usuario,
       nombre: entity.nombre,
       apellido: entity.apellido,
       correo: entity.correo ?? '',
-      telefono: entity.telefono ?? '',
-      is_active: entity.is_active ?? true,
-      createdAt: entity.created_at ?? new Date(),
-      updatedAt: entity.updated_at ?? new Date(),
-
-      id_rol: entity.id_rol ?? 0,
-      id_cliente: entity.id_cliente ?? null,
-      id_sucursal: entity.id_sucursal ?? null,
-      id_area: entity.id_area ?? null,
-
-      nombre_rol: entity.rol?.nombre || 'Sin Rol',
-      nombre_cliente: entity.clientes?.nombre_principal || null,
-      nombre_sucursal: entity.sucursales?.nombre_sucursal || null,
-      nombre_area: entity.area?.nombre_area || null,
+      rol: entity.rol?.nombre ?? 'Sin Rol',
+      empresa: entity.clientes?.nombre_principal ?? null,
+      sucursal: entity.sucursales?.nombre_sucursal ?? null,
+      area: entity.area?.nombre_area ?? null,
+      estado: (entity.is_active ?? true) ? 'ACTIVO' : 'INACTIVO',
     };
   }
 

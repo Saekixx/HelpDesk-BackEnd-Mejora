@@ -8,7 +8,7 @@ import { User } from '@/usuarios/domain/entities/user.entity';
 import { UserFilterCriteria } from '@/usuarios/domain/criteria/user-filter.criteria';
 import { UserStatsCriteria } from '@/usuarios/domain/criteria/user-stats.criteria';
 import { RolEnum } from '@/auth/domain/enums/rol.enum';
-import { UserMapper } from './mappers/user.mapper';
+import { UserMapper, USER_LIST_SELECT } from './mappers/user.mapper';
 import { UsersBatchConflictException } from '@/usuarios/domain/exceptions/user.exceptions';
 import { Prisma } from '@prisma/client';
 import { UserSelectFilterDto } from '../../dtos/user-select-filter-dto';
@@ -139,66 +139,59 @@ export class UserPrismaRepository implements UserRepositoryPort {
   async findAllWithFilters(
     filters: UserFilterCriteria,
   ): Promise<PaginatedUsersResult> {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      id_rol,
-      id_cliente,
-      id_sucursal,
-      id_area,
-      is_active,
-    } = filters;
-
-    const where: Prisma.usuariosWhereInput = {};
-
-    if (search) {
-      where.OR = [
-        { nombre: { contains: search } },
-        { apellido: { contains: search } },
-        { correo: { contains: search } },
-      ];
-    }
-
-    if (id_rol) where.id_rol = id_rol;
-    if (id_cliente) where.id_cliente = id_cliente;
-    if (id_sucursal) where.id_sucursal = id_sucursal;
-    if (id_area) where.id_area = id_area;
-
-    if (
-      is_active !== undefined &&
-      is_active !== null &&
-      String(is_active) !== ''
-    ) {
-      where.is_active =
-        is_active === true || String(is_active).toLowerCase() === 'true';
-    }
-
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 10 } = filters;
+    const where = this.buildListWhere(filters);
 
     const [entities, total] = await Promise.all([
       this.prisma.usuarios.findMany({
         where,
-        skip,
+        skip: (page - 1) * limit,
         take: limit,
-        orderBy: { created_at: 'desc' },
-        include: {
-          rol: { select: { nombre: true } },
-          clientes: { select: { nombre_principal: true } },
-          sucursales: { select: { nombre_sucursal: true } },
-          area: { select: { nombre_area: true } },
-        },
+        // id_usuario como desempate: las cargas masivas comparten created_at
+        // y la paginación debe ser estable
+        orderBy: [{ created_at: 'desc' }, { id_usuario: 'desc' }],
+        select: USER_LIST_SELECT,
       }),
       this.prisma.usuarios.count({ where }),
     ]);
 
     return {
-      data: entities.map(UserMapper.toResponseDto),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      data: entities.map(UserMapper.toListItem),
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
+  }
+
+  // Construye el criterio del listado a partir de los query params.
+  // - search: coincidencia parcial en nombre, apellido, correo y nombre de la empresa.
+  // - id_rol / rol: filtro por rol (prevalece id_rol si llegan ambos).
+  // - is_active / estado: usuarios activos o inactivos (prevalece is_active).
+  private buildListWhere({
+    search,
+    id_rol,
+    rol,
+    is_active,
+    estado,
+  }: UserFilterCriteria): Prisma.usuariosWhereInput {
+    const where: Prisma.usuariosWhereInput = {};
+
+    const term = search?.trim();
+    if (term) {
+      where.OR = [
+        { nombre: { contains: term } },
+        { apellido: { contains: term } },
+        { correo: { contains: term } },
+        { clientes: { nombre_principal: { contains: term } } },
+      ];
+    }
+
+    if (id_rol !== undefined) where.id_rol = id_rol;
+    else if (rol) where.rol = { nombre: rol };
+
+    const activo =
+      is_active ?? (estado !== undefined ? estado === 'activo' : undefined);
+    if (activo !== undefined) where.is_active = activo;
+
+    return where;
   }
 
   async findActiveRolUsers(
