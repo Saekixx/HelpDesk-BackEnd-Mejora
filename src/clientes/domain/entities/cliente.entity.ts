@@ -204,3 +204,30 @@ export interface CreateClienteResult {
   sucursal_principal_id: number;
   usuario_responsable_id: number;
 }
+
+// ---------------------------------------------------------------------------
+// Comando de actualización (PATCH /clientes/:id) para el modal de edición de
+// cliente: Razón Social, RUC/Documento, Rubro y Plan de Soporte.
+// Es un tipo de dominio puro: lo implementa el DTO HTTP y lo consumirá el
+// caso de uso de actualización. Todos los campos son opcionales (PATCH
+// semántico): solo se modifican los campos enviados.
+// ---------------------------------------------------------------------------
+export interface UpdateClienteCommand {
+  // Razón Social (persona jurídica) o nombre (persona natural)
+  nombre_principal?: string;
+  // RUC o DNI
+  numero_documento?: string;
+  rubro?: string;
+  // Plan de Soporte
+  id_plan?: number;
+}
+
+// Resultado de la actualización: datos vigentes del cliente tras aplicar los
+// cambios. Es lo que devuelve el caso de uso y lo que adapta el DTO de respuesta.
+export interface UpdateClienteResult {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string;
+  rubro: string | null;
+  id_plan: number | null;
+}

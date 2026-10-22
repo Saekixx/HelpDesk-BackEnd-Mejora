@@ -23,6 +23,7 @@ import { GetClientesQueryDto } from '../dtos/get-clientes-query.dto';
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
 import { CreateClienteResponseDto } from '../dtos/create-cliente-response.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
+import { UpdateClienteResponseDto } from '../dtos/update-cliente-response.dto';
 import { ClienteDetailResponseDto } from '../dtos/cliente-detail-response.dto';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
@@ -116,7 +117,7 @@ export class ClienteController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateClienteRequestDto,
-  ) {
+  ): Promise<{ message: string; data: UpdateClienteResponseDto }> {
     const data = await this.updateClienteUseCase.execute(id, dto);
     return {
       message: 'Cliente actualizado exitosamente',

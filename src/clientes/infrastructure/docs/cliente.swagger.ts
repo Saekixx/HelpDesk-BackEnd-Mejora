@@ -10,6 +10,7 @@ import {
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
 import { CreateClienteResponseDto } from '../dtos/create-cliente-response.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
+import { UpdateClienteResponseDto } from '../dtos/update-cliente-response.dto';
 import { ClienteDetailResponseDto } from '../dtos/cliente-detail-response.dto';
 import { PaginatedClientesResponseDto } from '../dtos/cliente-list-response.dto';
 
@@ -444,40 +445,164 @@ export function ApiCreateClienteSwagger() {
   );
 }
 
+// Body de ejemplo de PATCH /clientes/:id (modal de edición de cliente:
+// Razón Social, RUC/Documento, Rubro y Plan de Soporte)
+const UPDATE_CLIENTE_REQUEST_EJEMPLO = {
+  nombre_principal: 'Acme Corp SAC',
+  numero_documento: '20123456789',
+  rubro: 'Sector Financiero & Banca',
+  id_plan: 2,
+};
+
+// Respuesta de ejemplo (campo `data`) de PATCH /clientes/:id
+const UPDATE_CLIENTE_RESPONSE_EJEMPLO = {
+  id_cliente: 1,
+  nombre_principal: 'Acme Corp SAC',
+  numero_documento: '20123456789',
+  rubro: 'Sector Financiero & Banca',
+  id_plan: 2,
+};
+
 export function ApiUpdateClienteSwagger() {
   return applyDecorators(
-    ApiOperation({ summary: 'Actualizar un cliente existente' }),
+    ApiExtraModels(UpdateClienteResponseDto),
+    ApiOperation({
+      summary: 'Actualizar los datos de un cliente',
+      description:
+        'Actualización parcial (PATCH) desde el modal de edición de cliente: Razón Social (`nombre_principal`), RUC/Documento (`numero_documento`), Rubro (`rubro`) y Plan de Soporte (`id_plan`). Todos los campos son opcionales, pero debe enviarse al menos uno; solo se modifican los campos enviados. Si el número de documento cambia, no debe pertenecer a otro cliente, y si se envía `id_plan` el plan debe existir. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
+    }),
     ApiParam({
       name: 'id',
       description: 'ID numérico del cliente a actualizar',
       example: 1,
     }),
-    ApiBody({ type: UpdateClienteRequestDto }),
+    ApiBody({
+      type: UpdateClienteRequestDto,
+      description:
+        'Campos a actualizar. Todos son opcionales, pero se requiere al menos uno.',
+      examples: {
+        completo: {
+          summary: 'Todos los campos del modal',
+          value: UPDATE_CLIENTE_REQUEST_EJEMPLO,
+        },
+        soloPlan: {
+          summary: 'Cambiar solo el plan de soporte',
+          value: { id_plan: 3 },
+        },
+        razonSocialYRubro: {
+          summary: 'Cambiar razón social y rubro',
+          value: {
+            nombre_principal: 'Acme Corporation SAC',
+            rubro: 'Retail',
+          },
+        },
+      },
+    }),
     ApiResponse({
       status: HttpStatus.OK,
-      description: 'Cliente actualizado exitosamente.',
+      description: 'Cliente actualizado exitosamente',
+      type: UpdateClienteResponseDto,
       schema: {
+        allOf: [
+          {
+            properties: {
+              status: { type: 'number', example: 200 },
+              message: {
+                type: 'string',
+                example: 'Cliente actualizado exitosamente',
+              },
+              data: { $ref: getSchemaPath(UpdateClienteResponseDto) },
+            },
+          },
+        ],
         example: {
+          status: 200,
           message: 'Cliente actualizado exitosamente',
-          data: CLIENTE_DETAIL_EJEMPLO,
+          data: UPDATE_CLIENTE_RESPONSE_EJEMPLO,
         },
       },
     }),
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
+      description:
+        'No se envió ningún campo a actualizar, el payload no pasa la validación (tipos, longitudes, propiedades no permitidas, `id` de ruta no numérico) o el plan indicado (`id_plan`) no existe.',
+      content: {
+        'application/json': {
+          examples: {
+            sinCampos: {
+              summary: 'Sin campos a actualizar',
+              value: {
+                status: 400,
+                message: 'Debe proporcionar al menos un campo para actualizar',
+                data: null,
+              },
+            },
+            validacion: {
+              summary: 'Error de validación del payload',
+              value: {
+                status: 400,
+                message:
+                  'La razón social no puede estar vacía, El ID de plan debe ser un número entero',
+                data: null,
+              },
+            },
+            planNoExiste: {
+              summary: 'El plan no existe',
+              value: {
+                status: 400,
+                message: 'El plan seleccionado no existe',
+                data: null,
+              },
+            },
+          },
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
+      schema: {
+        example: {
+          status: 401,
+          message: 'Token inválido o expirado',
+          data: null,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
+      description:
+        'El rol del usuario no tiene permiso para actualizar clientes (se requiere ADMINISTRADOR).',
+      schema: {
+        example: {
+          status: 403,
+          message: 'Forbidden resource',
+          data: null,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'El cliente no existe.',
+      schema: {
+        example: {
+          status: 404,
+          message: 'El cliente solicitado no existe',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'Conflicto: el número de documento (RUC/DNI) ya está registrado por otra empresa.',
+      schema: {
+        example: {
+          status: 409,
+          message: 'El número de documento ya está registrado por otra empresa',
+          data: null,
+        },
+      },
     }),
   );
 }

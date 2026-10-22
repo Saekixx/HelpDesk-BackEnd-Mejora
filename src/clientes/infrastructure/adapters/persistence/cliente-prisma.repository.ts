@@ -4,12 +4,12 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import {
   ClienteRepositoryPort,
   PaginatedClientesResult,
-  ActualizarClienteSucursalesInput,
 } from '@/clientes/domain/ports/cliente.repository.port';
 import {
   Cliente,
@@ -17,6 +17,8 @@ import {
   ClienteDetailView,
   CreateClienteCommand,
   CreateClienteResult,
+  UpdateClienteCommand,
+  UpdateClienteResult,
 } from '@/clientes/domain/entities/cliente.entity';
 import {
   HASH_SERVICE,
@@ -82,7 +84,7 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
 
   // Construye el criterio de filtrado del listado a partir de los query params.
   // - search: coincidencia parcial (contains) en nombre/razón social
-  //   (`nombre_principal`), número de documento y correo. 
+  //   (`nombre_principal`), número de documento y correo.
   // - tipo_cliente: enum JURIDICA | NATURAL.
   // - estado: "activo" | "inactivo", se mapea a la columna `is_active`.
   private buildWhere(filter: GetClientesFilterDto): Prisma.clientesWhereInput {
@@ -310,80 +312,112 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
     return error;
   }
 
+  // Actualización parcial de un cliente (PATCH /clientes/:id). Las
+  // validaciones y la escritura ocurren en una única transacción para que la
+  // comprobación de duplicados y el update vean el mismo estado.
   async update(
     id: number,
-    cliente: Cliente,
-    sucursales?: ActualizarClienteSucursalesInput,
-  ): Promise<ClienteDetail> {
-    const exists = await this.prisma.clientes.findUnique({
-      where: { id_cliente: id },
-    });
-    if (!exists) throw new ClienteNotFoundException();
-
-    // El id de ruta manda: se descarta cualquier id_cliente que venga en el payload
-    const { id_cliente: _ignored, ...data } =
-      ClienteMapper.toPersistence(cliente);
-
-    await this.prisma.$transaction(async (tx) => {
-      const clienteActualizado = await tx.clientes.update({
-        where: { id_cliente: id },
-        data,
-      });
-
-      if (sucursales?.principal) {
-        const principalExistente = await tx.sucursales.findFirst({
-          where: { id_cliente: id, is_principal: true },
+    command: UpdateClienteCommand,
+  ): Promise<UpdateClienteResult> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // a) Verificación de existencia
+        const actual = await tx.clientes.findUnique({
+          where: { id_cliente: id },
+          select: { id_cliente: true, numero_documento: true },
         });
-
-        if (principalExistente) {
-          // Merge parcial: Prisma ignora las claves ausentes/undefined
-          await tx.sucursales.update({
-            where: { id_sucursal: principalExistente.id_sucursal },
-            data: { ...sucursales.principal },
-          });
-        } else {
-          // Cliente legado sin sucursal principal marcada: se crea una nueva
-          await tx.sucursales.create({
-            data: {
-              nombre_sucursal:
-                sucursales.principal.nombre_sucursal ??
-                clienteActualizado.nombre_principal,
-              encargado: sucursales.principal.encargado ?? '',
-              telefono: sucursales.principal.telefono ?? '',
-              correo: sucursales.principal.correo ?? '',
-              direccion: sucursales.principal.direccion ?? '',
-              id_cliente: id,
-              is_active: true,
-              is_principal: true,
-            },
-          });
+        if (!actual) {
+          throw new NotFoundException('El cliente solicitado no existe');
         }
-      }
 
-      if (sucursales?.adicionales?.length) {
-        await tx.sucursales.createMany({
-          data: sucursales.adicionales.map((sucursal) => ({
-            ...sucursal,
-            id_cliente: id,
-            is_active: true,
-            is_principal: false,
-          })),
+        // b) Validación de duplicados: solo si el documento cambia
+        if (
+          command.numero_documento !== undefined &&
+          command.numero_documento !== actual.numero_documento
+        ) {
+          const duplicado = await tx.clientes.findUnique({
+            where: { numero_documento: command.numero_documento },
+            select: { id_cliente: true },
+          });
+          if (duplicado && duplicado.id_cliente !== id) {
+            throw new ConflictException(
+              'El número de documento ya está registrado por otra empresa',
+            );
+          }
+        }
+
+        // c) Validación del plan
+        if (command.id_plan !== undefined) {
+          const plan = await tx.planes.findUnique({
+            where: { id_plan: command.id_plan },
+            select: { id_plan: true },
+          });
+          if (!plan) {
+            throw new BadRequestException('El plan seleccionado no existe');
+          }
+        }
+
+        // d) Actualización: solo los campos definidos en el comando
+        const data: Prisma.clientesUncheckedUpdateInput = {
+          updated_at: new Date(),
+        };
+        if (command.nombre_principal !== undefined) {
+          data.nombre_principal = command.nombre_principal;
+        }
+        if (command.numero_documento !== undefined) {
+          data.numero_documento = command.numero_documento;
+        }
+        if (command.rubro !== undefined) data.rubro = command.rubro;
+        if (command.id_plan !== undefined) data.id_plan = command.id_plan;
+
+        const actualizado = await tx.clientes.update({
+          where: { id_cliente: id },
+          data,
+          select: {
+            id_cliente: true,
+            nombre_principal: true,
+            numero_documento: true,
+            rubro: true,
+            id_plan: true,
+          },
         });
-      }
 
-      return clienteActualizado;
-    });
-
-    const entityConRelaciones = await this.prisma.clientes.findUnique({
-      where: { id_cliente: id },
-      include: { planes: true, sucursales: true },
-    });
-
-    if (!entityConRelaciones) {
-      throw new ClienteNotFoundException();
+        // e) Resultado
+        return {
+          id_cliente: actualizado.id_cliente,
+          nombre_principal: actualizado.nombre_principal,
+          // La columna es nullable en BD, pero un cliente registrado siempre
+          // tiene documento.
+          numero_documento: actualizado.numero_documento ?? '',
+          rubro: actualizado.rubro,
+          id_plan: actualizado.id_plan,
+        };
+      });
+    } catch (error) {
+      throw this.translateUpdateError(error);
     }
+  }
 
-    return ClienteMapper.toDetail(entityConRelaciones);
+  // Traduce errores de Prisma de la actualización a excepciones HTTP:
+  // - P2002 (unique): otro cliente tomó el documento entre la validación y el
+  //   update (condición de carrera).
+  // - P2003 (foreign key): el plan fue eliminado entre la validación y el update.
+  // - P2025 (record not found): el cliente fue eliminado entre ambos pasos.
+  private translateUpdateError(error: unknown): unknown {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return new ConflictException(
+          'El número de documento ya está registrado por otra empresa',
+        );
+      }
+      if (error.code === 'P2003') {
+        return new BadRequestException('El plan seleccionado no existe');
+      }
+      if (error.code === 'P2025') {
+        return new NotFoundException('El cliente solicitado no existe');
+      }
+    }
+    return error;
   }
 
   async toggleStatus(id: number): Promise<Cliente> {
