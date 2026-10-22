@@ -156,3 +156,52 @@ export interface ClienteDetailView {
   // La sucursal principal (is_principal: true) siempre va primero
   sucursales_activas: SucursalActivaView[];
 }
+
+// ---------------------------------------------------------------------------
+// Comando de creación (POST /clientes) para el modal de registro de empresa
+// de 3 pasos: datos de la empresa, responsable y sucursal principal.
+// Es un tipo de dominio puro: lo implementa el DTO HTTP y lo consumirá el
+// caso de uso de registro.
+// ---------------------------------------------------------------------------
+
+// Paso 1: datos de la empresa
+export interface DatosEmpresaCommand {
+  tipo_cliente: TipoCliente;
+  numero_documento: string;
+  nombre_principal: string;
+  direccion?: string;
+  rubro?: string;
+  id_plan: number;
+}
+
+// Paso 2: persona responsable (se registra como usuario representante)
+export interface ResponsableCommand {
+  nombre: string;
+  apellido: string;
+  cargo?: string;
+  telefono: string;
+  correo: string;
+}
+
+// Paso 3: sucursal principal (is_principal es true cuando se omite)
+export interface SucursalPrincipalCommand {
+  nombre_sucursal: string;
+  encargado?: string;
+  direccion?: string;
+  is_principal?: boolean;
+}
+
+export interface CreateClienteCommand {
+  datos_empresa: DatosEmpresaCommand;
+  responsable: ResponsableCommand;
+  sucursal_principal: SucursalPrincipalCommand;
+}
+
+// Resultado del registro: identificadores de lo creado de forma atómica
+export interface CreateClienteResult {
+  id_cliente: number;
+  nombre_principal: string;
+  ruc: string;
+  sucursal_principal_id: number;
+  usuario_responsable_id: number;
+}
