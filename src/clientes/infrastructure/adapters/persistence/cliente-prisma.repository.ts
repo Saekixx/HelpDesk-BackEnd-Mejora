@@ -11,10 +11,15 @@ import {
   ClienteDetail,
 } from '@/clientes/domain/entities/cliente.entity';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
+import { ClienteStatsResult } from '@/clientes/domain/dto/cliente-stats.dto';
 import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
 import { ClienteMapper, CLIENTE_LIST_SELECT } from './mappers/cliente.mapper';
 import { Prisma, clientes_tipo_cliente } from '@prisma/client';
 import { OptionDto } from '../../dtos/options.response.dto';
+
+// Los planes no tienen columna "nombre": su denominación vive en `planes.tipo`
+// (ej. "Tech Enterprise"), por eso se busca la palabra clave por coincidencia parcial.
+const PLAN_ENTERPRISE_KEYWORD = 'Enterprise';
 
 @Injectable()
 export class ClientePrismaRepository implements ClienteRepositoryPort {
@@ -91,6 +96,40 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
     });
     if (!entity) return null;
     return ClienteMapper.toDetail(entity);
+  }
+
+  // KPIs del módulo de clientes. Las cinco consultas son independientes, por
+  // lo que se resuelven en paralelo.
+  async getStats(): Promise<ClienteStatsResult> {
+    const now = new Date();
+    const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [total, nuevosEsteMes, juridicos, naturales, enterprise] =
+      await Promise.all([
+        this.prisma.clientes.count(),
+        this.prisma.clientes.count({
+          where: { created_at: { gte: inicioMes } },
+        }),
+        this.prisma.clientes.count({
+          where: { tipo_cliente: clientes_tipo_cliente.JURIDICA },
+        }),
+        this.prisma.clientes.count({
+          where: { tipo_cliente: clientes_tipo_cliente.NATURAL },
+        }),
+        this.prisma.clientes.count({
+          where: {
+            is_active: true,
+            planes: { tipo: { contains: PLAN_ENTERPRISE_KEYWORD } },
+          },
+        }),
+      ]);
+
+    return {
+      totalClientes: { cantidad: total, nuevosEsteMes },
+      clientesJuridicos: { cantidad: juridicos },
+      clientesNaturales: { cantidad: naturales },
+      planesEnterprise: { cantidad: enterprise },
+    };
   }
 
   async existsByDocumento(numero_documento: string): Promise<boolean> {

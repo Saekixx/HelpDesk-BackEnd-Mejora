@@ -147,6 +147,39 @@ export function ApiGetClientesOptionsSwagger() {
   );
 }
 
+export function ApiGetClienteStatsSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Obtener estadísticas de clientes (KPIs)',
+      description:
+        'Retorna los indicadores de las tarjetas superiores de la vista de gestión de clientes: total de clientes (con los registrados en el mes actual), cantidad de clientes jurídicos y naturales, y cantidad de clientes activos con plan Enterprise.',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Estadísticas de clientes obtenidas exitosamente.',
+      schema: {
+        example: {
+          message: 'Estadísticas de clientes obtenidas exitosamente',
+          data: {
+            totalClientes: { cantidad: 18, nuevosEsteMes: 2 },
+            clientesJuridicos: { cantidad: 14 },
+            clientesNaturales: { cantidad: 4 },
+            planesEnterprise: { cantidad: 12 },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso de lectura.',
+    }),
+  );
+}
+
 export function ApiFindClienteByIdSwagger() {
   return applyDecorators(
     ApiExtraModels(ClienteDetailResponseDto),
