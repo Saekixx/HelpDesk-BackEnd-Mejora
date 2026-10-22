@@ -3,6 +3,8 @@ import {
   ClienteListItem,
   ClienteDetail,
   ClienteDetailView,
+  CreateClienteCommand,
+  CreateClienteResult,
 } from '../entities/cliente.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetClientesFilterDto } from '../dto/get-clientes-filter.dto';
@@ -28,12 +30,6 @@ export interface PaginatedClientesResult {
   meta: PaginationMeta;
 }
 
-// Sucursales a crear junto con el cliente (POST /clientes)
-export interface NuevoClienteSucursalesInput {
-  principal: SucursalAnidadaPersistData;
-  adicionales: SucursalAnidadaPersistData[];
-}
-
 // Sucursales a crear/actualizar junto con el cliente (PUT /clientes/:id).
 // "principal" es un merge parcial sobre la sucursal principal existente
 // (o la crea si el cliente no tenía ninguna marcada); "adicionales" son
@@ -54,10 +50,11 @@ export interface ClienteRepositoryPort {
   // plan, contacto de enlace y solo las sucursales activas (la principal
   // primero) con su total de equipos. Retorna null si el cliente no existe.
   findDetailById(id: number): Promise<ClienteDetailView | null>;
-  create(
-    cliente: Cliente,
-    sucursales: NuevoClienteSucursalesInput,
-  ): Promise<Cliente>;
+  // Registro de un cliente en 3 pasos (POST /clientes). De forma atómica crea
+  // el cliente, su usuario responsable (rol CLIENTE_EMPRESA) y su sucursal
+  // matriz. Lanza ConflictException si ya existe un cliente con el mismo
+  // número de documento o un usuario con el mismo correo.
+  create(command: CreateClienteCommand): Promise<CreateClienteResult>;
 
   update(
     id: number,
