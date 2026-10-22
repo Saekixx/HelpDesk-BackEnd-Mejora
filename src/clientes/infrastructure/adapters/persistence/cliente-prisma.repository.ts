@@ -59,9 +59,9 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
   //   columna, por eso no se usa `mode: 'insensitive'` (solo existe en
   //   PostgreSQL/MongoDB).
   // - tipo_cliente: enum JURIDICA | NATURAL.
-  // - is_active / estado: clientes activos o inactivos (prevalece is_active).
+  // - estado: "activo" | "inactivo", se mapea a la columna `is_active`.
   private buildWhere(filter: GetClientesFilterDto): Prisma.clientesWhereInput {
-    const { search, tipo_cliente, is_active, estado } = filter;
+    const { search, tipo_cliente, estado } = filter;
     const where: Prisma.clientesWhereInput = {};
 
     const term = search?.trim();
@@ -77,10 +77,8 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
       where.tipo_cliente = tipo_cliente as unknown as clientes_tipo_cliente;
     }
 
-    const activo =
-      is_active ?? (estado !== undefined ? estado === 'activo' : undefined);
-    if (activo !== undefined) {
-      where.is_active = activo;
+    if (estado !== undefined) {
+      where.is_active = estado === 'activo';
     }
 
     return where;
