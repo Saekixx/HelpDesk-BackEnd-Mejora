@@ -10,7 +10,9 @@ export class SucursalAnidadaHttpDto implements SucursalAnidadaDto {
     description: 'Nombre de la sucursal',
     example: 'Sucursal Central',
   })
-  @IsString({ message: 'El nombre de la sucursal debe ser una cadena de texto' })
+  @IsString({
+    message: 'El nombre de la sucursal debe ser una cadena de texto',
+  })
   @IsNotEmpty({ message: 'El nombre de la sucursal es obligatorio' })
   readonly nombre: string;
 

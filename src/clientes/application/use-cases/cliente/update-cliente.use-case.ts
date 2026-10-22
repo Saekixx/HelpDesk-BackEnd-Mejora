@@ -69,10 +69,8 @@ export class UpdateClienteUseCase {
     const updatedCliente = new Cliente({
       id_cliente: currentCliente.id_cliente,
       tipo_cliente: dto.tipo_cliente ?? currentCliente.tipo_cliente,
-      numero_documento:
-        dto.numero_documento ?? currentCliente.numero_documento,
-      nombre_principal:
-        dto.nombre_principal ?? currentCliente.nombre_principal,
+      numero_documento: dto.numero_documento ?? currentCliente.numero_documento,
+      nombre_principal: dto.nombre_principal ?? currentCliente.nombre_principal,
       direccion: dto.direccion ?? currentCliente.direccion,
       telefono: dto.telefono ?? currentCliente.telefono,
       correo: dto.correo ?? currentCliente.correo,

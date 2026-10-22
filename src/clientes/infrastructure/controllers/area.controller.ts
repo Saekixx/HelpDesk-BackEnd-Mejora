@@ -47,11 +47,7 @@ export class AreaController {
   ) {}
 
   @Get()
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_TECNICO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindAllAreasSwagger()
   async findAll(@Query() query: GetAreasQueryDto) {
     const data = await this.getAreasUseCase.execute(query);
@@ -62,22 +58,14 @@ export class AreaController {
   }
 
   @Get(':id/options')
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_TECNICO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiGetAreasOptionsSwagger()
   async getAreasOptions(@Param('id', ParseIntPipe) id: number) {
     return await this.getAreasOptionsUseCase.execute(id);
   }
 
   @Get(':id')
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_TECNICO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindAreaByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const data = await this.getAreaByIdUseCase.execute(id);

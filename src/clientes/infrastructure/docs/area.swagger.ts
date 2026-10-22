@@ -60,7 +60,10 @@ export function ApiFindAreaByIdSwagger() {
       status: HttpStatus.FORBIDDEN,
       description: 'El rol del usuario no tiene permiso de lectura.',
     }),
-    ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'El área no existe.' }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El área no existe.',
+    }),
   );
 }
 
@@ -70,8 +73,14 @@ export function ApiCreateAreaSwagger() {
       summary: 'Crear un área',
       description: 'Crea un área asociada a una sucursal existente.',
     }),
-    ApiResponse({ status: HttpStatus.CREATED, description: 'Área creada exitosamente.' }),
-    ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos de entrada inválidos.' }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Área creada exitosamente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Datos de entrada inválidos.',
+    }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
@@ -94,7 +103,10 @@ export function ApiUpdateAreaSwagger() {
       status: HttpStatus.OK,
       description: 'Área actualizada exitosamente.',
     }),
-    ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos de entrada inválidos.' }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Datos de entrada inválidos.',
+    }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
@@ -128,6 +140,9 @@ export function ApiToggleAreaStatusSwagger() {
       status: HttpStatus.FORBIDDEN,
       description: 'El rol del usuario no tiene permiso administrativo.',
     }),
-    ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'El área no existe.' }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El área no existe.',
+    }),
   );
 }

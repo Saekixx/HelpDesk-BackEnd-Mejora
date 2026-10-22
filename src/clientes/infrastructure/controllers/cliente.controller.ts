@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -19,6 +21,7 @@ import { ToggleClienteStatusUseCase } from '@/clientes/application/use-cases/cli
 import { GetClienteStatsUseCase } from '@/clientes/application/use-cases/cliente/get-cliente-stats.use-case';
 import { GetClientesQueryDto } from '../dtos/get-clientes-query.dto';
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
+import { CreateClienteResponseDto } from '../dtos/create-cliente-response.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
 import { ClienteDetailResponseDto } from '../dtos/cliente-detail-response.dto';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
@@ -94,12 +97,15 @@ export class ClienteController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @Roles(RolEnum.ADMINISTRADOR)
   @ApiCreateClienteSwagger()
-  async create(@Body() dto: CreateClienteRequestDto) {
+  async create(
+    @Body() dto: CreateClienteRequestDto,
+  ): Promise<{ message: string; data: CreateClienteResponseDto }> {
     const data = await this.createClienteUseCase.execute(dto);
     return {
-      message: 'Cliente creado exitosamente',
+      message: 'Empresa y cuenta principal registradas correctamente',
       data,
     };
   }

@@ -82,7 +82,7 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
 
   // Construye el criterio de filtrado del listado a partir de los query params.
   // - search: coincidencia parcial (contains) en nombre/razón social
-  //   (`nombre_principal`), número de documento y correo. 
+  //   (`nombre_principal`), número de documento y correo.
   // - tipo_cliente: enum JURIDICA | NATURAL.
   // - estado: "activo" | "inactivo", se mapea a la columna `is_active`.
   private buildWhere(filter: GetClientesFilterDto): Prisma.clientesWhereInput {

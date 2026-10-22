@@ -13,9 +13,7 @@ export class GetEquiposUseCase {
     private readonly equipoRepository: EquipoRepositoryPort,
   ) {}
 
-  async execute(
-    filter: GetEquiposFilterDto,
-  ): Promise<PaginatedEquiposResult> {
+  async execute(filter: GetEquiposFilterDto): Promise<PaginatedEquiposResult> {
     const normalizedFilter: GetEquiposFilterDto = {
       ...filter,
       page: filter.page ?? 1,

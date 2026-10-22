@@ -84,7 +84,6 @@ export interface ClienteListItem {
   estado: EstadoCliente;
 }
 
-
 // Resumen del plan contratado por el cliente
 export interface PlanSummary {
   id_plan: number;

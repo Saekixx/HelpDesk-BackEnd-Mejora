@@ -17,9 +17,7 @@ export interface PaginatedSucursalesResult {
 
 export interface SucursalRepositoryPort {
   // Listado con búsqueda, filtro por cliente/estado y paginación
-  findAll(
-    filters: GetSucursalesFilterDto,
-  ): Promise<PaginatedSucursalesResult>;
+  findAll(filters: GetSucursalesFilterDto): Promise<PaginatedSucursalesResult>;
 
   findById(id: number): Promise<Sucursal | null>;
 

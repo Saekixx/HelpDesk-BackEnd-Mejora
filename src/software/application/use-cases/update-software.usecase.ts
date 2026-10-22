@@ -23,7 +23,8 @@ export class UpdateSoftwareUseCase {
     // Fusionar valores anteriores con los nuevos para soportar actualización parcial
     const updatedSoftware = new Software({
       id_software: existingSoftware.id_software,
-      nombre_software: softwareData.nombre_software ?? existingSoftware.nombre_software,
+      nombre_software:
+        softwareData.nombre_software ?? existingSoftware.nombre_software,
       licencia: softwareData.licencia ?? existingSoftware.licencia,
       correo: softwareData.correo ?? existingSoftware.correo,
       password: softwareData.password ?? existingSoftware.password,

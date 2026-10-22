@@ -60,7 +60,10 @@ export function ApiFindSucursalByIdSwagger() {
       status: HttpStatus.FORBIDDEN,
       description: 'El rol del usuario no tiene permiso de lectura.',
     }),
-    ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'La sucursal no existe.' }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'La sucursal no existe.',
+    }),
   );
 }
 
@@ -71,8 +74,14 @@ export function ApiCreateSucursalSwagger() {
       description:
         'Crea una sucursal asociada a un cliente (empresa) existente.',
     }),
-    ApiResponse({ status: HttpStatus.CREATED, description: 'Sucursal creada exitosamente.' }),
-    ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos de entrada inválidos.' }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Sucursal creada exitosamente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Datos de entrada inválidos.',
+    }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
@@ -95,7 +104,10 @@ export function ApiUpdateSucursalSwagger() {
       status: HttpStatus.OK,
       description: 'Sucursal actualizada exitosamente.',
     }),
-    ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos de entrada inválidos.' }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Datos de entrada inválidos.',
+    }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
@@ -129,6 +141,9 @@ export function ApiToggleSucursalStatusSwagger() {
       status: HttpStatus.FORBIDDEN,
       description: 'El rol del usuario no tiene permiso administrativo.',
     }),
-    ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'La sucursal no existe.' }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'La sucursal no existe.',
+    }),
   );
 }

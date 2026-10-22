@@ -22,7 +22,8 @@ export const ApiFindAllSoftwareSwagger = () =>
       name: 'search',
       required: false,
       type: String,
-      description: 'Término de búsqueda (tipo, marca, modelo o nombre del software)',
+      description:
+        'Término de búsqueda (tipo, marca, modelo o nombre del software)',
       example: 'Microsoft Office',
     }),
     ApiQuery({

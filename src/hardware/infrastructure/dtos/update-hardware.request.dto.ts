@@ -1,11 +1,6 @@
 import { UpdateHardwareDto } from '@/hardware/application/dtos/update-hardware.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsOptional,
-  IsString,
-  IsUrl,
-} from 'class-validator';
+import { IsDateString, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class UpdateHardwareRequestDto implements UpdateHardwareDto {
   @ApiPropertyOptional({

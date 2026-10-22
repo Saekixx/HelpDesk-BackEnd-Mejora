@@ -47,11 +47,7 @@ export class SucursalController {
   ) {}
 
   @Get()
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_TECNICO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindAllSucursalesSwagger()
   async findAll(@Query() query: GetSucursalesQueryDto) {
     const data = await this.getSucursalesUseCase.execute(query);
@@ -62,22 +58,14 @@ export class SucursalController {
   }
 
   @Get(':id/options')
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_TECNICO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiGetSucursalesOptionsSwagger()
   async getSucursalesOptions(@Param('id', ParseIntPipe) id: number) {
     return await this.getSucursalesOptionsUseCase.execute(id);
   }
 
   @Get(':id')
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_TECNICO,
-  )
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindSucursalByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const data = await this.getSucursalByIdUseCase.execute(id);

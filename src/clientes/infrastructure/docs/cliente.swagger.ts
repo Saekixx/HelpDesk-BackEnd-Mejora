@@ -8,6 +8,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
+import { CreateClienteResponseDto } from '../dtos/create-cliente-response.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
 import { ClienteDetailResponseDto } from '../dtos/cliente-detail-response.dto';
 import { PaginatedClientesResponseDto } from '../dtos/cliente-list-response.dto';
@@ -27,6 +28,40 @@ const CLIENTE_EJEMPLO = {
   limite_equipos_contratado: 20,
   id_plan: 1,
   is_active: true,
+};
+
+// Body de ejemplo de POST /clientes (modal de registro de empresa en 3 pasos)
+const CREATE_CLIENTE_REQUEST_EJEMPLO = {
+  datos_empresa: {
+    tipo_cliente: 'JURIDICA',
+    numero_documento: '20123456789',
+    nombre_principal: 'Acme Corp SAC',
+    direccion: 'Av. Siempre Viva 123',
+    rubro: 'Retail',
+    id_plan: 1,
+  },
+  responsable: {
+    nombre: 'Carlos',
+    apellido: 'Mendoza',
+    cargo: 'Gerente de TI',
+    telefono: '987654321',
+    correo: 'carlos.mendoza@acme.com',
+  },
+  sucursal_principal: {
+    nombre_sucursal: 'Sede Central',
+    encargado: 'Juan Pérez',
+    direccion: 'Jr. Los Pinos 456',
+    is_principal: true,
+  },
+};
+
+// Contenido de `data` en la respuesta 201 de POST /clientes
+const CREATE_CLIENTE_RESPONSE_EJEMPLO = {
+  id_cliente: 1,
+  nombre_principal: 'Acme Corp SAC',
+  ruc: '20123456789',
+  sucursal_principal_id: 1,
+  usuario_responsable_id: 12,
 };
 
 const CLIENTE_LIST_ITEM_EJEMPLO = {
@@ -266,29 +301,145 @@ export function ApiFindClienteByIdSwagger() {
 
 export function ApiCreateClienteSwagger() {
   return applyDecorators(
+    ApiExtraModels(CreateClienteResponseDto),
     ApiOperation({
-      summary: 'Crear un cliente',
-      description: 'Registra un nuevo cliente (empresa) en el sistema.',
+      summary: 'Registrar una empresa cliente y su cuenta principal',
+      description:
+        'Registra una empresa cliente en un solo paso atómico (transacción): crea el cliente (`datos_empresa`), el usuario responsable con rol `CLIENTE_EMPRESA` que usará el correo del responsable como usuario de acceso (`responsable`) y la sucursal matriz (`sucursal_principal`, siempre con `is_principal: true`). Si cualquiera de los pasos falla no se guarda nada. El número de documento y el correo del responsable deben ser únicos, y el `id_plan` debe existir. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
     }),
-    ApiBody({ type: CreateClienteRequestDto }),
-    ApiResponse({
-      status: HttpStatus.CREATED,
-      description: 'Cliente creado exitosamente.',
-      schema: {
-        example: {
-          message: 'Cliente creado exitosamente',
-          data: CLIENTE_EJEMPLO,
+    ApiBody({
+      type: CreateClienteRequestDto,
+      description:
+        'Payload anidado en 3 bloques: datos de la empresa, responsable y sucursal principal.',
+      examples: {
+        completo: {
+          summary: 'Empresa jurídica con todos los campos',
+          value: CREATE_CLIENTE_REQUEST_EJEMPLO,
+        },
+        minimo: {
+          summary: 'Solo campos obligatorios',
+          value: {
+            datos_empresa: {
+              tipo_cliente: 'NATURAL',
+              numero_documento: '45871236',
+              nombre_principal: 'María Torres Quispe',
+              id_plan: 1,
+            },
+            responsable: {
+              nombre: 'María',
+              apellido: 'Torres',
+              telefono: '912345678',
+              correo: 'maria.torres@correo.com',
+            },
+            sucursal_principal: {
+              nombre_sucursal: 'Oficina Principal',
+            },
+          },
         },
       },
     }),
-    ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos de entrada inválidos.' }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Empresa y cuenta principal registradas correctamente',
+      type: CreateClienteResponseDto,
+      schema: {
+        allOf: [
+          {
+            properties: {
+              status: { type: 'number', example: 201 },
+              message: {
+                type: 'string',
+                example: 'Empresa y cuenta principal registradas correctamente',
+              },
+              data: { $ref: getSchemaPath(CreateClienteResponseDto) },
+            },
+          },
+        ],
+        example: {
+          status: 201,
+          message: 'Empresa y cuenta principal registradas correctamente',
+          data: CREATE_CLIENTE_RESPONSE_EJEMPLO,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Error de validación del payload (campos obligatorios, formato de correo, tipos, propiedades no permitidas) o el plan indicado (`id_plan`) no existe.',
+      content: {
+        'application/json': {
+          examples: {
+            validacion: {
+              summary: 'Error de validación',
+              value: {
+                status: 400,
+                message:
+                  'datos_empresa.El número de documento es obligatorio, responsable.El correo electrónico debe ser válido',
+                data: null,
+              },
+            },
+            planNoExiste: {
+              summary: 'El plan no existe',
+              value: {
+                status: 400,
+                message: 'El plan seleccionado no existe',
+                data: null,
+              },
+            },
+          },
+        },
+      },
+    }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
+      schema: {
+        example: {
+          status: 401,
+          message: 'Token inválido o expirado',
+          data: null,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
+      description:
+        'El rol del usuario no tiene permiso para registrar clientes (se requiere ADMINISTRADOR).',
+      schema: {
+        example: {
+          status: 403,
+          message: 'Forbidden resource',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'Conflicto: ya existe un cliente con el mismo número de documento o un usuario con el mismo correo del responsable.',
+      content: {
+        'application/json': {
+          examples: {
+            documentoDuplicado: {
+              summary: 'Número de documento duplicado',
+              value: {
+                status: 409,
+                message:
+                  'Ya existe un cliente registrado con ese número de documento',
+                data: null,
+              },
+            },
+            correoDuplicado: {
+              summary: 'Correo del responsable duplicado',
+              value: {
+                status: 409,
+                message: 'Ya existe un usuario registrado con ese correo',
+                data: null,
+              },
+            },
+          },
+        },
+      },
     }),
   );
 }
@@ -312,7 +463,10 @@ export function ApiUpdateClienteSwagger() {
         },
       },
     }),
-    ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos de entrada inválidos.' }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'Datos de entrada inválidos.',
+    }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
@@ -321,7 +475,10 @@ export function ApiUpdateClienteSwagger() {
       status: HttpStatus.FORBIDDEN,
       description: 'El rol del usuario no tiene permiso administrativo.',
     }),
-    ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'El cliente no existe.' }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El cliente no existe.',
+    }),
   );
 }
 
@@ -354,6 +511,9 @@ export function ApiToggleClienteStatusSwagger() {
       status: HttpStatus.FORBIDDEN,
       description: 'El rol del usuario no tiene permiso administrativo.',
     }),
-    ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'El cliente no existe.' }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El cliente no existe.',
+    }),
   );
 }

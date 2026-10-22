@@ -30,9 +30,7 @@ export class UpdateAreaUseCase {
       dto.id_sucursal !== undefined &&
       dto.id_sucursal !== existing.id_sucursal
     ) {
-      const sucursal = await this.sucursalRepository.findById(
-        dto.id_sucursal,
-      );
+      const sucursal = await this.sucursalRepository.findById(dto.id_sucursal);
       if (!sucursal) throw new SucursalNotFoundException();
     }
 

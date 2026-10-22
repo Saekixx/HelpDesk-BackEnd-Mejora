@@ -101,7 +101,8 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
 
     return entities.map((entity) => ({
       id: entity.id_hardware,
-      nombre: `${entity.tipo_equipo} ${entity.marca ?? ''} (${entity.numero_serie})`.trim(),
+      nombre:
+        `${entity.tipo_equipo} ${entity.marca ?? ''} (${entity.numero_serie})`.trim(),
     }));
   }
 }
