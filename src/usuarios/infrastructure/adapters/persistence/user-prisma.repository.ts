@@ -163,13 +163,11 @@ export class UserPrismaRepository implements UserRepositoryPort {
 
   // Construye el criterio del listado a partir de los query params.
   // - search: coincidencia parcial en nombre, apellido, correo y nombre de la empresa.
-  // - id_rol / rol: filtro por rol (prevalece id_rol si llegan ambos).
-  // - is_active / estado: usuarios activos o inactivos (prevalece is_active).
+  // - rol: filtro por nombre del rol.
+  // - estado: usuarios activos o inactivos.
   private buildListWhere({
     search,
-    id_rol,
     rol,
-    is_active,
     estado,
   }: UserFilterCriteria): Prisma.usuariosWhereInput {
     const where: Prisma.usuariosWhereInput = {};
@@ -184,12 +182,9 @@ export class UserPrismaRepository implements UserRepositoryPort {
       ];
     }
 
-    if (id_rol !== undefined) where.id_rol = id_rol;
-    else if (rol) where.rol = { nombre: rol };
+    if (rol) where.rol = { nombre: rol };
 
-    const activo =
-      is_active ?? (estado !== undefined ? estado === 'activo' : undefined);
-    if (activo !== undefined) where.is_active = activo;
+    if (estado) where.is_active = estado === 'activo';
 
     return where;
   }

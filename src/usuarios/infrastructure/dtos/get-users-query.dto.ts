@@ -2,7 +2,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsOptional,
   IsString,
-  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -25,20 +24,10 @@ export class GetUsersQueryDto implements GetUsersFilterDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por ID de rol',
-    example: 2,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  id_rol?: number;
-
-  @ApiPropertyOptional({
     enum: RolEnum,
     enumName: 'RolEnum',
     description:
-      'Filtrar por nombre del rol. Equivale a id_rol; si se envían ambos, prevalece id_rol.',
+      'Filtrar por rol. Si se omite (o se envía "ALL"), retorna todos.',
     example: RolEnum.CLIENTE_EMPRESA,
   })
   @IsOptional()
@@ -49,24 +38,9 @@ export class GetUsersQueryDto implements GetUsersFilterDto {
   rol?: RolEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Filtrar por estado activo/inactivo. Si se omite, retorna ambos.',
-    example: true,
-  })
-  @IsOptional()
-  @Transform(({ obj, key }) => {
-    const rawValue = obj[key];
-    if (rawValue === 'true' || rawValue === true) return true;
-    if (rawValue === 'false' || rawValue === false) return false;
-    return undefined;
-  })
-  @IsBoolean()
-  is_active?: boolean;
-
-  @ApiPropertyOptional({
     enum: ['activo', 'inactivo'],
     description:
-      'Filtrar por estado ("activo" | "inactivo"). Equivale a is_active; si se envían ambos, prevalece is_active.',
+      'Filtrar por estado ("activo" | "inactivo"). Si se omite, retorna ambos.',
     example: 'activo',
   })
   @IsOptional()

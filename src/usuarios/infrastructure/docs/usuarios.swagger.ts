@@ -26,7 +26,7 @@ export function ApiFindAllUsersSwagger() {
     ApiOperation({
       summary: 'Obtener lista paginada de usuarios',
       description:
-        'Retorna un listado paginado de usuarios con id, nombre, apellido, correo, rol, empresa, sucursal, área y estado (`ACTIVO` | `INACTIVO`). Admite búsqueda parcial (nombre, apellido, correo o nombre de la empresa), filtro por rol (`id_rol` o `rol`), estado (`is_active` o `estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
+        'Retorna un listado paginado de usuarios con id, nombre, apellido, correo, rol, empresa, sucursal, área y estado (`ACTIVO` | `INACTIVO`). Admite búsqueda parcial (nombre, apellido, correo o nombre de la empresa), filtro por rol (`rol`), estado (`estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
     }),
     ApiResponse({
       status: HttpStatus.OK,
