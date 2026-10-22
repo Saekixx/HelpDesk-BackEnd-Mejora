@@ -41,36 +41,37 @@ const CLIENTE_LIST_ITEM_EJEMPLO = {
 };
 
 const CLIENTE_DETAIL_EJEMPLO = {
-  ...CLIENTE_EJEMPLO,
-  fecha_registro: '2026-01-01T00:00:00.000Z',
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
+  id_cliente: 1,
+  nombre_principal: 'Acme Corp SAC',
+  numero_documento: '20123456789',
+  tipo_cliente: 'JURIDICA',
+  rubro: 'Retail',
+  direccion: 'Av. Siempre Viva 123',
   plan: {
     id_plan: 1,
-    nombre: 'Plan Premium',
-    tipo: 'Plan Premium',
-    precio: 250.0,
+    tipo: 'Tech Enterprise',
     limite_equipos: 30,
-    is_active: true,
   },
-  sucursales: [
+  contacto_enlace: {
+    nombre_responsable: 'Carlos Mendoza',
+    cargo: 'Representante de la empresa',
+    correo: 'carlos.mendoza@acme.com',
+    telefono: '987654321',
+  },
+  sucursales_activas: [
     {
       id_sucursal: 1,
-      nombre: 'Sucursal Central',
-      encargado: 'Juan Pérez',
-      telefono: '+51987654321',
-      correo: 'sucursal.central@acme.com',
+      is_principal: true,
+      nombre: 'Sede Central',
       direccion: 'Jr. Los Pinos 456',
-      is_active: true,
+      total_equipos: 12,
     },
     {
       id_sucursal: 2,
+      is_principal: false,
       nombre: 'Sucursal Norte',
-      encargado: 'María Gómez',
-      telefono: '+51987654322',
-      correo: 'sucursal.norte@acme.com',
       direccion: 'Av. Los Álamos 789',
-      is_active: true,
+      total_equipos: 5,
     },
   ],
 };
@@ -81,7 +82,7 @@ export function ApiFindAllClientesSwagger() {
     ApiOperation({
       summary: 'Listar clientes (Listado Avanzado)',
       description:
-        'Retorna un listado paginado de clientes con id, nombre/razón social, rubro, tipo, documento, total de sucursales, plan de soporte y estado. Admite búsqueda parcial (nombre/razón social, documento o correo), filtro por tipo de cliente, estado (`is_active` o `estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
+        'Retorna un listado paginado de clientes con id, nombre/razón social, rubro, tipo, documento, total de sucursales, plan de soporte y estado. Admite búsqueda parcial (nombre/razón social, documento o correo), filtro por tipo de cliente, estado (`estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
     }),
     ApiResponse({
       status: HttpStatus.OK,
@@ -147,16 +148,50 @@ export function ApiGetClientesOptionsSwagger() {
   );
 }
 
+export function ApiGetClienteStatsSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Obtener estadísticas de clientes (KPIs)',
+      description:
+        'Retorna los indicadores de las tarjetas superiores de la vista de gestión de clientes: total de clientes (con los registrados en el mes actual), cantidad de clientes jurídicos y naturales, y cantidad de clientes activos con plan Enterprise.',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Estadísticas de clientes obtenidas exitosamente.',
+      schema: {
+        example: {
+          message: 'Estadísticas de clientes obtenidas exitosamente',
+          data: {
+            totalClientes: { cantidad: 18, nuevosEsteMes: 2 },
+            clientesJuridicos: { cantidad: 14 },
+            clientesNaturales: { cantidad: 4 },
+            planesEnterprise: { cantidad: 12 },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso de lectura.',
+    }),
+  );
+}
+
 export function ApiFindClienteByIdSwagger() {
   return applyDecorators(
     ApiExtraModels(ClienteDetailResponseDto),
     ApiOperation({
-      summary: 'Obtener un cliente por id',
+      summary: 'Obtener el detalle de un cliente por id',
       description:
-        'Retorna el detalle completo de un cliente, incluyendo el plan contratado y el listado de sus sucursales.',
+        'Retorna el detalle del cliente que consume el modal "Detalle de Cliente / Empresa": datos generales, plan contratado, contacto de enlace y sus sucursales activas con el total de equipos de cada una. La sucursal principal (`is_principal: true`) siempre aparece primero. `plan` y `contacto_enlace` son `null` cuando no existen.',
     }),
     ApiParam({
       name: 'id',
+      type: Number,
       description: 'ID numérico del cliente',
       example: 1,
     }),
@@ -182,14 +217,50 @@ export function ApiFindClienteByIdSwagger() {
       },
     }),
     ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'El id de la ruta no es un número válido.',
+      schema: {
+        example: {
+          status: 400,
+          message: 'Validation failed (numeric string is expected)',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token inválido, expirado o ausente.',
+      schema: {
+        example: {
+          status: 401,
+          message: 'Token inválido o expirado',
+          data: null,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso de lectura.',
+      description:
+        'El rol del usuario no tiene permiso de lectura (se requiere ADMINISTRADOR, SOPORTE_TECNICO o SOPORTE_INSITU).',
+      schema: {
+        example: {
+          status: 403,
+          message: 'Forbidden resource',
+          data: null,
+        },
+      },
     }),
-    ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'El cliente no existe.' }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El cliente no existe.',
+      schema: {
+        example: {
+          status: 404,
+          message: 'Cliente no encontrado',
+          data: null,
+        },
+      },
+    }),
   );
 }
 

@@ -16,6 +16,7 @@ import { GetClienteByIdUseCase } from '@/clientes/application/use-cases/cliente/
 import { CreateClienteUseCase } from '@/clientes/application/use-cases/cliente/create-cliente.use-case';
 import { UpdateClienteUseCase } from '@/clientes/application/use-cases/cliente/update-cliente.use-case';
 import { ToggleClienteStatusUseCase } from '@/clientes/application/use-cases/cliente/toggle-cliente-status.use-case';
+import { GetClienteStatsUseCase } from '@/clientes/application/use-cases/cliente/get-cliente-stats.use-case';
 import { GetClientesQueryDto } from '../dtos/get-clientes-query.dto';
 import { CreateClienteRequestDto } from '../dtos/create-cliente.dto';
 import { UpdateClienteRequestDto } from '../dtos/update-cliente.dto';
@@ -27,6 +28,7 @@ import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import {
   ApiFindAllClientesSwagger,
   ApiGetClientesOptionsSwagger,
+  ApiGetClienteStatsSwagger,
   ApiFindClienteByIdSwagger,
   ApiCreateClienteSwagger,
   ApiUpdateClienteSwagger,
@@ -45,6 +47,7 @@ export class ClienteController {
     private readonly createClienteUseCase: CreateClienteUseCase,
     private readonly updateClienteUseCase: UpdateClienteUseCase,
     private readonly toggleClienteStatusUseCase: ToggleClienteStatusUseCase,
+    private readonly getClienteStatsUseCase: GetClienteStatsUseCase,
   ) {}
 
   @Get()
@@ -63,6 +66,18 @@ export class ClienteController {
   @ApiGetClientesOptionsSwagger()
   async getClientesOptions() {
     return await this.getClientesOptionsUseCase.execute();
+  }
+
+  // Debe declararse antes de @Get(':id') para que 'estadisticas' no se interprete como un id
+  @Get('estadisticas')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
+  @ApiGetClienteStatsSwagger()
+  async getEstadisticas() {
+    const data = await this.getClienteStatsUseCase.execute();
+    return {
+      message: 'Estadísticas de clientes obtenidas exitosamente',
+      data,
+    };
   }
 
   @Get(':id')

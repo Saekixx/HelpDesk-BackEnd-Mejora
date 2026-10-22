@@ -156,16 +156,20 @@ export class UsersController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindAllUsersSwagger()
   async findAll(@Query() query: GetUsersQueryDto) {
-    const data = await this.getUsersUseCase.execute(query);
+    const { data, meta } = await this.getUsersUseCase.execute(query);
     return {
       message: 'Usuarios obtenidos exitosamente',
-      data,
+      data: { data, meta },
     };
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindUserByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const data = await this.getUserByIdUseCase.execute(id);
@@ -176,6 +180,8 @@ export class UsersController {
   }
 
   @Post('create')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
   @ApiCreateUserSwagger()
   async create(@Body() dto: CreateUserRequestDto) {
     const data = await this.createUserUseCase.execute(dto);
@@ -185,7 +191,21 @@ export class UsersController {
     };
   }
 
+  // Debe declararse antes de @Patch(':id') para que 'perfil' no se interprete como un id
+  // Cualquier usuario autenticado puede editar su propio perfil (no exige roles)
+  @Patch('perfil')
+  @UseGuards(JwtAuthGuard)
+  @ApiUpdateProfileSwagger()
+  async update(
+    @CurrentUser('userId') userId: number,
+    @Body() dto: UpdateProfileDTO,
+  ) {
+    return await this.updateProfileUseCase.execute(userId, dto);
+  }
+
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
   @ApiUpdateUserSwagger()
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
@@ -198,18 +218,9 @@ export class UsersController {
     };
   }
 
-  @Patch('perfil')
-  @UseGuards(JwtAuthGuard)
-  @ApiUpdateProfileSwagger()
-  async update(
-    @CurrentUser('userId') userId: number,
-    @Body() dto: UpdateProfileDTO,
-  ) {
-    return await this.updateProfileUseCase.execute(userId, dto);
-  }
-
   @Patch(':id/rol')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
   @ApiAssignRolSwagger()
   async updateRole(
     @Param('id', ParseIntPipe) id: number,
@@ -219,7 +230,8 @@ export class UsersController {
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
   @ApiToggleUserStatusSwagger()
   async toggleStatus(
     @Param('id', ParseIntPipe) id: number,

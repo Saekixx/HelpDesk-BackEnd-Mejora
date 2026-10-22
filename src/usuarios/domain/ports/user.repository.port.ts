@@ -1,17 +1,22 @@
 import { User } from '../entities/user.entity.js';
 import { UserFilterCriteria } from '../criteria/user-filter.criteria.js';
-import { UserResponseCriteria } from '../criteria/user-response.criteria.js';
+import { UserListItemCriteria } from '../criteria/user-list-item.criteria.js';
 import { UserOptions } from '../criteria/user-options.dto.js';
 import { UserSelectCriteria } from '../criteria/user-select-criteria.js';
 import { UserStatsCriteria } from '../criteria/user-stats.criteria.js';
 
-// Resultado de la paginación de usuarios
-export interface PaginatedUsersResult {
-  data: UserResponseCriteria[];
+// Metadatos de paginación del listado de usuarios
+export interface UserPaginationMeta {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+}
+
+// Resultado paginado del listado de usuarios: { data, meta }
+export interface PaginatedUsersResult {
+  data: UserListItemCriteria[];
+  meta: UserPaginationMeta;
 }
 
 // Token único para la Inyección de Dependencias en NestJS

@@ -112,3 +112,47 @@ export interface ClienteDetail extends Cliente {
   plan: PlanSummary | null;
   sucursales: SucursalSummary[];
 }
+
+// ---------------------------------------------------------------------------
+// Vista de detalle (GET /clientes/:id).
+// Es una proyección de solo lectura: no reutiliza
+// `ClienteDetail` porque ese tipo extiende la entidad completa y lo consume
+// el flujo de actualización.
+// ---------------------------------------------------------------------------
+
+// Plan contratado
+export interface ClientePlanView {
+  id_plan: number;
+  tipo: string;
+  limite_equipos: number;
+}
+
+// Persona de contacto (enlace) de la empresa
+export interface ContactoEnlaceView {
+  nombre_responsable: string;
+  cargo: string;
+  correo: string;
+  telefono: string;
+}
+
+// Sucursal activa del cliente con su cantidad de equipos vinculados
+export interface SucursalActivaView {
+  id_sucursal: number;
+  is_principal: boolean;
+  nombre: string;
+  direccion: string;
+  total_equipos: number;
+}
+
+export interface ClienteDetailView {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string;
+  tipo_cliente: TipoCliente;
+  rubro: string | null;
+  direccion: string | null;
+  plan: ClientePlanView | null;
+  contacto_enlace: ContactoEnlaceView | null;
+  // La sucursal principal (is_principal: true) siempre va primero
+  sucursales_activas: SucursalActivaView[];
+}

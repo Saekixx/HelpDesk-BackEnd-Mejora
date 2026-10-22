@@ -9,10 +9,7 @@ export interface GetClientesFilterDto {
   // Búsqueda parcial por nombre/razón social, número de documento o correo
   search?: string;
   tipo_cliente?: TipoCliente;
-  // true => "activo", false => "inactivo". Si se omite, retorna ambos.
-  is_active?: boolean;
-  // Equivalente legible de `is_active` ("activo" | "inactivo"), usado por el
-  // Si llegan ambos, prevalece `is_active`.
+  // "activo" | "inactivo". Si se omite, retorna ambos.
   estado?: EstadoCliente;
   page?: number;
   limit?: number;

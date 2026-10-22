@@ -26,6 +26,7 @@ import { GetClienteByIdUseCase } from './application/use-cases/cliente/get-clien
 import { CreateClienteUseCase } from './application/use-cases/cliente/create-cliente.use-case';
 import { UpdateClienteUseCase } from './application/use-cases/cliente/update-cliente.use-case';
 import { ToggleClienteStatusUseCase } from './application/use-cases/cliente/toggle-cliente-status.use-case';
+import { GetClienteStatsUseCase } from './application/use-cases/cliente/get-cliente-stats.use-case';
 import { ClienteController } from './infrastructure/controllers/cliente.controller';
 import { SucursalController } from './infrastructure/controllers/sucursal.controller';
 import { AreaController } from './infrastructure/controllers/area.controller';
@@ -44,6 +45,7 @@ import { AreaController } from './infrastructure/controllers/area.controller';
     CreateClienteUseCase,
     UpdateClienteUseCase,
     ToggleClienteStatusUseCase,
+    GetClienteStatsUseCase,
     // Casos de Uso - Sucursales
     GetSucursalesOptionsUseCase,
     GetSucursalesUseCase,

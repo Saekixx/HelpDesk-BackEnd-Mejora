@@ -3,11 +3,13 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiExtraModels,
   ApiOperation,
   ApiParam,
   ApiProduces,
   ApiQuery,
   ApiResponse,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
@@ -15,48 +17,79 @@ import { UpdateUserDto } from '../dtos/update-user.request.dto';
 import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
 import { UserOptions } from '../dtos/user-options.dto';
 import { ProcessBulkUsersRequestDto } from '../dtos/process-bulk-users.request.dto';
+import { PaginatedUsersResponseDto } from '../dtos/user-list-response.dto';
 
 export function ApiFindAllUsersSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
+    ApiExtraModels(PaginatedUsersResponseDto),
     ApiOperation({
       summary: 'Obtener lista paginada de usuarios',
       description:
-        'Retorna usuarios según los filtros aplicados (búsqueda por texto, rol, cliente, sucursal, área o estado).',
+        'Retorna un listado paginado de usuarios con id, nombre, apellido, correo, rol, empresa, sucursal, área y estado (`ACTIVO` | `INACTIVO`). Admite búsqueda parcial (nombre, apellido, correo o nombre de la empresa), filtro por rol (`rol`), estado (`estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
     }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Lista de usuarios devuelta exitosamente.',
       schema: {
+        allOf: [
+          {
+            properties: {
+              message: { type: 'string' },
+              data: { $ref: getSchemaPath(PaginatedUsersResponseDto) },
+            },
+          },
+        ],
         example: {
           message: 'Usuarios obtenidos exitosamente',
           data: {
             data: [
               {
                 id_usuario: 1,
+                nombre: 'Ana',
+                apellido: 'Torres',
+                correo: 'ana.torres@empresa.com',
+                rol: 'CLIENTE_TRABAJADOR',
+                empresa: 'Banco Andino S.A.',
+                sucursal: 'Sede Lima',
+                area: 'Contabilidad',
+                estado: 'ACTIVO',
+              },
+              {
+                id_usuario: 2,
                 nombre: 'Juan',
                 apellido: 'Pérez',
-                correo: 'juan.perez@empresa.com',
-                is_active: true,
-                nombre_rol: 'SOPORTE_INSITU',
-                zonas: [
-                  { id_zona: 1, nombre_zona: 'Lima Centro / San Isidro' },
-                  { id_zona: 2, nombre_zona: 'Lima Norte' },
-                ],
+                correo: 'juan.perez@zaint.com',
+                rol: 'SOPORTE_TECNICO',
+                empresa: null,
+                sucursal: null,
+                area: null,
+                estado: 'INACTIVO',
               },
             ],
             meta: {
-              total: 1,
+              total: 2,
               page: 1,
-              lastPage: 1,
+              limit: 10,
+              totalPages: 1,
             },
           },
         },
       },
     }),
     ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Parámetros de consulta inválidos (rol, estado, page o limit fuera de rango).',
+    }),
+    ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description:
+        'El rol del usuario no tiene permiso para listar usuarios (requiere ADMINISTRADOR, SOPORTE_INSITU o SOPORTE_TECNICO).',
     }),
   );
 }
@@ -102,6 +135,11 @@ export function ApiFindUserByIdSwagger() {
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description:
+        'El rol del usuario no tiene permiso para ver usuarios (requiere ADMINISTRADOR, SOPORTE_INSITU o SOPORTE_TECNICO).',
     }),
   );
 }
@@ -172,6 +210,10 @@ Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
     }),
   );
 }
@@ -255,6 +297,10 @@ Permite a un administrador modificar la información, rol, zonas de cobertura o 
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
     }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
+    }),
   );
 }
 
@@ -264,7 +310,7 @@ export function ApiUpdateProfileSwagger() {
     ApiOperation({
       summary: 'Actualizar perfil del usuario autenticado',
       description:
-        'Permite al usuario autenticado modificar su propia información personal o cambiar su clave mediante el token JWT.',
+        'Permite al usuario autenticado modificar su propia información personal o cambiar su clave mediante el token JWT. Disponible para cualquier rol autenticado: no exige un rol específico, por lo que solo responde 401 si el token no es válido o el usuario está inactivo.',
     }),
     ApiBody({ type: UpdateProfileDTO }),
     ApiResponse({
@@ -344,6 +390,10 @@ export function ApiAssignRolSwagger() {
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
     }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
+    }),
   );
 }
 
@@ -387,6 +437,10 @@ export function ApiToggleUserStatusSwagger() {
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso administrativo.',
     }),
   );
 }

@@ -9,12 +9,20 @@ import {
 import {
   Cliente,
   ClienteDetail,
+  ClienteDetailView,
 } from '@/clientes/domain/entities/cliente.entity';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
+import { ClienteStatsResult } from '@/clientes/domain/dto/cliente-stats.dto';
 import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
-import { ClienteMapper, CLIENTE_LIST_SELECT } from './mappers/cliente.mapper';
+import {
+  ClienteMapper,
+  CLIENTE_LIST_SELECT,
+  CLIENTE_DETAIL_SELECT,
+} from './mappers/cliente.mapper';
 import { Prisma, clientes_tipo_cliente } from '@prisma/client';
 import { OptionDto } from '../../dtos/options.response.dto';
+
+const PLAN_ENTERPRISE_KEYWORD = 'Enterprise';
 
 @Injectable()
 export class ClientePrismaRepository implements ClienteRepositoryPort {
@@ -54,14 +62,11 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
 
   // Construye el criterio de filtrado del listado a partir de los query params.
   // - search: coincidencia parcial (contains) en nombre/razón social
-  //   (`nombre_principal`), número de documento y correo. En MySQL la
-  //   comparación ya es insensible a mayúsculas por la collation de la
-  //   columna, por eso no se usa `mode: 'insensitive'` (solo existe en
-  //   PostgreSQL/MongoDB).
+  //   (`nombre_principal`), número de documento y correo. 
   // - tipo_cliente: enum JURIDICA | NATURAL.
-  // - is_active / estado: clientes activos o inactivos (prevalece is_active).
+  // - estado: "activo" | "inactivo", se mapea a la columna `is_active`.
   private buildWhere(filter: GetClientesFilterDto): Prisma.clientesWhereInput {
-    const { search, tipo_cliente, is_active, estado } = filter;
+    const { search, tipo_cliente, estado } = filter;
     const where: Prisma.clientesWhereInput = {};
 
     const term = search?.trim();
@@ -77,10 +82,8 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
       where.tipo_cliente = tipo_cliente as unknown as clientes_tipo_cliente;
     }
 
-    const activo =
-      is_active ?? (estado !== undefined ? estado === 'activo' : undefined);
-    if (activo !== undefined) {
-      where.is_active = activo;
+    if (estado !== undefined) {
+      where.is_active = estado === 'activo';
     }
 
     return where;
@@ -93,6 +96,50 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
     });
     if (!entity) return null;
     return ClienteMapper.toDetail(entity);
+  }
+
+  // Detalle de un cliente específico (GET /clientes/:id).
+  async findDetailById(id: number): Promise<ClienteDetailView | null> {
+    const entity = await this.prisma.clientes.findUnique({
+      where: { id_cliente: id },
+      select: CLIENTE_DETAIL_SELECT,
+    });
+    if (!entity) return null;
+    return ClienteMapper.toDetailView(entity);
+  }
+
+  // KPIs del módulo de clientes. Las cinco consultas son independientes, por
+  // lo que se resuelven en paralelo.
+  async getStats(): Promise<ClienteStatsResult> {
+    const now = new Date();
+    const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [total, nuevosEsteMes, juridicos, naturales, enterprise] =
+      await Promise.all([
+        this.prisma.clientes.count(),
+        this.prisma.clientes.count({
+          where: { created_at: { gte: inicioMes } },
+        }),
+        this.prisma.clientes.count({
+          where: { tipo_cliente: clientes_tipo_cliente.JURIDICA },
+        }),
+        this.prisma.clientes.count({
+          where: { tipo_cliente: clientes_tipo_cliente.NATURAL },
+        }),
+        this.prisma.clientes.count({
+          where: {
+            is_active: true,
+            planes: { tipo: { contains: PLAN_ENTERPRISE_KEYWORD } },
+          },
+        }),
+      ]);
+
+    return {
+      totalClientes: { cantidad: total, nuevosEsteMes },
+      clientesJuridicos: { cantidad: juridicos },
+      clientesNaturales: { cantidad: naturales },
+      planesEnterprise: { cantidad: enterprise },
+    };
   }
 
   async existsByDocumento(numero_documento: string): Promise<boolean> {

@@ -2,72 +2,55 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsOptional,
   IsString,
-  IsNumber,
-  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
   Min,
+  Max,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { GetUsersFilterDto } from '../../application/dtos/get-users-filter.dto';
 
 export class GetUsersQueryDto implements GetUsersFilterDto {
   @ApiPropertyOptional({
-    description: 'Término de búsqueda (filtra por nombre, apellido o correo)',
+    description:
+      'Búsqueda parcial por nombre, apellido, correo o nombre de la empresa',
     example: 'Juan',
   })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por ID de rol',
-    example: 2,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  id_rol?: number;
-
-  @ApiPropertyOptional({
-    description: 'Filtrar por ID de cliente',
-    example: 1,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  id_cliente?: number;
-
-  @ApiPropertyOptional({
-    description: 'Filtrar por ID de sucursal',
-    example: 1,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  id_sucursal?: number;
-
-  @ApiPropertyOptional({
-    description: 'Filtrar por ID de área',
-    example: 3,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  id_area?: number;
-
-  @ApiPropertyOptional({
+    enum: RolEnum,
+    enumName: 'RolEnum',
     description:
-      'Filtrar por estado activo/inactivo. Si se omite, retorna ambos.',
-    example: true,
+      'Filtrar por rol. Si se omite (o se envía "ALL"), retorna todos.',
+    example: RolEnum.CLIENTE_EMPRESA,
   })
   @IsOptional()
-  @Transform(({ obj, key }) => {
-    const rawValue = obj[key];
-    if (rawValue === 'true' || rawValue === true) return true;
-    if (rawValue === 'false' || rawValue === false) return false;
-    return undefined;
+  @Transform(({ value }) =>
+    value === '' || value === 'ALL' ? undefined : value,
+  )
+  @IsEnum(RolEnum, { message: 'El rol no es válido' })
+  rol?: RolEnum;
+
+  @ApiPropertyOptional({
+    enum: ['activo', 'inactivo'],
+    description:
+      'Filtrar por estado ("activo" | "inactivo"). Si se omite, retorna ambos.',
+    example: 'activo',
   })
-  @IsBoolean()
-  is_active?: boolean;
+  @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() || undefined : value,
+  )
+  @IsIn(['activo', 'inactivo'], {
+    message: 'El estado debe ser "activo" o "inactivo"',
+  })
+  estado?: 'activo' | 'inactivo';
 
   @ApiPropertyOptional({
     description: 'Número de página para la paginación',
@@ -77,19 +60,21 @@ export class GetUsersQueryDto implements GetUsersFilterDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Cantidad de registros por página',
+    description: 'Cantidad de registros por página (máximo 100)',
     default: 10,
     example: 10,
     minimum: 1,
+    maximum: 100,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number = 10;
 }

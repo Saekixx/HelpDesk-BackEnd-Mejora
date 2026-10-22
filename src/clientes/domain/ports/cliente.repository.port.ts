@@ -2,9 +2,11 @@ import {
   Cliente,
   ClienteListItem,
   ClienteDetail,
+  ClienteDetailView,
 } from '../entities/cliente.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetClientesFilterDto } from '../dto/get-clientes-filter.dto';
+import { ClienteStatsResult } from '../dto/cliente-stats.dto';
 import {
   SucursalAnidadaPersistData,
   UpdateSucursalAnidadaPersistData,
@@ -48,6 +50,10 @@ export interface ClienteRepositoryPort {
   // estructura de `ClienteListItem` junto con `meta` de paginación.
   findAll(filter: GetClientesFilterDto): Promise<PaginatedClientesResult>;
   findById(id: number): Promise<ClienteDetail | null>;
+  // Detalle de un cliente específico (GET /clientes/:id):
+  // plan, contacto de enlace y solo las sucursales activas (la principal
+  // primero) con su total de equipos. Retorna null si el cliente no existe.
+  findDetailById(id: number): Promise<ClienteDetailView | null>;
   create(
     cliente: Cliente,
     sucursales: NuevoClienteSucursalesInput,
@@ -61,4 +67,7 @@ export interface ClienteRepositoryPort {
   toggleStatus(id: number): Promise<Cliente>;
   getClientesOptions(): Promise<OptionDto[]>;
   existsByDocumento(numero_documento: string): Promise<boolean>;
+  // Estadísticas (KPIs) del módulo de clientes: totales por tipo, nuevos del
+  // mes actual y clientes activos con plan Enterprise.
+  getStats(): Promise<ClienteStatsResult>;
 }
