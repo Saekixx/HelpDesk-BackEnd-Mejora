@@ -44,19 +44,19 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
 
     if (search) {
       where.OR = [
-        { tipo_equipo: { contains: search } },
-        { marca: { contains: search } },
+        { tipo_componente: { contains: search } },
+        { marca_modelo: { contains: search } },
         { numero_serie: { contains: search } },
         { proveedor: { contains: search } },
       ];
     }
 
     if (tipo) {
-      where.tipo_equipo = { contains: tipo };
+      where.tipo_componente = { contains: tipo };
     }
 
     if (is_active !== undefined) {
-      where.is_active = is_active;
+      where.estado = is_active ? 'Instalado' : 'En_Stock';
     }
 
     const [total, entities] = await Promise.all([
@@ -90,11 +90,11 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
 
   async getHardwareOptions(): Promise<HardwareOptionDto[]> {
     const entities = await this.prisma.hardware.findMany({
-      where: { is_active: true },
+      where: { estado: 'En_Stock' },
       select: {
         id_hardware: true,
-        tipo_equipo: true,
-        marca: true,
+        tipo_componente: true,
+        marca_modelo: true,
         numero_serie: true,
       },
     });
@@ -102,7 +102,7 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
     return entities.map((entity) => ({
       id: entity.id_hardware,
       nombre:
-        `${entity.tipo_equipo} ${entity.marca ?? ''} (${entity.numero_serie})`.trim(),
+        `${entity.tipo_componente} ${entity.marca_modelo ?? ''} (${entity.numero_serie})`.trim(),
     }));
   }
 }

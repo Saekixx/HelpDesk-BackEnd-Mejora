@@ -11,7 +11,6 @@ import { Server, Socket } from 'socket.io';
 import { Inject } from '@nestjs/common';
 import { SendMessageUseCase } from '../../application/use-cases/send-message.use-case';
 import { GetHistoryUseCase } from '../../application/use-cases/get-history.use-case';
-import { SendMessageDto } from '../../application/dtos/send-message.dto';
 import { ICachePort } from '../../domain/ports/cache.port';
 
 @WebSocketGateway({

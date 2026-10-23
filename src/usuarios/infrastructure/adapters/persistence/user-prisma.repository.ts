@@ -6,13 +6,12 @@ import {
 } from '@/usuarios/domain/ports/user.repository.port';
 import { User } from '@/usuarios/domain/entities/user.entity';
 import { UserFilterCriteria } from '@/usuarios/domain/criteria/user-filter.criteria';
-import { UserStatsCriteria } from '@/usuarios/domain/criteria/user-stats.criteria';
-import { RolEnum } from '@/auth/domain/enums/rol.enum';
-import { UserMapper, USER_LIST_SELECT } from './mappers/user.mapper';
-import { UsersBatchConflictException } from '@/usuarios/domain/exceptions/user.exceptions';
+import { UserMapper } from './mappers/user.mapper';
 import { Prisma } from '@prisma/client';
 import { UserSelectFilterDto } from '../../dtos/user-select-filter-dto';
 import { UserOptions } from '../../dtos/user-options.dto';
+import { RolEnum } from '@/auth/domain/enums/rol.enum';
+import { UserStatsCriteria } from '@/usuarios/domain/criteria/user-stats.criteria';
 
 const ROLES_TECNICOS: string[] = [
   RolEnum.ADMINISTRADOR,
@@ -79,29 +78,6 @@ export class UserPrismaRepository implements UserRepositoryPort {
     return UserMapper.toDomain(created);
   }
 
-  async saveMany(users: User[]): Promise<User[]> {
-    try {
-      // Una sola transacción: si falla un insert se revierten todos
-      const created = await this.prisma.$transaction(
-        users.map((user) =>
-          this.prisma.usuarios.create({
-            data: UserMapper.toPersistence(user) as Prisma.usuariosCreateInput,
-          }),
-        ),
-      );
-      return created.map((entity) => UserMapper.toDomain(entity));
-    } catch (error) {
-      // P2002: violación de unicidad (correo registrado entre la validación y el registro)
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new UsersBatchConflictException();
-      }
-      throw error;
-    }
-  }
-
   async findByCorreo(correo: string): Promise<User | null> {
     const entity = await this.prisma.usuarios.findUnique({
       where: { correo },
@@ -125,68 +101,79 @@ export class UserPrismaRepository implements UserRepositoryPort {
     return count > 0;
   }
 
-  async findExistingCorreos(correos: string[]): Promise<string[]> {
-    if (correos.length === 0) return [];
-
-    const users = await this.prisma.usuarios.findMany({
-      where: { correo: { in: correos } },
-      select: { correo: true },
-    });
-
-    return users.map((user) => (user.correo ?? '').toLowerCase());
-  }
-
   async findAllWithFilters(
     filters: UserFilterCriteria,
   ): Promise<PaginatedUsersResult> {
-    const { page = 1, limit = 10 } = filters;
-    const where = this.buildListWhere(filters);
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      id_rol,
+      id_cliente,
+      id_sucursal,
+      id_area,
+      is_active,
+    } = filters;
+
+    const where: Prisma.usuariosWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { nombre: { contains: search } },
+        { apellido: { contains: search } },
+        { correo: { contains: search } },
+      ];
+    }
+
+    if (id_rol) where.id_rol = id_rol;
+    if (id_cliente) where.id_cliente = id_cliente;
+    if (id_sucursal) where.id_sucursal = id_sucursal;
+    if (id_area) where.id_area = id_area;
+
+    if (
+      is_active !== undefined &&
+      is_active !== null &&
+      String(is_active) !== ''
+    ) {
+      where.is_active =
+        is_active === true || String(is_active).toLowerCase() === 'true';
+    }
+
+    const skip = (page - 1) * limit;
 
     const [entities, total] = await Promise.all([
       this.prisma.usuarios.findMany({
         where,
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
-        // id_usuario como desempate: las cargas masivas comparten created_at
-        // y la paginación debe ser estable
-        orderBy: [{ created_at: 'desc' }, { id_usuario: 'desc' }],
-        select: USER_LIST_SELECT,
+        orderBy: { created_at: 'desc' },
+        include: {
+          rol: { select: { nombre: true } },
+          clientes: { select: { nombre_principal: true } },
+          sucursales: { select: { nombre_sucursal: true } },
+          area: { select: { nombre_area: true } },
+          tecnicos_zonas: {
+            include: {
+              zonas: {
+                select: {
+                  id_zona: true,
+                  nombre_zona: true,
+                },
+              },
+            },
+          },
+        },
       }),
       this.prisma.usuarios.count({ where }),
     ]);
 
     return {
-      data: entities.map(UserMapper.toListItem),
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      data: entities.map(UserMapper.toResponseDto),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
-  }
-
-  // Construye el criterio del listado a partir de los query params.
-  // - search: coincidencia parcial en nombre, apellido, correo y nombre de la empresa.
-  // - rol: filtro por nombre del rol.
-  // - estado: usuarios activos o inactivos.
-  private buildListWhere({
-    search,
-    rol,
-    estado,
-  }: UserFilterCriteria): Prisma.usuariosWhereInput {
-    const where: Prisma.usuariosWhereInput = {};
-
-    const term = search?.trim();
-    if (term) {
-      where.OR = [
-        { nombre: { contains: term } },
-        { apellido: { contains: term } },
-        { correo: { contains: term } },
-        { clientes: { nombre_principal: { contains: term } } },
-      ];
-    }
-
-    if (rol) where.rol = { nombre: rol };
-
-    if (estado) where.is_active = estado === 'activo';
-
-    return where;
   }
 
   async findActiveRolUsers(
