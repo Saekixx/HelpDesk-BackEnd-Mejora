@@ -10,7 +10,9 @@ import { DashboardMapper } from './mappers/dashboard.mapper';
 export class DashboardPrismaRepository implements DashboardRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAdminMetrics(filters: DashboardFilterCriteria): Promise<AdminDashboardMetrics> {
+  async getAdminMetrics(
+    filters: DashboardFilterCriteria,
+  ): Promise<AdminDashboardMetrics> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -62,14 +64,21 @@ export class DashboardPrismaRepository implements DashboardRepositoryPort {
     });
 
     const clienteMap = new Map<number, { nombre: string; count: number }>();
-    
+
     for (const t of ticketsPorClienteRaw) {
       const equipo = equiposConCliente.find((e) => e.id_equipo === t.id_equipo);
       if (equipo && equipo.clientes) {
         const clienteId = equipo.clientes.id_cliente;
-        const nombreEmpresa = equipo.clientes.nombre_empresa ?? 'Empresa Cliente';
-        const current = clienteMap.get(clienteId) ?? { nombre: nombreEmpresa, count: 0 };
-        clienteMap.set(clienteId, { nombre: nombreEmpresa, count: current.count + t._count.id_tickets });
+        const nombreEmpresa =
+          equipo.clientes.nombre_empresa ?? 'Empresa Cliente';
+        const current = clienteMap.get(clienteId) ?? {
+          nombre: nombreEmpresa,
+          count: 0,
+        };
+        clienteMap.set(clienteId, {
+          nombre: nombreEmpresa,
+          count: current.count + t._count.id_tickets,
+        });
       }
     }
 
@@ -133,7 +142,8 @@ export class DashboardPrismaRepository implements DashboardRepositoryPort {
       const resueltosDia = await this.prisma.tickets.count({
         where: {
           estado: 'Cerrado',
-          updated_at: { // O la fecha en que se marcó como cerrado, según tu esquema
+          updated_at: {
+            // O la fecha en que se marcó como cerrado, según tu esquema
             gte: startDay,
             lt: endDay,
           },
@@ -154,18 +164,18 @@ export class DashboardPrismaRepository implements DashboardRepositoryPort {
 
     const alertasLicencias = await this.prisma.software.findMany({
       where: {
-        fechaCaducidad: {
+        fecha_caducidad: {
           lte: fechaLimiteAlerta,
           gte: today,
         },
       },
       include: {
         _count: {
-          select: { softwareEquipos: true },
+          select: { software_equipos: true },
         },
       },
       take: 4,
-      orderBy: { fechaCaducidad: 'asc' },
+      orderBy: { fecha_caducidad: 'asc' },
     });
 
     // 6. Ensamblaje y retorno a través del Mapper
