@@ -2,94 +2,58 @@ import { applyDecorators, HttpStatus } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiConsumes,
-  ApiExtraModels,
   ApiOperation,
   ApiParam,
-  ApiProduces,
   ApiQuery,
   ApiResponse,
-  getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateUserRequestDto } from '../dtos/create-user.request.dto';
 import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
 import { UpdateUserDto } from '../dtos/update-user.request.dto';
 import { UpdateProfileDTO } from '../dtos/update-profile.request.dto';
 import { UserOptions } from '../dtos/user-options.dto';
-import { ProcessBulkUsersRequestDto } from '../dtos/process-bulk-users.request.dto';
-import { PaginatedUsersResponseDto } from '../dtos/user-list-response.dto';
 
 export function ApiFindAllUsersSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
-    ApiExtraModels(PaginatedUsersResponseDto),
     ApiOperation({
       summary: 'Obtener lista paginada de usuarios',
       description:
-        'Retorna un listado paginado de usuarios con id, nombre, apellido, correo, rol, empresa, sucursal, área y estado (`ACTIVO` | `INACTIVO`). Admite búsqueda parcial (nombre, apellido, correo o nombre de la empresa), filtro por rol (`rol`), estado (`estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
+        'Retorna usuarios según los filtros aplicados (búsqueda por texto, rol, cliente, sucursal, área o estado).',
     }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Lista de usuarios devuelta exitosamente.',
       schema: {
-        allOf: [
-          {
-            properties: {
-              message: { type: 'string' },
-              data: { $ref: getSchemaPath(PaginatedUsersResponseDto) },
-            },
-          },
-        ],
         example: {
           message: 'Usuarios obtenidos exitosamente',
           data: {
             data: [
               {
                 id_usuario: 1,
-                nombre: 'Ana',
-                apellido: 'Torres',
-                correo: 'ana.torres@empresa.com',
-                rol: 'CLIENTE_TRABAJADOR',
-                empresa: 'Banco Andino S.A.',
-                sucursal: 'Sede Lima',
-                area: 'Contabilidad',
-                estado: 'ACTIVO',
-              },
-              {
-                id_usuario: 2,
                 nombre: 'Juan',
                 apellido: 'Pérez',
-                correo: 'juan.perez@zaint.com',
-                rol: 'SOPORTE_TECNICO',
-                empresa: null,
-                sucursal: null,
-                area: null,
-                estado: 'INACTIVO',
+                correo: 'juan.perez@empresa.com',
+                is_active: true,
+                nombre_rol: 'SOPORTE_INSITU',
+                zonas: [
+                  { id_zona: 1, nombre_zona: 'Lima Centro / San Isidro' },
+                  { id_zona: 2, nombre_zona: 'Lima Norte' },
+                ],
               },
             ],
             meta: {
-              total: 2,
+              total: 1,
               page: 1,
-              limit: 10,
-              totalPages: 1,
+              lastPage: 1,
             },
           },
         },
       },
     }),
     ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description:
-        'Parámetros de consulta inválidos (rol, estado, page o limit fuera de rango).',
-    }),
-    ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description:
-        'El rol del usuario no tiene permiso para listar usuarios (requiere ADMINISTRADOR, SOPORTE_INSITU o SOPORTE_TECNICO).',
     }),
   );
 }
@@ -136,11 +100,6 @@ export function ApiFindUserByIdSwagger() {
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
     }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description:
-        'El rol del usuario no tiene permiso para ver usuarios (requiere ADMINISTRADOR, SOPORTE_INSITU o SOPORTE_TECNICO).',
-    }),
   );
 }
 
@@ -152,7 +111,7 @@ export function ApiCreateUserSwagger() {
       description: `
 Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según su **Rol**:
 
-* **ADMINISTRADOR / SOPORTE_TECNICO:** No requieren relaciones externas (\`id_cliente\`, \`id_sucursal\`, \`id_area\`, \`zonas_ids\`).
+* **ADMINISTRADOR / SOPORTE_REMOTO:** No requieren relaciones externas (\`id_cliente\`, \`id_sucursal\`, \`id_area\`, \`zonas_ids\`).
 * **SOPORTE_INSITU:** Requiere obligatoriamente asignar al menos una zona de cobertura geográfica en \`zonas_ids\`.
 * **CLIENTE_EMPRESA:** Requiere obligatoriamente \`id_cliente\`.
 * **CLIENTE_SUCURSAL:** Requiere obligatoriamente \`id_cliente\` e \`id_sucursal\`.
@@ -210,10 +169,6 @@ Registra un nuevo usuario en el sistema aplicando las reglas jerárquicas según
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
     }),
   );
 }
@@ -297,10 +252,6 @@ Permite a un administrador modificar la información, rol, zonas de cobertura o 
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
     }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
   );
 }
 
@@ -310,7 +261,7 @@ export function ApiUpdateProfileSwagger() {
     ApiOperation({
       summary: 'Actualizar perfil del usuario autenticado',
       description:
-        'Permite al usuario autenticado modificar su propia información personal o cambiar su clave mediante el token JWT. Disponible para cualquier rol autenticado: no exige un rol específico, por lo que solo responde 401 si el token no es válido o el usuario está inactivo.',
+        'Permite al usuario autenticado modificar su propia información personal o cambiar su clave mediante el token JWT.',
     }),
     ApiBody({ type: UpdateProfileDTO }),
     ApiResponse({
@@ -390,10 +341,6 @@ export function ApiAssignRolSwagger() {
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
     }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
   );
 }
 
@@ -438,10 +385,6 @@ export function ApiToggleUserStatusSwagger() {
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
     }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
   );
 }
 
@@ -485,285 +428,6 @@ export function ApiFindUserOptionsSwagger() {
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
       description: 'Token JWT no válido o no enviado.',
-    }),
-  );
-}
-
-export function ApiGetUserStatsSwagger() {
-  return applyDecorators(
-    ApiBearerAuth('access-token'),
-    ApiOperation({
-      summary: 'Obtener estadísticas generales de usuarios',
-      description:
-        'Retorna el total de usuarios (con su desglose de activos e inactivos), la cantidad de personal técnico (administradores y soporte) y la cantidad de cuentas de clientes (empresa, sucursal y trabajador).',
-    }),
-    ApiResponse({
-      status: HttpStatus.OK,
-      description: 'Estadísticas de usuarios obtenidas exitosamente.',
-      schema: {
-        example: {
-          message: 'Estadísticas de usuarios obtenidas exitosamente',
-          data: {
-            totalUsuarios: { cantidad: 25, activos: 22, inactivos: 3 },
-            personalTecnico: { cantidad: 8 },
-            cuentasClientes: { cantidad: 17 },
-          },
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token JWT no válido o no enviado.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
-  );
-}
-
-export function ApiDownloadBulkUserTemplateSwagger() {
-  return applyDecorators(
-    ApiBearerAuth('access-token'),
-    ApiOperation({
-      summary: 'Descargar la plantilla de carga masiva de usuarios',
-      description:
-        'Descarga un archivo Excel (.xlsx) con la hoja Usuarios y las columnas, en este orden: nombre, apellido, correo, rol, empresa, sucursal, area, estado. Incluye listas desplegables para rol y estado (ACTIVO / INACTIVO) y una hoja de instrucciones.',
-    }),
-    ApiProduces(
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ),
-    ApiResponse({
-      status: HttpStatus.OK,
-      description: 'Plantilla generada exitosamente.',
-      schema: { type: 'string', format: 'binary' },
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token JWT no válido o no enviado.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
-  );
-}
-
-export function ApiValidateBulkUsersSwagger() {
-  return applyDecorators(
-    ApiBearerAuth('access-token'),
-    ApiOperation({
-      summary: 'Pre-validar una carga masiva de usuarios',
-      description: `
-Analiza un archivo **.xlsx** o **.csv** (con las columnas de la plantilla; \`empresa\` y \`estado\` son opcionales) contra la base de datos **sin crear ningún usuario**. Máximo 5 MB y 1000 filas.
-
-Validaciones por fila:
-* **Correo:** obligatorio, con formato válido, no registrado en el sistema y no repetido dentro del archivo.
-* **Rol:** debe existir en el sistema.
-* **Empresa (opcional):** si se indica, debe coincidir con el nombre de la empresa de \`id_cliente\`.
-* **Estado (opcional):** \`ACTIVO\` o \`INACTIVO\`; si se deja vacío se asume \`ACTIVO\`. Cualquier otro valor deja la fila en \`ERROR\`.
-* **Sucursal:** debe existir y pertenecer a la empresa (\`id_cliente\`) indicada; de lo contrario la fila queda en \`ERROR\` con la observación \`Sede Inexistente\`. Es obligatoria para los roles CLIENTE_SUCURSAL y CLIENTE_TRABAJADOR.
-* **Área:** si se indica, debe pertenecer a la sucursal de la fila. Es obligatoria para el rol CLIENTE_TRABAJADOR.
-
-Si una fila tiene varios errores, las observaciones se concatenan separadas por \`; \`.
-      `,
-    }),
-    ApiConsumes('multipart/form-data'),
-    ApiBody({
-      schema: {
-        type: 'object',
-        required: ['file', 'id_cliente'],
-        properties: {
-          file: {
-            type: 'string',
-            format: 'binary',
-            description: 'Archivo .xlsx o .csv con los usuarios a cargar',
-          },
-          id_cliente: {
-            type: 'integer',
-            example: 1,
-            description: 'ID de la empresa (cliente) destino',
-          },
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.OK,
-      description: 'Validación completada (puede incluir filas con error).',
-      schema: {
-        example: {
-          status: 200,
-          message: 'Validación de la carga masiva completada',
-          data: {
-            totalRegistros: 3,
-            validos: 1,
-            conError: 2,
-            detalles: [
-              {
-                fila: 2,
-                estado: 'VALIDO',
-                observacion: 'Registro válido',
-                nombreCompleto: 'Ana Torres',
-                correo: 'ana.torres@empresa.com',
-                rol: 'CLIENTE_TRABAJADOR',
-                empresa: 'Empresa Demo S.A.C.',
-                sucursal: 'Sede Lima',
-                area: 'Contabilidad',
-                estadoUsuario: 'ACTIVO',
-              },
-              {
-                fila: 3,
-                estado: 'ERROR',
-                observacion: 'Sede Inexistente',
-                nombreCompleto: 'Luis Rojas',
-                correo: 'luis.rojas@empresa.com',
-                rol: 'CLIENTE_SUCURSAL',
-                empresa: 'Empresa Demo S.A.C.',
-                sucursal: 'Sede Fantasma',
-                area: 'Contabilidad',
-                estadoUsuario: 'ACTIVO',
-              },
-              {
-                fila: 4,
-                estado: 'ERROR',
-                observacion: 'Correo ya registrado; Rol inexistente',
-                nombreCompleto: 'Rosa Díaz',
-                correo: 'juan.perez@empresa.com',
-                rol: 'SUPERVISOR',
-                empresa: '',
-                sucursal: '',
-                area: '',
-                estadoUsuario: 'ACTIVO',
-              },
-            ],
-          },
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description:
-        'Archivo ausente, formato no admitido, sin las columnas requeridas, vacío o con más de 1000 filas; o id_cliente inválido.',
-      schema: {
-        example: {
-          message:
-            'Archivo de carga masiva inválido: faltan las columnas: sucursal, area',
-          error: 'Bad Request',
-          statusCode: 400,
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.NOT_FOUND,
-      description: 'La empresa indicada en id_cliente no existe.',
-    }),
-    ApiResponse({
-      status: HttpStatus.PAYLOAD_TOO_LARGE,
-      description: 'El archivo supera el tamaño máximo de 5 MB.',
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token JWT no válido o no enviado.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
-  );
-}
-
-export function ApiProcessBulkUsersSwagger() {
-  return applyDecorators(
-    ApiBearerAuth('access-token'),
-    ApiOperation({
-      summary: 'Procesar una carga masiva de usuarios',
-      description: `
-Registra en la empresa indicada (\`id_cliente\`) los usuarios aprobados en la pre-validación (\`POST /usuario/carga-masiva/validar\`).
-
-* **Revalidación en servidor:** el listado se vuelve a validar con las mismas reglas de la pre-validación (correo único, rol, sucursal y área de la empresa). Las filas que no pasen se omiten y se reportan con su observación; las demás se registran.
-* **Atomicidad:** todos los usuarios válidos se crean en una sola transacción. Si falla el registro (por ejemplo, un correo tomado por otro proceso) no se crea ninguno.
-* **Relaciones:** se asignan \`id_rol\`, \`id_cliente\` y, según el rol, \`id_sucursal\` e \`id_area\` (CLIENTE_EMPRESA: solo empresa; CLIENTE_SUCURSAL: empresa y sucursal; CLIENTE_TRABAJADOR: empresa, sucursal y área).
-* **Estado:** cada usuario se crea \`ACTIVO\` o \`INACTIVO\` según su columna \`estado\` (por defecto \`ACTIVO\`). A los usuarios \`INACTIVO\` no se les envía correo de acceso.
-* **Credenciales:** las cuentas activas se crean con una contraseña aleatoria que nadie conoce. Con \`enviarCredenciales: true\` cada usuario recibe un correo con un enlace (válido 24 horas) para definir su contraseña. Con \`false\` no se envía nada y el usuario puede usar "Olvidé mi contraseña".
-* Un fallo al enviar un correo no revierte la creación del usuario; se informa en \`credencialesEnviadas\` de cada fila.
-* Máximo 1000 usuarios por solicitud.
-      `,
-    }),
-    ApiBody({ type: ProcessBulkUsersRequestDto }),
-    ApiResponse({
-      status: HttpStatus.CREATED,
-      description:
-        'Carga procesada. Puede incluir filas omitidas por error de validación.',
-      schema: {
-        example: {
-          status: 201,
-          message:
-            'Carga masiva procesada: 2 usuario(s) creado(s), 1 con error',
-          data: {
-            totalRecibidos: 3,
-            creados: 2,
-            conError: 1,
-            enviarCredenciales: true,
-            credencialesEnviadas: 1,
-            credencialesFallidas: 1,
-            detalles: [
-              {
-                fila: 2,
-                estado: 'CREADO',
-                observacion: 'Usuario creado',
-                nombreCompleto: 'Ana Torres',
-                correo: 'ana.torres@empresa.com',
-                rol: 'CLIENTE_TRABAJADOR',
-                sucursal: 'Sede Lima',
-                credencialesEnviadas: true,
-              },
-              {
-                fila: 3,
-                estado: 'CREADO',
-                observacion:
-                  'Usuario creado, pero no se pudo enviar el correo de acceso',
-                nombreCompleto: 'Luis Rojas',
-                correo: 'luis.rojas@empresa.com',
-                rol: 'CLIENTE_SUCURSAL',
-                sucursal: 'Sede Arequipa',
-                credencialesEnviadas: false,
-              },
-              {
-                fila: 4,
-                estado: 'ERROR',
-                observacion: 'Sede Inexistente',
-                nombreCompleto: 'Rosa Díaz',
-                correo: 'rosa.diaz@empresa.com',
-                rol: 'CLIENTE_SUCURSAL',
-                sucursal: 'Sede Fantasma',
-                credencialesEnviadas: null,
-              },
-            ],
-          },
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description:
-        'Cuerpo inválido: id_cliente no válido, enviarCredenciales no booleano, listado vacío o con más de 1000 usuarios.',
-    }),
-    ApiResponse({
-      status: HttpStatus.NOT_FOUND,
-      description: 'La empresa indicada en id_cliente no existe.',
-    }),
-    ApiResponse({
-      status: HttpStatus.CONFLICT,
-      description:
-        'Un correo fue registrado por otro proceso durante la carga; no se creó ningún usuario. Vuelve a validar e inténtalo de nuevo.',
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token JWT no válido o no enviado.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
     }),
   );
 }

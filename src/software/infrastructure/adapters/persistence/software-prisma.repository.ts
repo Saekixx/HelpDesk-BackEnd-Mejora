@@ -16,14 +16,14 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
 
     if (software.id_software) {
       const updated = await this.prisma.software.update({
-        where: { idSoftware: software.id_software },
+        where: { id_software: software.id_software },
         data,
       });
       return SoftwareMapper.toDomain(updated);
     }
 
     const created = await this.prisma.software.create({
-      data: data as Prisma.SoftwareCreateInput,
+      data: data as Prisma.softwareCreateInput,
     });
     return SoftwareMapper.toDomain(created);
   }
@@ -40,17 +40,17 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
     const { search, is_active, page = 1, limit = 10 } = filterDto;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.SoftwareWhereInput = {};
+    const where: Prisma.softwareWhereInput = {};
 
     if (search) {
       where.OR = [
-        { nombreSoftware: { contains: search } },
+        { nombre_software: { contains: search } },
         { proveedor: { contains: search } },
       ];
     }
 
     if (is_active !== undefined) {
-      where.isActive = is_active;
+      where.is_active = is_active;
     }
 
     const [total, entities] = await Promise.all([
@@ -59,7 +59,7 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
       }),
     ]);
 
@@ -76,7 +76,7 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
 
   async findById(id: number): Promise<Software | null> {
     const entity = await this.prisma.software.findUnique({
-      where: { idSoftware: id },
+      where: { id_software: id },
     });
     if (!entity) return null;
     return SoftwareMapper.toDomain(entity);
@@ -84,16 +84,16 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
 
   async getSoftwareOptions(): Promise<SoftwareOptionDto[]> {
     const entities = await this.prisma.software.findMany({
-      where: { isActive: true },
+      where: { is_active: true },
       select: {
-        idSoftware: true,
-        nombreSoftware: true,
+        id_software: true,
+        nombre_software: true,
       },
     });
 
     return entities.map((entity) => ({
-      id: entity.idSoftware,
-      nombre: entity.nombreSoftware,
+      id: entity.id_software,
+      nombre: entity.nombre_software,
     }));
   }
 }

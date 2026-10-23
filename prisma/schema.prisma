@@ -103,7 +103,7 @@ model area {
 }
 
 // ==========================================
-// USUARIOS Y COBERTURA TÉCNICA
+// USUARIOS Y ROLES
 // ==========================================
 
 model rol {
@@ -138,6 +138,7 @@ model usuarios {
   tecnicos_zonas                          tecnicos_zonas[]
   soft_locks                              soft_locks[]
   auditoria_eventos                       auditoria_eventos[]
+  registro_hardware_tecnico               registro_hardware[] @relation("registro_hardware_tecnico")
 
   @@index([id_area], map: "fk_usuario_area")
   @@index([id_cliente], map: "fk_usuario_cliente")
@@ -157,16 +158,16 @@ model tecnicos_zonas {
 }
 
 // ==========================================
-// INVENTARIO HARDWARE Y SOFTWARE
+// INVENTARIO TI (EQUIPOS, HARDWARE, SOFTWARE)
 // ==========================================
 
 model equipos {
   id_equipo         Int                 @id @default(autoincrement())
   nombre_equipo     String?             @db.VarChar(100)
   tipo              String              @db.VarChar(50)
-  marca             String              @db.VarChar(50)
+  marca_modelo      String?             @db.VarChar(150)
   num_serie         String?             @unique(map: "num_serie") @db.VarChar(100)
-  nombre_usuario    String?             @db.VarChar(100)
+  estado            equipos_estado?     @default(Activo)
   ult_revision      DateTime?           @db.Date
   rev_programada    DateTime?           @db.Date
   id_trabajador     Int?
@@ -176,11 +177,13 @@ model equipos {
   is_active         Boolean?            @default(true)
   created_at        DateTime?           @default(now()) @db.DateTime(0)
   updated_at        DateTime?           @default(now()) @db.DateTime(0)
+  
   usuarios          usuarios?           @relation(fields: [id_trabajador], references: [id_usuario], onDelete: Cascade, onUpdate: Restrict, map: "fk_eqipos_trabajador")
   area              area?               @relation(fields: [id_area], references: [id_area], onUpdate: Restrict, map: "fk_equipos_area")
   clientes          clientes?           @relation(fields: [id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: Restrict, map: "fk_equipos_cliente")
-  sucursales        sucursales?         @relation(fields: [id_sucursal], references: [id_sucursal], onUpdate: Restrict, map: "fk_equipos_sucursal")
+  sucursales        sucursales?         @relation(fields: [id_sucursal], references: [id_sucursal], onDelete: Restrict, onUpdate: Restrict, map: "fk_equipos_sucursal")
   registro_hardware registro_hardware[]
+  hardware_actual   hardware[]          @relation("hardware_equipo_actual")
   software_equipos  software_equipos[]
   tickets           tickets[]
 
@@ -192,75 +195,87 @@ model equipos {
 
 model hardware {
   id_hardware       Int                 @id @default(autoincrement())
-  tipo_equipo       String              @db.VarChar(100)
+  tipo_componente   String              @db.VarChar(100)
+  marca_modelo      String              @db.VarChar(150)
   numero_serie      String              @db.VarChar(100)
-  fecha_compra      DateTime            @db.Date
-  marca             String              @db.VarChar(100)
-  proveedor         String              @db.VarChar(100)
+  proveedor         String?             @db.VarChar(150)
+  fecha_compra      DateTime?           @db.Date
   url_factura       String?             @db.VarChar(255)
-  descripcion       String?             @db.Text
-  ult_revision      DateTime?           @db.Date
-  rev_programada    DateTime?           @db.Date
-  is_active         Boolean?            @default(true)
+  estado            hardware_estado?    @default(En_Stock)
+  id_equipo_actual  Int?                
   created_at        DateTime?           @default(now()) @db.DateTime(0)
   updated_at        DateTime?           @default(now()) @db.DateTime(0)
+  
+  equipo_actual     equipos?            @relation("hardware_equipo_actual", fields: [id_equipo_actual], references: [id_equipo], onDelete: SetNull, onUpdate: Restrict, map: "fk_hw_equipo_actual")
   registro_hardware registro_hardware[]
+
+  @@index([id_equipo_actual], map: "fk_hw_equipo_actual")
 }
 
 model registro_hardware {
-  id_RH             Int       @id @default(autoincrement())
-  fecha_instalacion DateTime  @default(now()) @db.DateTime(0)
-  descripcion       String    @db.Text
-  serie             String    @db.VarChar(100)
-  proveedor         String    @db.VarChar(255)
-  is_actual         Boolean?  @default(true)
-  id_hardware       Int?
-  id_equipo         Int?
-  created_at        DateTime? @default(now()) @db.DateTime(0)
-  updated_at        DateTime? @default(now()) @db.DateTime(0)
-  equipos           equipos?  @relation(fields: [id_equipo], references: [id_equipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_rh_equipo")
-  hardware          hardware? @relation(fields: [id_hardware], references: [id_hardware], onDelete: Cascade, onUpdate: Restrict, map: "fk_rh_hardware")
+  id_RH                 Int               @id @default(autoincrement())
+  fecha_instalacion     DateTime          @default(now()) @db.DateTime(0)
+  fecha_retiro          DateTime?         @db.DateTime(0)
+  motivo_retiro         String?           @db.Text
+  salud_smart           String?           @db.VarChar(100)
+  is_actual             Boolean?          @default(true)
+  id_hardware           Int
+  id_equipo             Int
+  id_tecnico_resp       Int?
+  created_at            DateTime?         @default(now()) @db.DateTime(0)
+  updated_at            DateTime?         @default(now()) @db.DateTime(0)
+  
+  equipos               equipos           @relation(fields: [id_equipo], references: [id_equipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_rh_equipo")
+  hardware              hardware          @relation(fields: [id_hardware], references: [id_hardware], onDelete: Cascade, onUpdate: Restrict, map: "fk_rh_hardware")
+  tecnico_responsable   usuarios?         @relation("registro_hardware_tecnico", fields: [id_tecnico_resp], references: [id_usuario], onDelete: SetNull, onUpdate: Restrict, map: "fk_rh_tecnico")
 
   @@index([id_equipo], map: "fk_rh_equipo")
   @@index([id_hardware], map: "fk_rh_hardware")
+  @@index([id_tecnico_resp], map: "fk_rh_tecnico")
 }
 
-model Software {
-  idSoftware       Int                @id @default(autoincrement()) @map("id_software")
-  nombreSoftware   String             @map("nombre_software") @db.VarChar(100)
-  licencia         String             @db.VarChar(100)
-  correo           String             @db.VarChar(100)
-  password         String             @db.VarChar(255)
-  fechaInstalacion DateTime           @map("fecha_instalacion") @db.Date
-  fechaCaducidad   DateTime           @map("fecha_caducidad") @db.Date
-  proveedor        String             @db.VarChar(100)
-  isActive         Boolean?           @default(true) @map("is_active")
-  createdAt        DateTime?          @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt        DateTime?          @default(now()) @map("updated_at") @db.DateTime(0)
-  softwareEquipos  software_equipos[]
+model software {
+  id_software         Int                @id @default(autoincrement())
+  nombre_software     String             @db.VarChar(150)
+  categoria           String?            @db.VarChar(100)
+  tipo_licencia       tipo_licencia_enum @default(Pool_Limitado)
+  licencia_master_key String?            @db.VarChar(150)
+  proveedor           String?            @db.VarChar(150)
+  limite_equipos      Int?               @default(1)
+  licencias_usadas    Int?               @default(0)
+  url_factura         String?            @db.VarChar(255)
+  fecha_compra        DateTime?          @db.Date
+  fecha_caducidad     DateTime?          @db.Date
+  is_active           Boolean?           @default(true)
+  created_at          DateTime?          @default(now()) @db.DateTime(0)
+  updated_at          DateTime?          @default(now()) @db.DateTime(0)
 
-  @@map("software")
+  software_equipos    software_equipos[]
 }
 
 model software_equipos {
   id_software_equipos Int       @id @default(autoincrement())
   id_software         Int
   id_equipo           Int
+  licencia_especifica String?   @db.VarChar(150)
+  correo_asociado     String?   @db.VarChar(150)
+  password_enc        String?   @db.VarChar(255)
   fecha_instalacion   DateTime? @default(now()) @db.DateTime(0)
-  licencia_asignada   String?   @db.VarChar(100)
-  is_active           Boolean?  @default(true)
+  fecha_vencimiento   DateTime? @db.Date
   observaciones       String?   @db.Text
+  is_active           Boolean?  @default(true)
   created_at          DateTime? @default(now()) @db.DateTime(0)
   updated_at          DateTime? @default(now()) @db.DateTime(0)
+  
   equipos             equipos   @relation(fields: [id_equipo], references: [id_equipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_equipos")
-  software            Software  @relation(fields: [id_software], references: [idSoftware], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_software")
+  software            software  @relation(fields: [id_software], references: [id_software], onDelete: Cascade, onUpdate: Restrict, map: "fk_se_software")
 
   @@index([id_equipo], map: "fk_se_equipos")
-  @@index([id_software], map: "fk_se_software")
+  @@index([id_software], map: "fk_software")
 }
 
 // ==========================================
-// TICKETS, CITAS Y ATENCIÓN PRESENCIAL
+// TICKETS Y SOPORTE
 // ==========================================
 
 model tickets {
@@ -277,7 +292,7 @@ model tickets {
   updated_at                               DateTime?           @default(now()) @db.DateTime(0)
   equipos                                  equipos             @relation(fields: [id_equipo], references: [id_equipo], onUpdate: Restrict, map: "fk_tickets_equipo")
   usuarios_tickets_id_soporteTousuarios    usuarios?           @relation("tickets_id_soporteTousuarios", fields: [id_soporte], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_tickets_soporte")
-  usuarios_tickets_id_trabajadorTousuarios usuarios            @relation("tickets_id_trabajadorTousuarios", fields: [id_trabajador], references: [id_usuario], onUpdate: Restrict, map: "fk_tickets_trabajador")
+  usuarios_tickets_id_trabajadorTousuarios usuarios            @relation("tickets_id_trabajadorTousuarios", fields: [id_trabajador], references: [id_usuario], onDelete: Restrict, onUpdate: Restrict, map: "fk_tickets_trabajador")
   citas_soporte                            citas_soporte[]
   auditoria_eventos                        auditoria_eventos[]
 
@@ -362,4 +377,25 @@ enum tickets_estado {
   Derivado_InSitu  @map("Derivado InSitu")
   Reabierto
   Cerrado
+}
+
+enum equipos_estado {
+  Activo
+  En_Almacen       @map("En Almacén")
+  En_Mantenimiento @map("En Mantenimiento")
+  Retirado         @map("Retirado")
+}
+
+enum hardware_estado {
+  Instalado
+  En_Stock         @map("En Stock")
+  En_Mantenimiento @map("En Mantenimiento")
+  De_Baja          @map("De Baja")
+}
+
+enum tipo_licencia_enum {
+  Monousuario_OEM       @map("Monousuario / OEM")
+  Pool_Limitado         @map("Pool Limitado")
+  Corporativa_Flotante  @map("Corporativa Flotante")
+  Empresarial_Ilimitada @map("Empresarial Ilimitada")
 }
