@@ -104,40 +104,21 @@ export class UserPrismaRepository implements UserRepositoryPort {
   async findAllWithFilters(
     filters: UserFilterCriteria,
   ): Promise<PaginatedUsersResult> {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      id_rol,
-      id_cliente,
-      id_sucursal,
-      id_area,
-      is_active,
-    } = filters;
+    const { page = 1, limit = 10, search, id_rol, is_active } = filters;
 
-    const where: Prisma.usuariosWhereInput = {};
-
-    if (search) {
-      where.OR = [
-        { nombre: { contains: search } },
-        { apellido: { contains: search } },
-        { correo: { contains: search } },
-      ];
-    }
-
-    if (id_rol) where.id_rol = id_rol;
-    if (id_cliente) where.id_cliente = id_cliente;
-    if (id_sucursal) where.id_sucursal = id_sucursal;
-    if (id_area) where.id_area = id_area;
-
-    if (
-      is_active !== undefined &&
-      is_active !== null &&
-      String(is_active) !== ''
-    ) {
-      where.is_active =
-        is_active === true || String(is_active).toLowerCase() === 'true';
-    }
+    // En MySQL la búsqueda "contains" es insensible a mayúsculas según la collation (ci)
+    const where: Prisma.usuariosWhereInput = {
+      ...(search && {
+        OR: [
+          { nombre: { contains: search } },
+          { apellido: { contains: search } },
+          { correo: { contains: search } },
+          { clientes: { nombre_principal: { contains: search } } },
+        ],
+      }),
+      ...(id_rol !== undefined && { id_rol }),
+      ...(is_active !== undefined && { is_active }),
+    };
 
     const skip = (page - 1) * limit;
 
@@ -148,7 +129,7 @@ export class UserPrismaRepository implements UserRepositoryPort {
         take: limit,
         orderBy: { created_at: 'desc' },
         include: {
-          rol: { select: { nombre: true } },
+          rol: { select: { id_rol: true, nombre: true } },
           clientes: { select: { nombre_principal: true } },
           sucursales: { select: { nombre_sucursal: true } },
           area: { select: { nombre_area: true } },

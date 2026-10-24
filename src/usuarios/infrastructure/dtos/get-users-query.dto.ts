@@ -1,56 +1,53 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
+  IsInt,
   IsOptional,
   IsString,
-  IsEnum,
-  IsIn,
-  IsInt,
-  Min,
   Max,
+  Min,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
-import { RolEnum } from '@/auth/domain/enums/rol.enum';
+import { Transform, Type } from 'class-transformer';
 import { GetUsersFilterDto } from '../../application/dtos/get-users-filter.dto';
 
 export class GetUsersQueryDto implements GetUsersFilterDto {
   @ApiPropertyOptional({
-    description:
-      'Búsqueda parcial por nombre, apellido, correo o nombre de la empresa',
+    description: 'Búsqueda parcial por nombre, apellido o correo del usuario',
     example: 'Juan',
   })
   @IsOptional()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() || undefined : value,
+  )
   @IsString()
   search?: string;
 
   @ApiPropertyOptional({
-    enum: RolEnum,
-    enumName: 'RolEnum',
-    description:
-      'Filtrar por rol. Si se omite (o se envía "ALL"), retorna todos.',
-    example: RolEnum.CLIENTE_EMPRESA,
+    description: 'Filtrar por ID de rol. Si se omite, retorna todos los roles.',
+    example: 1,
+    minimum: 1,
   })
   @IsOptional()
-  @Transform(({ value }) =>
-    value === '' || value === 'ALL' ? undefined : value,
-  )
-  @IsEnum(RolEnum, { message: 'El rol no es válido' })
-  rol?: RolEnum;
+  @Type(() => Number)
+  @IsInt({ message: 'id_rol debe ser un número entero' })
+  @Min(1)
+  id_rol?: number;
 
   @ApiPropertyOptional({
-    enum: ['activo', 'inactivo'],
     description:
-      'Filtrar por estado ("activo" | "inactivo"). Si se omite, retorna ambos.',
-    example: 'activo',
+      'Filtrar por estado: true (activos) o false (inactivos). Si se omite, retorna ambos.',
+    example: true,
   })
   @IsOptional()
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() || undefined : value,
-  )
-  @IsIn(['activo', 'inactivo'], {
-    message: 'El estado debe ser "activo" o "inactivo"',
+  // Se lee el valor crudo (obj) porque enableImplicitConversion ya convirtió "false" en true.
+  @Transform(({ obj, key }) => {
+    const raw: unknown = obj[key];
+    if (raw === 'true' || raw === true) return true;
+    if (raw === 'false' || raw === false) return false;
+    return raw === '' ? undefined : raw;
   })
-  estado?: 'activo' | 'inactivo';
+  @IsBoolean({ message: 'is_active debe ser true o false' })
+  is_active?: boolean;
 
   @ApiPropertyOptional({
     description: 'Número de página para la paginación',

@@ -26,7 +26,7 @@ import { GetUserByIdUseCase } from '@/usuarios/application/use-cases/get-user-by
 import {
   ApiAssignRolSwagger,
   ApiCreateUserSwagger,
-  ApiFindAllUsersSwagger, // <-- Asegúrate de importar esta
+  ApiFindAllUsersSwagger,
   ApiFindUserByIdSwagger,
   ApiFindUserOptionsSwagger,
   ApiToggleUserStatusSwagger,
@@ -77,14 +77,27 @@ export class UsersController {
   @Get()
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
-  @ApiFindAllUsersSwagger() // <-- Faltaba este decorador aquí
+  @ApiFindAllUsersSwagger()
   async findAll(@Query() query: GetUsersQueryDto) {
-    const { data, page, limit, total, totalPages } =
-      await this.getUsersUseCase.execute(query);
-    const meta = { page, limit, total, totalPages };
+    const { search, id_rol, is_active, page, limit } = query;
+    const result = await this.getUsersUseCase.execute({
+      search,
+      id_rol,
+      is_active,
+      page,
+      limit,
+    });
     return {
       message: 'Usuarios obtenidos exitosamente',
-      data: { data, meta },
+      data: {
+        data: result.data,
+        meta: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      },
     };
   }
 

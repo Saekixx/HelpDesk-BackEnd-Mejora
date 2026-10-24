@@ -5,7 +5,7 @@ import { UserOptions } from '@/usuarios/domain/criteria/user-options.dto';
 
 // Tipo para consultas de Prisma que incluyen relaciones con otras tablas
 export type PrismaUserWithRelations = PrismaUsuario & {
-  rol?: { nombre: string } | null;
+  rol?: { id_rol: number; nombre: string } | null;
   clientes?: { nombre_principal: string } | null;
   sucursales?: { nombre_sucursal: string } | null;
   area?: { nombre_area: string } | null;
@@ -77,6 +77,9 @@ export class UserMapper {
       id_sucursal: entity.id_sucursal ?? null,
       id_area: entity.id_area ?? null,
 
+      rol: entity.rol
+        ? { id: entity.rol.id_rol, nombre: entity.rol.nombre }
+        : null,
       nombre_rol: entity.rol?.nombre || 'Sin Rol',
       nombre_cliente: entity.clientes?.nombre_principal || null,
       nombre_sucursal: entity.sucursales?.nombre_sucursal || null,

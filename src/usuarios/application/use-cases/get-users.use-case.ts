@@ -4,7 +4,7 @@ import {
   UserRepositoryPort,
   PaginatedUsersResult,
 } from '../../domain/ports/user.repository.port';
-import { GetUsersFilterDto } from '../dtos/get-users-filter.dto';
+import { UserFilterCriteria } from '../../domain/criteria/user-filter.criteria';
 
 @Injectable()
 export class GetUsersUseCase {
@@ -13,7 +13,7 @@ export class GetUsersUseCase {
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  async execute(filters: GetUsersFilterDto): Promise<PaginatedUsersResult> {
+  async execute(filters: UserFilterCriteria): Promise<PaginatedUsersResult> {
     return await this.userRepository.findAllWithFilters(filters);
   }
 }
