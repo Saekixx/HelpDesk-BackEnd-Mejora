@@ -29,6 +29,7 @@ import {
   ApiFindAllUsersSwagger,
   ApiFindUserByIdSwagger,
   ApiFindUserOptionsSwagger,
+  ApiFindUserStatsSwagger,
   ApiToggleUserStatusSwagger,
   ApiUpdateProfileSwagger,
   ApiUpdateUserSwagger,
@@ -66,6 +67,7 @@ export class UsersController {
   @Get('estadisticas')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(RolEnum.ADMINISTRADOR)
+  @ApiFindUserStatsSwagger()
   async getEstadisticas() {
     const data = await this.getUserStatsUseCase.execute();
     return {

@@ -99,6 +99,40 @@ export function ApiFindAllUsersSwagger() {
   );
 }
 
+export function ApiFindUserStatsSwagger() {
+  return applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiOperation({
+      summary: 'Obtener estadísticas resumidas de usuarios',
+      description:
+        'Retorna el total de usuarios (activos e inactivos), la cantidad de personal técnico (ADMINISTRADOR, SOPORTE_TECNICO, SOPORTE_INSITU) y la cantidad de cuentas de clientes (CLIENTE_EMPRESA, CLIENTE_SUCURSAL, CLIENTE_TRABAJADOR). Solo accesible para ADMINISTRADOR.',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Estadísticas de usuarios obtenidas exitosamente.',
+      schema: {
+        example: {
+          status: 200,
+          message: 'Estadísticas de usuarios obtenidas exitosamente',
+          data: {
+            totalUsuarios: { cantidad: 28, activos: 25, inactivos: 3 },
+            personalTecnico: { cantidad: 10 },
+            cuentasClientes: { cantidad: 18 },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso (solo ADMINISTRADOR).',
+    }),
+  );
+}
+
 export function ApiFindUserByIdSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
