@@ -28,10 +28,12 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
     // Agregamos condiciones al objeto `where` según los filtros proporcionados
     if (id_cliente !== undefined) where.id_cliente = id_cliente;
 
-    // Agregamos condiciones de búsqueda si se proporciona el filtro `search`
+    // Búsqueda parcial por nombre, dirección, encargado o correo.
+    // En MySQL `contains` ya ignora mayúsculas según la collation (`mode` no es soportado).
     if (search) {
       where.OR = [
         { nombre_sucursal: { contains: search } },
+        { direccion: { contains: search } },
         { encargado: { contains: search } },
         { correo: { contains: search } },
       ];
@@ -50,9 +52,21 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
         take: limit,
         orderBy: { created_at: 'desc' },
         include: {
-          // Incluimos información relacionada de clientes y zonas, así como el conteo de áreas asociadas a cada sucursal
-          clientes: { select: { id_cliente: true, nombre_principal: true } },
+          // Incluimos información relacionada de clientes, zonas y encargado, así como el conteo de áreas asociadas a cada sucursal
+          clientes: {
+            select: {
+              id_cliente: true,
+              nombre_principal: true,
+              numero_documento: true,
+            },
+          },
           zonas: { select: { id_zona: true, nombre_zona: true } },
+          // Encargado: primer usuario vinculado a la sucursal
+          usuarios: {
+            select: { id_usuario: true, nombre: true, apellido: true },
+            orderBy: { id_usuario: 'asc' },
+            take: 1,
+          },
           _count: { select: { area: true } },
         },
       }),

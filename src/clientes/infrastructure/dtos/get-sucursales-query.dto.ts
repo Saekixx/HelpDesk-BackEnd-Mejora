@@ -14,7 +14,8 @@ export class GetSucursalesQueryDto implements GetSucursalesFilterDto {
   id_cliente?: number;
 
   @ApiPropertyOptional({
-    description: 'Término de búsqueda (nombre, encargado o correo)',
+    description:
+      'Término de búsqueda por nombre, dirección, encargado o correo',
     example: 'Sucursal Centro',
   })
   @IsOptional()
