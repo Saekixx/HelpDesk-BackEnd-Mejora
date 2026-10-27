@@ -1,10 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import {
   SucursalRepositoryPort,
   PaginatedSucursalesResult,
 } from '@/clientes/domain/ports/sucursal.repository.port';
-import { Sucursal } from '@/clientes/domain/entities/sucursal.entity';
+import {
+  CreateSucursalResult,
+  Sucursal,
+} from '@/clientes/domain/entities/sucursal.entity';
+import {
+  HASH_SERVICE,
+  HashServicePort,
+} from '@/auth/domain/ports/hash.service.port';
+import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { GetSucursalesFilterDto } from '@/clientes/domain/dto/get-sucursales-filter.dto';
 import { CreateSucursalDto } from '@/clientes/domain/dto/create-sucursal.dto';
 import { UpdateSucursalDto } from '@/clientes/domain/dto/update-sucursal.dto';
@@ -15,7 +30,11 @@ import { OptionDto } from '../../dtos/options.response.dto';
 
 @Injectable()
 export class SucursalPrismaRepository implements SucursalRepositoryPort {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(HASH_SERVICE)
+    private readonly hashService: HashServicePort,
+  ) {}
 
   async findAll(
     filters: GetSucursalesFilterDto,
@@ -91,24 +110,105 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
     return SucursalMapper.toDomain(entity);
   }
 
-  async create(data: CreateSucursalDto): Promise<Sucursal> {
-    // Las columnas encargado/telefono/correo de `sucursales` son NOT NULL, por
-    // lo que se rellenan con los datos del encargado. La creación de su cuenta
-    // de usuario (misma transacción) se añade en el siguiente bloque.
+  // Creación atómica de la sucursal y de la cuenta de su encargado local. Todo
+  // ocurre en una única transacción: si falla cualquier paso se revierte la
+  // sucursal y el usuario.
+  async create(data: CreateSucursalDto): Promise<CreateSucursalResult> {
     const { encargado } = data;
-    const created = await this.prisma.sucursales.create({
-      data: {
-        nombre_sucursal: data.nombre_sucursal,
-        encargado: `${encargado.nombre} ${encargado.apellido}`,
-        telefono: encargado.telefono_contacto ?? '',
-        direccion: data.direccion,
-        correo: encargado.correo_corporativo,
-        is_active: data.is_active ?? true,
-        id_cliente: data.id_cliente,
-        id_zona: data.id_zona,
-      },
-    });
-    return SucursalMapper.toDomain(created);
+    const correoEncargado = encargado.correo_corporativo.trim().toLowerCase();
+
+    // La contraseña inicial es aleatoria y nunca se expone: el encargado
+    // establece la suya mediante el flujo de recuperación de contraseña.
+    // bcrypt es costoso en CPU, por lo que se calcula antes de abrir la
+    // transacción para no mantener la conexión ocupada mientras se hashea.
+    const passwordHash = await this.hashService.hash(
+      randomBytes(24).toString('base64url'),
+    );
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // a) Validaciones previas
+        const usuarioExistente = await tx.usuarios.findUnique({
+          where: { correo: correoEncargado },
+          select: { id_usuario: true },
+        });
+        if (usuarioExistente) {
+          throw new ConflictException(
+            'Ya existe un usuario registrado con ese correo',
+          );
+        }
+
+        const rolEncargado = await tx.rol.findFirst({
+          where: { nombre: RolEnum.CLIENTE_SUCURSAL },
+          select: { id_rol: true },
+        });
+        if (!rolEncargado) {
+          throw new InternalServerErrorException(
+            `El rol ${RolEnum.CLIENTE_SUCURSAL} no está configurado en el sistema`,
+          );
+        }
+
+        // b) Paso 1: sucursal. Las columnas encargado/telefono/correo son
+        // NOT NULL, por lo que se rellenan con los datos del encargado.
+        const sucursal = await tx.sucursales.create({
+          data: {
+            nombre_sucursal: data.nombre_sucursal,
+            encargado: `${encargado.nombre} ${encargado.apellido}`,
+            telefono: encargado.telefono_contacto ?? '',
+            direccion: data.direccion,
+            correo: correoEncargado,
+            is_active: data.is_active ?? true,
+            id_cliente: data.id_cliente,
+            id_zona: data.id_zona,
+          },
+          select: { id_sucursal: true, nombre_sucursal: true },
+        });
+
+        // c) Paso 2: usuario encargado vinculado a la sucursal recién creada
+        const usuario = await tx.usuarios.create({
+          data: {
+            nombre: encargado.nombre,
+            apellido: encargado.apellido,
+            correo: correoEncargado,
+            telefono: encargado.telefono_contacto,
+            password: passwordHash,
+            is_active: true,
+            id_rol: rolEncargado.id_rol,
+            id_cliente: data.id_cliente,
+            id_sucursal: sucursal.id_sucursal,
+          },
+          select: { id_usuario: true },
+        });
+
+        // d) Resultado
+        return {
+          id_sucursal: sucursal.id_sucursal,
+          nombre_sucursal: sucursal.nombre_sucursal,
+          usuario_encargado_id: usuario.id_usuario,
+        };
+      });
+    } catch (error) {
+      throw this.translateCreateError(error);
+    }
+  }
+
+  // Traduce errores de Prisma de la creación a excepciones HTTP:
+  // - P2002 (unique): dos registros concurrentes pasaron la validación de
+  //   duplicados al mismo tiempo; la restricción única de la BD los detiene.
+  // - P2003 (foreign key): la zona indicada no existe (el cliente ya se valida
+  //   en el caso de uso).
+  private translateCreateError(error: unknown): unknown {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return new ConflictException(
+          'Ya existe un usuario registrado con ese correo',
+        );
+      }
+      if (error.code === 'P2003') {
+        return new BadRequestException('La zona seleccionada no existe');
+      }
+    }
+    return error;
   }
 
   async update(id: number, data: UpdateSucursalDto): Promise<Sucursal> {

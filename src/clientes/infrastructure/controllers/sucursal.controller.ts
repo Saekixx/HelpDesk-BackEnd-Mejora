@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -18,6 +20,7 @@ import { UpdateSucursalUseCase } from '@/clientes/application/use-cases/sucursal
 import { ToggleSucursalStatusUseCase } from '@/clientes/application/use-cases/sucursal/toggle-sucursal-status.use-case';
 import { GetSucursalesQueryDto } from '../dtos/get-sucursales-query.dto';
 import { CreateSucursalHttpDto } from '../dtos/create-sucursal-http.dto';
+import { CreateSucursalResponseDto } from '../dtos/create-sucursal-response.dto';
 import { UpdateSucursalHttpDto } from '../dtos/update-sucursal-http.dto';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
@@ -76,12 +79,15 @@ export class SucursalController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @Roles(RolEnum.ADMINISTRADOR)
   @ApiCreateSucursalSwagger()
-  async create(@Body() dto: CreateSucursalHttpDto) {
+  async create(
+    @Body() dto: CreateSucursalHttpDto,
+  ): Promise<{ message: string; data: CreateSucursalResponseDto }> {
     const data = await this.createSucursalUseCase.execute(dto);
     return {
-      message: 'Sucursal creada exitosamente',
+      message: 'Sucursal y cuenta de encargado local creadas correctamente',
       data,
     };
   }

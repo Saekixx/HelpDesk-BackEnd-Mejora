@@ -1,4 +1,8 @@
-import { Sucursal, SucursalListItem } from '../entities/sucursal.entity';
+import {
+  CreateSucursalResult,
+  Sucursal,
+  SucursalListItem,
+} from '../entities/sucursal.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetSucursalesFilterDto } from '../dto/get-sucursales-filter.dto';
 import { CreateSucursalDto } from '../dto/create-sucursal.dto';
@@ -21,7 +25,8 @@ export interface SucursalRepositoryPort {
 
   findById(id: number): Promise<Sucursal | null>;
 
-  create(data: CreateSucursalDto): Promise<Sucursal>;
+  // Crea de forma atómica la sucursal y la cuenta de usuario de su encargado
+  create(data: CreateSucursalDto): Promise<CreateSucursalResult>;
 
   update(id: number, data: UpdateSucursalDto): Promise<Sucursal>;
 

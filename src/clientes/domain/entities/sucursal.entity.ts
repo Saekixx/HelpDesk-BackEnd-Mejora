@@ -40,6 +40,14 @@ export class Sucursal {
   }
 }
 
+// Resultado de la creación atómica de una sucursal junto con la cuenta de su
+// encargado local (POST /sucursales)
+export interface CreateSucursalResult {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  usuario_encargado_id: number;
+}
+
 // Empresa (cliente) dueña de la sucursal
 export interface SucursalListClienteEmpresa {
   id_cliente: number;

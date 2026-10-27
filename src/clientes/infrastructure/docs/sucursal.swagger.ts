@@ -1,11 +1,14 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
 import {
+  ApiBody,
   ApiExtraModels,
   ApiOperation,
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
 import { SucursalListItemResponseDto } from '../dtos/sucursal-list-response.dto';
+import { CreateSucursalHttpDto } from '../dtos/create-sucursal-http.dto';
+import { CreateSucursalResponseDto } from '../dtos/create-sucursal-response.dto';
 
 const SUCURSAL_LIST_ITEM_EJEMPLO = {
   id_sucursal: 5,
@@ -135,20 +138,90 @@ export function ApiFindSucursalByIdSwagger() {
   );
 }
 
+// Body de ejemplo de POST /sucursales (sucursal + encargado local anidado)
+const CREATE_SUCURSAL_REQUEST_EJEMPLO = {
+  id_cliente: 1,
+  nombre_sucursal: 'Sucursal Centro',
+  direccion: 'Jr. Los Pinos 456',
+  encargado: {
+    nombre: 'María',
+    apellido: 'Gómez',
+    telefono_contacto: '987654321',
+    correo_corporativo: 'maria.gomez@acme.com',
+  },
+};
+
+// Contenido de `data` en la respuesta 201 de POST /sucursales
+const CREATE_SUCURSAL_RESPONSE_EJEMPLO = {
+  id_sucursal: 7,
+  nombre_sucursal: 'Sucursal Centro',
+  usuario_encargado_id: 25,
+};
+
 export function ApiCreateSucursalSwagger() {
   return applyDecorators(
+    ApiExtraModels(CreateSucursalResponseDto),
     ApiOperation({
-      summary: 'Crear una sucursal',
+      summary: 'Crear una sucursal y su cuenta de encargado local',
       description:
-        'Crea una sucursal asociada a un cliente (empresa) existente.',
+        'Crea en un solo paso atómico (transacción) la sucursal de un cliente (empresa) existente y la cuenta de usuario de su encargado local (`encargado`), con rol `CLIENTE_SUCURSAL` y vinculada a la sucursal. El correo corporativo del encargado será su usuario de acceso y debe ser único. La contraseña inicial es aleatoria: el encargado debe establecerla con el flujo de recuperación de contraseña. Si cualquiera de los pasos falla no se guarda nada. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
+    }),
+    ApiBody({
+      type: CreateSucursalHttpDto,
+      description:
+        'Datos de la sucursal y del encargado local anidado en `encargado`.',
+      examples: {
+        completo: {
+          summary: 'Sucursal con encargado local',
+          value: CREATE_SUCURSAL_REQUEST_EJEMPLO,
+        },
+        minimo: {
+          summary: 'Solo campos obligatorios',
+          value: {
+            id_cliente: 1,
+            nombre_sucursal: 'Sucursal Centro',
+            direccion: 'Jr. Los Pinos 456',
+            encargado: {
+              nombre: 'María',
+              apellido: 'Gómez',
+              correo_corporativo: 'maria.gomez@acme.com',
+            },
+          },
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.CREATED,
-      description: 'Sucursal creada exitosamente.',
+      description:
+        'Sucursal y cuenta de encargado local creadas correctamente.',
+      type: CreateSucursalResponseDto,
+      schema: {
+        properties: {
+          status: { type: 'number', example: 201 },
+          message: {
+            type: 'string',
+            example:
+              'Sucursal y cuenta de encargado local creadas correctamente',
+          },
+          data: { $ref: getSchemaPath(CreateSucursalResponseDto) },
+        },
+        example: {
+          status: 201,
+          message: 'Sucursal y cuenta de encargado local creadas correctamente',
+          data: CREATE_SUCURSAL_RESPONSE_EJEMPLO,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
+      description: 'Datos de entrada inválidos o la zona indicada no existe.',
+      schema: {
+        example: {
+          status: 400,
+          message: 'El correo corporativo debe ser válido',
+          data: null,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
@@ -161,6 +234,25 @@ export function ApiCreateSucursalSwagger() {
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'El cliente (empresa) indicado no existe.',
+      schema: {
+        example: {
+          status: 404,
+          message: 'Cliente no encontrado',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'Conflicto: el correo corporativo del encargado ya se encuentra registrado.',
+      schema: {
+        example: {
+          status: 409,
+          message: 'Ya existe un usuario registrado con ese correo',
+          data: null,
+        },
+      },
     }),
   );
 }
