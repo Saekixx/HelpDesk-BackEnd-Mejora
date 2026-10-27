@@ -1,6 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
 
+// Plan de soporte asignado al cliente (relación con la tabla planes)
+export class PlanSoporteResponseDto {
+  @ApiProperty({ description: 'Identificador único del plan', example: 3 })
+  id_plan: number;
+
+  @ApiProperty({
+    description: 'Tipo/nombre del plan',
+    example: 'Tech Enterprise',
+  })
+  tipo: string;
+
+  @ApiProperty({
+    description: 'Servicios incluidos en el plan (texto tal como se guarda)',
+    example:
+      '["Mantenimiento semanal", "Soporte 24/7", "Asignación de técnico exclusivo"]',
+  })
+  servicios: string;
+}
+
 // Item del Listado Avanzado de Clientes (GET /clientes)
 export class ClienteListItemResponseDto {
   @ApiProperty({ description: 'Identificador único del cliente', example: 1 })
@@ -36,12 +55,11 @@ export class ClienteListItemResponseDto {
 
   @ApiProperty({
     description:
-      'Nombre del plan de soporte asignado. null si el cliente no tiene plan.',
-    example: 'Plan Premium',
+      'Plan de soporte asignado (id_plan, tipo y servicios). null si el cliente no tiene plan.',
+    type: PlanSoporteResponseDto,
     nullable: true,
-    type: String,
   })
-  planSoporte: string | null;
+  planSoporte: PlanSoporteResponseDto | null;
 
   @ApiProperty({
     description: 'Estado del cliente: true (activo) o false (inactivo)',

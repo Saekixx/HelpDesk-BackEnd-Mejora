@@ -63,6 +63,13 @@ export class Cliente {
   }
 }
 
+// Plan de soporte del cliente en el listado (relación con la tabla planes)
+export interface PlanSoporteListItem {
+  id_plan: number;
+  tipo: string;
+  servicios: string;
+}
+
 // Vista de lista usada por GET /clientes (Listado Avanzado de Clientes).
 export interface ClienteListItem {
   id_cliente: number;
@@ -75,9 +82,9 @@ export interface ClienteListItem {
   numero_documento: string;
   // Cantidad de sucursales asociadas
   totalSucursales: number;
-  // Nombre del plan de soporte asignado.
+  // Plan de soporte asignado (id, tipo y servicios).
   // null si el cliente no tiene un plan asignado.
-  planSoporte: string | null;
+  planSoporte: PlanSoporteListItem | null;
   is_active: boolean;
 }
 

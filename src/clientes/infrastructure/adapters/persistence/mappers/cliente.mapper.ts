@@ -16,7 +16,7 @@ import {
 import { RolEnum } from '@/auth/domain/enums/rol.enum';
 
 // Selección mínima que usa el listado paginado (GET /clientes): solo las
-// columnas que necesita ClienteListItem, el nombre del plan (planes.tipo) y el
+// columnas que necesita ClienteListItem, el plan (planes.id_plan/tipo/servicios) y el
 // conteo de sucursales. Se reutiliza en ClientePrismaRepository.findAll.
 export const CLIENTE_LIST_SELECT = {
   id_cliente: true,
@@ -25,7 +25,7 @@ export const CLIENTE_LIST_SELECT = {
   tipo_cliente: true,
   numero_documento: true,
   is_active: true,
-  planes: { select: { tipo: true } },
+  planes: { select: { id_plan: true, tipo: true, servicios: true } },
   _count: { select: { sucursales: true } },
 } satisfies Prisma.clientesSelect;
 
@@ -119,7 +119,13 @@ export class ClienteMapper {
       tipo_cliente: entity.tipo_cliente as unknown as TipoCliente,
       numero_documento: entity.numero_documento ?? '',
       totalSucursales: entity._count.sucursales,
-      planSoporte: entity.planes?.tipo ?? null,
+      planSoporte: entity.planes
+        ? {
+            id_plan: entity.planes.id_plan,
+            tipo: entity.planes.tipo,
+            servicios: entity.planes.servicios,
+          }
+        : null,
       is_active: entity.is_active ?? true,
     };
   }
