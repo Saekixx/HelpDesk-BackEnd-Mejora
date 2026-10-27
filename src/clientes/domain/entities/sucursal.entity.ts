@@ -40,9 +40,39 @@ export class Sucursal {
   }
 }
 
-export interface SucursalListItem extends Sucursal {
+// Empresa (cliente) dueña de la sucursal
+export interface SucursalListClienteEmpresa {
+  id_cliente: number;
+  nombre: string;
+  numero_documento: string | null;
+}
+
+// Usuario encargado de la sucursal (primer usuario vinculado)
+export interface SucursalListEncargado {
+  id_usuario: number;
+  nombre: string;
+  apellido: string;
+  telefono_contacto: string;
+  correo: string;
+}
+
+// Zona geográfica asignada a la sucursal
+export interface SucursalListZona {
+  id_zona: number;
+  nombre: string;
+}
+
+// Item del listado paginado de sucursales (GET /sucursales)
+export interface SucursalListItem {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  direccion: string;
   // Cantidad total de áreas de la sucursal (Prisma: _count.area)
   total_areas: number;
-  cliente: { id_cliente: number; nombre: string } | null;
-  zona: { id_zona: number; nombre: string } | null;
+  is_active: boolean;
+  cliente_empresa: SucursalListClienteEmpresa | null;
+  encargado: SucursalListEncargado | null;
+  zona: SucursalListZona | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

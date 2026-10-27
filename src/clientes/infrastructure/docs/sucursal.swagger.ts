@@ -1,16 +1,84 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiOperation,
+  ApiResponse,
+  getSchemaPath,
+} from '@nestjs/swagger';
+import { SucursalListItemResponseDto } from '../dtos/sucursal-list-response.dto';
+
+const SUCURSAL_LIST_ITEM_EJEMPLO = {
+  id_sucursal: 5,
+  nombre_sucursal: 'Sede Miraflores',
+  direccion: 'Av. Larco 345, Miraflores',
+  total_areas: 3,
+  is_active: true,
+  // null si la sucursal no tiene cliente asignado
+  cliente_empresa: {
+    id_cliente: 1,
+    nombre: 'Corporación ACME S.A.C.',
+    numero_documento: '20123456789',
+  },
+  // null si no hay usuarios vinculados a la sucursal
+  encargado: {
+    id_usuario: 12,
+    nombre: 'María',
+    apellido: 'Gómez',
+    telefono_contacto: '987654321',
+    correo: 'maria.gomez@acme.com',
+  },
+  // null si la sucursal no tiene zona asignada
+  zona: {
+    id_zona: 2,
+    nombre: 'Lima Centro',
+  },
+  createdAt: '2026-10-01T15:30:00.000Z',
+  updatedAt: '2026-10-10T09:12:00.000Z',
+};
 
 export function ApiFindAllSucursalesSwagger() {
   return applyDecorators(
+    ApiExtraModels(SucursalListItemResponseDto),
     ApiOperation({
       summary: 'Listar sucursales',
       description:
-        'Retorna un listado paginado de sucursales, con filtro opcional por cliente, texto de búsqueda y estado activo/inactivo.',
+        'Retorna un listado paginado de sucursales con la empresa (`cliente_empresa`), el encargado (`encargado`), la zona y el total de áreas. Admite filtro opcional por cliente, búsqueda parcial (nombre, dirección, encargado o correo), estado activo/inactivo y paginación.',
     }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Sucursales obtenidas exitosamente.',
+      schema: {
+        allOf: [
+          {
+            properties: {
+              message: { type: 'string' },
+              data: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: { $ref: getSchemaPath(SucursalListItemResponseDto) },
+                  },
+                  total: { type: 'number' },
+                  page: { type: 'number' },
+                  limit: { type: 'number' },
+                  totalPages: { type: 'number' },
+                },
+              },
+            },
+          },
+        ],
+        example: {
+          message: 'Sucursales obtenidas exitosamente',
+          data: {
+            data: [SUCURSAL_LIST_ITEM_EJEMPLO],
+            total: 1,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+          },
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
