@@ -92,14 +92,19 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
   }
 
   async create(data: CreateSucursalDto): Promise<Sucursal> {
+    // Las columnas encargado/telefono/correo de `sucursales` son NOT NULL, por
+    // lo que se rellenan con los datos del encargado. La creación de su cuenta
+    // de usuario (misma transacción) se añade en el siguiente bloque.
+    const { encargado } = data;
     const created = await this.prisma.sucursales.create({
       data: {
         nombre_sucursal: data.nombre_sucursal,
-        encargado: data.encargado,
-        telefono: data.telefono,
+        encargado: `${encargado.nombre} ${encargado.apellido}`,
+        telefono: encargado.telefono_contacto ?? '',
         direccion: data.direccion,
-        correo: data.correo,
+        correo: encargado.correo_corporativo,
         is_active: data.is_active ?? true,
+        id_cliente: data.id_cliente,
         id_zona: data.id_zona,
       },
     });
