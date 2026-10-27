@@ -86,9 +86,9 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
   // - search: coincidencia parcial (contains) en nombre/razón social
   //   (`nombre_principal`), número de documento y correo.
   // - tipo_cliente: enum JURIDICA | NATURAL.
-  // - estado: "activo" | "inactivo", se mapea a la columna `is_active`.
+  // - is_active: true | false, filtro exacto sobre la columna `is_active`.
   private buildWhere(filter: GetClientesFilterDto): Prisma.clientesWhereInput {
-    const { search, tipo_cliente, estado } = filter;
+    const { search, tipo_cliente, is_active } = filter;
     const where: Prisma.clientesWhereInput = {};
 
     const term = search?.trim();
@@ -104,8 +104,8 @@ export class ClientePrismaRepository implements ClienteRepositoryPort {
       where.tipo_cliente = tipo_cliente as unknown as clientes_tipo_cliente;
     }
 
-    if (estado !== undefined) {
-      where.is_active = estado === 'activo';
+    if (is_active !== undefined) {
+      where.is_active = is_active;
     }
 
     return where;

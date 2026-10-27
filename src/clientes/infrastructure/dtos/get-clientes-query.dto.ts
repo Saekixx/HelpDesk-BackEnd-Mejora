@@ -3,17 +3,14 @@ import {
   IsOptional,
   IsString,
   IsInt,
+  IsBoolean,
   IsEnum,
-  IsIn,
   Min,
   Max,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
-import {
-  EstadoCliente,
-  TipoCliente,
-} from '@/clientes/domain/entities/cliente.entity';
+import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
 
 export class GetClientesQueryDto implements GetClientesFilterDto {
   @ApiPropertyOptional({
@@ -38,16 +35,21 @@ export class GetClientesQueryDto implements GetClientesFilterDto {
   tipo_cliente?: TipoCliente;
 
   @ApiPropertyOptional({
-    enum: ['activo', 'inactivo'],
     description:
-      'Filtrar por estado ("activo" | "inactivo"). Si se omite, retorna ambos.',
-    example: 'activo',
+      'Filtrar por estado: true (activos) o false (inactivos). Si se omite, retorna ambos.',
+    type: Boolean,
+    required: false,
   })
   @IsOptional()
-  @IsIn(['activo', 'inactivo'], {
-    message: 'El estado debe ser "activo" o "inactivo"',
+  // Se lee el valor crudo (obj) porque enableImplicitConversion ya convirtió "false" en true.
+  @Transform(({ obj, key }) => {
+    const raw: unknown = obj[key];
+    if (raw === 'true' || raw === true) return true;
+    if (raw === 'false' || raw === false) return false;
+    return raw === '' ? undefined : raw;
   })
-  estado?: EstadoCliente;
+  @IsBoolean({ message: 'is_active debe ser true o false' })
+  is_active?: boolean;
 
   @ApiPropertyOptional({
     description: 'Número de página para la paginación',

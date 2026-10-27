@@ -73,7 +73,7 @@ const CLIENTE_LIST_ITEM_EJEMPLO = {
   numero_documento: '20123456789',
   totalSucursales: 3,
   planSoporte: 'Plan Premium',
-  estado: 'activo',
+  is_active: true,
 };
 
 const CLIENTE_DETAIL_EJEMPLO = {
@@ -118,7 +118,7 @@ export function ApiFindAllClientesSwagger() {
     ApiOperation({
       summary: 'Listar clientes (Listado Avanzado)',
       description:
-        'Retorna un listado paginado de clientes con id, nombre/razón social, rubro, tipo, documento, total de sucursales, plan de soporte y estado. Admite búsqueda parcial (nombre/razón social, documento o correo), filtro por tipo de cliente, estado (`estado`=activo|inactivo) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
+        'Retorna un listado paginado de clientes con id, nombre/razón social, rubro, tipo, documento, total de sucursales, plan de soporte e `is_active`. Admite búsqueda parcial (nombre/razón social, documento o correo), filtro por tipo de cliente, estado (`is_active`=true|false; si se omite retorna ambos) y paginación (`page`, `limit` máx. 100). La respuesta incluye `data` y `meta` (total, page, limit, totalPages).',
     }),
     ApiResponse({
       status: HttpStatus.OK,

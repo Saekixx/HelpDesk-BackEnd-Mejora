@@ -44,11 +44,11 @@ export class ClienteListItemResponseDto {
   planSoporte: string | null;
 
   @ApiProperty({
-    description: 'Estado actual del cliente',
-    enum: ['activo', 'inactivo'],
-    example: 'activo',
+    description: 'Estado del cliente: true (activo) o false (inactivo)',
+    type: Boolean,
+    example: true,
   })
-  estado: 'activo' | 'inactivo';
+  is_active: boolean;
 }
 
 // Metadatos de paginación

@@ -63,9 +63,6 @@ export class Cliente {
   }
 }
 
-// Estado legible del cliente
-export type EstadoCliente = 'activo' | 'inactivo';
-
 // Vista de lista usada por GET /clientes (Listado Avanzado de Clientes).
 export interface ClienteListItem {
   id_cliente: number;
@@ -81,7 +78,7 @@ export interface ClienteListItem {
   // Nombre del plan de soporte asignado.
   // null si el cliente no tiene un plan asignado.
   planSoporte: string | null;
-  estado: EstadoCliente;
+  is_active: boolean;
 }
 
 // Resumen del plan contratado por el cliente

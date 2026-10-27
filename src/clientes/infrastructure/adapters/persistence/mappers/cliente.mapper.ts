@@ -120,7 +120,7 @@ export class ClienteMapper {
       numero_documento: entity.numero_documento ?? '',
       totalSucursales: entity._count.sucursales,
       planSoporte: entity.planes?.tipo ?? null,
-      estado: (entity.is_active ?? true) ? 'activo' : 'inactivo',
+      is_active: entity.is_active ?? true,
     };
   }
 
