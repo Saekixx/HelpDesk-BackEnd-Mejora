@@ -11,6 +11,7 @@ import { GetSucursalDetailResponseDto } from '../dtos/get-sucursal-detail-respon
 import { GetSucursalStatsResponseDto } from '../dtos/get-sucursal-stats-response.dto';
 import { CreateSucursalHttpDto } from '../dtos/create-sucursal-http.dto';
 import { CreateSucursalResponseDto } from '../dtos/create-sucursal-response.dto';
+import { UpdateSucursalHttpDto } from '../dtos/update-sucursal-http.dto';
 
 const SUCURSAL_LIST_ITEM_EJEMPLO = {
   id_sucursal: 5,
@@ -243,6 +244,7 @@ const CREATE_SUCURSAL_REQUEST_EJEMPLO = {
   id_cliente: 1,
   nombre_sucursal: 'Sucursal Centro',
   direccion: 'Jr. Los Pinos 456',
+  id_zona: 1,
   encargado: {
     nombre: 'María',
     apellido: 'Gómez',
@@ -264,7 +266,7 @@ export function ApiCreateSucursalSwagger() {
     ApiOperation({
       summary: 'Crear una sucursal y su cuenta de encargado local',
       description:
-        'Crea en un solo paso atómico (transacción) la sucursal de un cliente (empresa) existente y la cuenta de usuario de su encargado local (`encargado`), con rol `CLIENTE_SUCURSAL` y vinculada a la sucursal. El correo corporativo del encargado será su usuario de acceso y debe ser único. La contraseña inicial es aleatoria: el encargado debe establecerla con el flujo de recuperación de contraseña. Si cualquiera de los pasos falla no se guarda nada. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
+        'Crea en un solo paso atómico (transacción) la sucursal de un cliente (empresa) existente y la cuenta de usuario de su encargado local (`encargado`), con rol `CLIENTE_SUCURSAL` y vinculada a la sucursal. `id_zona` es opcional: puede omitirse o enviarse como `null` para crear la sucursal sin zona. El correo corporativo del encargado será su usuario de acceso y debe ser único. La contraseña inicial es aleatoria: el encargado debe establecerla con el flujo de recuperación de contraseña. Si cualquiera de los pasos falla no se guarda nada. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
     }),
     ApiBody({
       type: CreateSucursalHttpDto,
@@ -275,8 +277,12 @@ export function ApiCreateSucursalSwagger() {
           summary: 'Sucursal con encargado local',
           value: CREATE_SUCURSAL_REQUEST_EJEMPLO,
         },
+        sinZona: {
+          summary: 'Sin zona asignada (id_zona null)',
+          value: { ...CREATE_SUCURSAL_REQUEST_EJEMPLO, id_zona: null },
+        },
         minimo: {
-          summary: 'Solo campos obligatorios',
+          summary: 'Solo campos obligatorios (id_zona se puede omitir)',
           value: {
             id_cliente: 1,
             nombre_sucursal: 'Sucursal Centro',
@@ -357,16 +363,97 @@ export function ApiCreateSucursalSwagger() {
   );
 }
 
+// Body de ejemplo de PATCH /sucursales/:id (todos los campos son opcionales)
+const UPDATE_SUCURSAL_REQUEST_EJEMPLO = {
+  id_cliente: 1,
+  nombre_sucursal: 'Sucursal Centro',
+  direccion: 'Jr. Los Pinos 456',
+  id_zona: 2,
+  encargado: {
+    nombre: 'María',
+    apellido: 'Gómez',
+    telefono_contacto: '987654321',
+    correo_corporativo: 'maria.gomez@acme.com',
+  },
+};
+
+// Contenido de `data` en la respuesta 200 de PATCH /sucursales/:id. Los datos
+// de contacto de la sucursal (encargado, telefono, correo) replican los del
+// encargado actualizado.
+const UPDATE_SUCURSAL_RESPONSE_EJEMPLO = {
+  id_sucursal: 7,
+  nombre_sucursal: 'Sucursal Centro',
+  encargado: 'María Gómez',
+  telefono: '987654321',
+  direccion: 'Jr. Los Pinos 456',
+  correo: 'maria.gomez@acme.com',
+  is_active: true,
+  id_cliente: 1,
+  id_zona: 2,
+  createdAt: '2026-10-01T15:30:00.000Z',
+  updatedAt: '2026-10-28T09:12:00.000Z',
+};
+
 export function ApiUpdateSucursalSwagger() {
   return applyDecorators(
-    ApiOperation({ summary: 'Actualizar una sucursal existente' }),
+    ApiOperation({
+      summary: 'Actualizar una sucursal existente',
+      description:
+        'Actualiza parcialmente una sucursal: solo se modifican los campos enviados. Si se envía `encargado`, se sincronizan en una sola transacción las columnas de contacto de la sucursal (`encargado`, `telefono`, `correo`) y la cuenta del usuario encargado vinculado (`nombre`, `apellido`, `telefono`, `correo`). El correo corporativo se normaliza (sin espacios y en minúsculas) y debe ser único entre los usuarios. Enviar `id_zona: null` desasigna la zona. Si falla cualquier paso no se guarda nada. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
+    }),
+    ApiBody({
+      type: UpdateSucursalHttpDto,
+      description:
+        'Campos de la sucursal a actualizar. Todos son opcionales; el encargado se envía anidado en `encargado`.',
+      examples: {
+        completo: {
+          summary: 'Sucursal y encargado',
+          value: UPDATE_SUCURSAL_REQUEST_EJEMPLO,
+        },
+        soloEncargado: {
+          summary: 'Solo datos del encargado',
+          value: {
+            encargado: {
+              telefono_contacto: '987654321',
+              correo_corporativo: 'maria.gomez@acme.com',
+            },
+          },
+        },
+        desasignarZona: {
+          summary: 'Desasignar la zona',
+          value: { id_zona: null },
+        },
+      },
+    }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Sucursal actualizada exitosamente.',
+      schema: {
+        properties: {
+          status: { type: 'number', example: 200 },
+          message: {
+            type: 'string',
+            example: 'Sucursal actualizada exitosamente',
+          },
+          data: { type: 'object' },
+        },
+        example: {
+          status: 200,
+          message: 'Sucursal actualizada exitosamente',
+          data: UPDATE_SUCURSAL_RESPONSE_EJEMPLO,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
+      description: 'Datos de entrada inválidos o la zona indicada no existe.',
+      schema: {
+        example: {
+          status: 400,
+          message: 'El correo corporativo debe ser válido',
+          data: null,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
@@ -378,7 +465,26 @@ export function ApiUpdateSucursalSwagger() {
     }),
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
-      description: 'La sucursal o el cliente indicado no existen.',
+      description: 'La sucursal o el cliente (empresa) indicado no existe.',
+      schema: {
+        example: {
+          status: 404,
+          message: 'Sucursal no encontrada',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'Conflicto: el correo corporativo ya pertenece a otro usuario.',
+      schema: {
+        example: {
+          status: 409,
+          message: 'Ya existe un usuario registrado con ese correo',
+          data: null,
+        },
+      },
     }),
   );
 }

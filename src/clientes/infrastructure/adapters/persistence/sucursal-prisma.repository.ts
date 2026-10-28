@@ -25,6 +25,7 @@ import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { GetSucursalesFilterDto } from '@/clientes/domain/dto/get-sucursales-filter.dto';
 import { CreateSucursalDto } from '@/clientes/domain/dto/create-sucursal.dto';
 import { UpdateSucursalDto } from '@/clientes/domain/dto/update-sucursal.dto';
+import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
 import { SucursalNotFoundException } from '@/clientes/domain/exceptions/sucursal.exceptions';
 import { SucursalMapper } from './mappers/sucursal.mapper';
 import { Prisma } from '@prisma/client';
@@ -269,29 +270,140 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
     return error;
   }
 
+  // Actualiza la sucursal y, si llega `encargado`, también la cuenta del usuario
+  // vinculado. Todo ocurre en una única transacción: si falla un paso (p. ej.
+  // correo duplicado) no se persiste ninguno de los dos.
   async update(id: number, data: UpdateSucursalDto): Promise<Sucursal> {
-    const exists = await this.prisma.sucursales.findUnique({
-      where: { id_sucursal: id },
-    });
-    if (!exists) throw new SucursalNotFoundException();
+    const { encargado } = data;
+    const correoEncargado = encargado?.correo_corporativo?.trim().toLowerCase();
 
-    const updated = await this.prisma.sucursales.update({
-      where: { id_sucursal: id },
-      data: {
-        ...(data.nombre_sucursal !== undefined && {
-          nombre_sucursal: data.nombre_sucursal,
-        }),
-        ...(data.encargado !== undefined && { encargado: data.encargado }),
-        ...(data.telefono !== undefined && { telefono: data.telefono }),
-        ...(data.direccion !== undefined && { direccion: data.direccion }),
-        ...(data.correo !== undefined && { correo: data.correo }),
-        ...(data.id_cliente !== undefined && {
-          id_cliente: data.id_cliente,
-        }),
-        ...(data.id_zona !== undefined && { id_zona: data.id_zona }),
-      },
-    });
-    return SucursalMapper.toDomain(updated);
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // a) Verificación de existencia
+        const existente = await tx.sucursales.findUnique({
+          where: { id_sucursal: id },
+          select: { id_sucursal: true },
+        });
+        if (!existente) throw new SucursalNotFoundException();
+
+        // b) Encargado vinculado: el mismo que muestran el listado y el
+        // detalle (primer usuario de la sucursal por id_usuario ascendente).
+        // Las sucursales sin usuarios vinculados solo actualizan sus columnas.
+        const usuario = encargado
+          ? await tx.usuarios.findFirst({
+              where: { id_sucursal: id },
+              orderBy: { id_usuario: 'asc' },
+              select: { id_usuario: true, nombre: true, apellido: true },
+            })
+          : null;
+
+        // c) El correo no puede pertenecer a otro usuario distinto al encargado
+        if (correoEncargado !== undefined) {
+          const duenoDelCorreo = await tx.usuarios.findUnique({
+            where: { correo: correoEncargado },
+            select: { id_usuario: true },
+          });
+          if (
+            duenoDelCorreo &&
+            duenoDelCorreo.id_usuario !== usuario?.id_usuario
+          ) {
+            throw new ConflictException(
+              'Ya existe un usuario registrado con ese correo',
+            );
+          }
+        }
+
+        // d) Paso 1: sucursal. Las columnas encargado/telefono/correo replican
+        // los datos del encargado (igual que en el alta). El texto `encargado`
+        // se recompone con el nombre y apellido nuevos, completando el que no
+        // llegue con el del usuario vinculado.
+        const nombreCompleto = this.buildNombreEncargado(encargado, usuario);
+        const updated = await tx.sucursales.update({
+          where: { id_sucursal: id },
+          data: {
+            ...(data.nombre_sucursal !== undefined && {
+              nombre_sucursal: data.nombre_sucursal,
+            }),
+            ...(data.direccion !== undefined && {
+              direccion: data.direccion,
+            }),
+            ...(data.id_cliente !== undefined && {
+              id_cliente: data.id_cliente,
+            }),
+            // number asigna la zona y null la desasigna
+            ...(data.id_zona !== undefined && { id_zona: data.id_zona }),
+            ...(nombreCompleto !== undefined && { encargado: nombreCompleto }),
+            ...(encargado?.telefono_contacto !== undefined && {
+              telefono: encargado.telefono_contacto,
+            }),
+            ...(correoEncargado !== undefined && { correo: correoEncargado }),
+          },
+        });
+
+        // e) Paso 2: usuario encargado (solo los campos enviados)
+        if (usuario && encargado) {
+          const cambiosUsuario: Prisma.usuariosUpdateInput = {
+            ...(encargado.nombre !== undefined && { nombre: encargado.nombre }),
+            ...(encargado.apellido !== undefined && {
+              apellido: encargado.apellido,
+            }),
+            ...(encargado.telefono_contacto !== undefined && {
+              telefono: encargado.telefono_contacto,
+            }),
+            ...(correoEncargado !== undefined && { correo: correoEncargado }),
+          };
+          if (Object.keys(cambiosUsuario).length > 0) {
+            await tx.usuarios.update({
+              where: { id_usuario: usuario.id_usuario },
+              data: cambiosUsuario,
+            });
+          }
+        }
+
+        return SucursalMapper.toDomain(updated);
+      });
+    } catch (error) {
+      throw this.translateUpdateError(error);
+    }
+  }
+
+  // Texto de la columna `sucursales.encargado` (nombre y apellido). Solo se
+  // recalcula si llega nombre o apellido; el dato que falte se toma del usuario
+  // vinculado y, si no hay usuario, solo se recalcula cuando llegan ambos.
+  private buildNombreEncargado(
+    encargado: UpdateSucursalDto['encargado'],
+    usuario: { nombre: string; apellido: string } | null,
+  ): string | undefined {
+    if (encargado?.nombre === undefined && encargado?.apellido === undefined) {
+      return undefined;
+    }
+    const nombre = encargado.nombre ?? usuario?.nombre;
+    const apellido = encargado.apellido ?? usuario?.apellido;
+    return nombre !== undefined && apellido !== undefined
+      ? `${nombre} ${apellido}`
+      : undefined;
+  }
+
+  // Traduce errores de Prisma de la actualización a excepciones HTTP:
+  // - P2002 (unique): otro registro tomó el mismo correo entre la validación y
+  //   la escritura; la restricción única de la BD detiene la segunda.
+  // - P2003 (foreign key): la zona o el cliente indicados no existen.
+  private translateUpdateError(error: unknown): unknown {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return new ConflictException(
+          'Ya existe un usuario registrado con ese correo',
+        );
+      }
+      if (error.code === 'P2003') {
+        const campo = String(error.meta?.field_name ?? '');
+        if (campo.includes('zona')) {
+          return new BadRequestException('La zona seleccionada no existe');
+        }
+        if (campo.includes('cliente')) return new ClienteNotFoundException();
+      }
+    }
+    return error;
   }
 
   async toggleStatus(id: number): Promise<Sucursal> {

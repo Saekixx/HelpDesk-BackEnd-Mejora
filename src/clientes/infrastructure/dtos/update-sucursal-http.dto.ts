@@ -1,39 +1,29 @@
 import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { CreateSucursalHttpDto } from './create-sucursal-http.dto';
+import { UpdateSucursalEncargadoDto } from './update-sucursal-encargado.dto';
 import { UpdateSucursalDto } from '@/clientes/domain/dto/update-sucursal.dto';
 
-// PartialType hace opcionales los campos heredados de CreateSucursalHttpDto
-// conservando sus validadores y su documentación Swagger. El `encargado`
-// anidado (con cuenta de usuario) solo aplica al alta, por lo que se omite y
-// la actualización conserva los campos planos de contacto de la sucursal.
+// Body de PATCH /sucursales/:id. Todos los campos son opcionales.
+// PartialType reutiliza los validadores y la documentación Swagger de
+// CreateSucursalHttpDto para id_cliente, nombre_sucursal, direccion e id_zona
+// (null desasigna la zona). `is_active` no se hereda porque el estado se
+// cambia con el endpoint de toggle, y `encargado` se redefine porque aquí es
+// parcial (UpdateSucursalEncargadoDto).
 export class UpdateSucursalHttpDto
-  extends PartialType(OmitType(CreateSucursalHttpDto, ['encargado'] as const))
+  extends PartialType(
+    OmitType(CreateSucursalHttpDto, ['encargado', 'is_active'] as const),
+  )
   implements UpdateSucursalDto
 {
   @ApiPropertyOptional({
-    description: 'Nombre del encargado de la sucursal',
-    example: 'Juan Pérez',
+    description:
+      'Datos del encargado local a actualizar. Solo se modifican los campos enviados.',
+    type: UpdateSucursalEncargadoDto,
   })
   @IsOptional()
-  @IsString({ message: 'El encargado debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El encargado no puede estar vacío' })
-  readonly encargado?: string;
-
-  @ApiPropertyOptional({
-    description: 'Teléfono de contacto de la sucursal',
-    example: '+51987654321',
-  })
-  @IsOptional()
-  @IsString({ message: 'El teléfono debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El teléfono no puede estar vacío' })
-  readonly telefono?: string;
-
-  @ApiPropertyOptional({
-    description: 'Correo de contacto de la sucursal',
-    example: 'sucursal.centro@acme.com',
-  })
-  @IsOptional()
-  @IsEmail({}, { message: 'El correo electrónico debe ser válido' })
-  readonly correo?: string;
+  @ValidateNested()
+  @Type(() => UpdateSucursalEncargadoDto)
+  readonly encargado?: UpdateSucursalEncargadoDto;
 }

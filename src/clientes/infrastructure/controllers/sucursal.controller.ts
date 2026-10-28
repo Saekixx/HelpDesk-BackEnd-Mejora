@@ -19,6 +19,7 @@ import { GetSucursalStatsUseCase } from '@/clientes/application/use-cases/sucurs
 import { CreateSucursalUseCase } from '@/clientes/application/use-cases/sucursal/create-sucursal.use-case';
 import { UpdateSucursalUseCase } from '@/clientes/application/use-cases/sucursal/update-sucursal.use-case';
 import { ToggleSucursalStatusUseCase } from '@/clientes/application/use-cases/sucursal/toggle-sucursal-status.use-case';
+import { Sucursal } from '@/clientes/domain/entities/sucursal.entity';
 import { GetSucursalesQueryDto } from '../dtos/get-sucursales-query.dto';
 import { CreateSucursalHttpDto } from '../dtos/create-sucursal-http.dto';
 import { CreateSucursalResponseDto } from '../dtos/create-sucursal-response.dto';
@@ -121,7 +122,7 @@ export class SucursalController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSucursalHttpDto,
-  ) {
+  ): Promise<{ message: string; data: Sucursal }> {
     const data = await this.updateSucursalUseCase.execute(id, dto);
     return {
       message: 'Sucursal actualizada exitosamente',

@@ -1,15 +1,21 @@
 // src/clientes/domain/dto/update-sucursal.dto.ts
 
-// Contrato de actualización de una sucursal. Todos los campos son opcionales.
-// Se mantiene plano (encargado/telefono/correo como texto de la sucursal): el
-// alta con cuenta de encargado anidada solo aplica a la creación.
+// Datos del encargado local que pueden actualizarse. Todos son opcionales: solo
+// se modifican los campos enviados.
+export interface UpdateSucursalEncargadoCommand {
+  nombre?: string;
+  apellido?: string;
+  telefono_contacto?: string;
+  correo_corporativo?: string;
+}
+
+// Contrato de dominio para la actualización parcial de una sucursal. Refleja la
+// estructura de creación (CreateSucursalDto): el encargado viaja anidado.
+// `id_zona: null` desasigna la zona de la sucursal.
 export interface UpdateSucursalDto {
-  nombre_sucursal?: string;
-  encargado?: string;
-  telefono?: string;
-  direccion?: string;
-  correo?: string;
   id_cliente?: number;
-  id_zona?: number;
-  is_active?: boolean;
+  nombre_sucursal?: string;
+  direccion?: string;
+  id_zona?: number | null;
+  encargado?: UpdateSucursalEncargadoCommand;
 }

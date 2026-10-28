@@ -14,7 +14,8 @@ export interface CreateSucursalDto {
   id_cliente: number;
   nombre_sucursal: string;
   direccion: string;
-  id_zona?: number;
+  // Opcional: una sucursal puede crearse sin zona asignada
+  id_zona?: number | null;
   is_active?: boolean;
   encargado: CreateSucursalEncargadoCommand;
 }

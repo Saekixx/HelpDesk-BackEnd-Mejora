@@ -47,12 +47,16 @@ export class CreateSucursalHttpDto implements CreateSucursalDto {
   readonly direccion: string;
 
   @ApiPropertyOptional({
-    description: 'ID de la zona geográfica a la que pertenece la sucursal',
+    description: 'ID de la zona opcional',
+    // Explícito: con `number | null` TypeScript emite `Object` y Swagger
+    // mostraría el campo como objeto.
+    type: Number,
     example: 1,
+    nullable: true,
   })
   @IsOptional()
   @IsInt({ message: 'El ID de zona debe ser un número entero' })
-  readonly id_zona?: number;
+  readonly id_zona?: number | null;
 
   @ApiPropertyOptional({
     description: 'Estado activo de la sucursal',
