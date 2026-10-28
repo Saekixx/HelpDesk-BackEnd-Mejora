@@ -17,7 +17,7 @@ import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator';
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RoleGuard)
 @Controller('dashboard')
-@Roles('ADMIN') // Restringe estrictamente el módulo al rol administrador
+@Roles('ADMINISTRADOR') // Restringe estrictamente el módulo al rol administrador
 export class DashboardController {
   constructor(
     private readonly getAdminDashboardMetricsUseCase: GetAdminDashboardMetricsUseCase,

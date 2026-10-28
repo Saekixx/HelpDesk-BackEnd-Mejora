@@ -58,7 +58,7 @@ export class DashboardPrismaRepository implements DashboardRepositoryPort {
       select: {
         id_equipo: true,
         clientes: {
-          select: { id_cliente: true, nombre_empresa: true },
+          select: { id_cliente: true, nombre_principal: true },
         },
       },
     });
@@ -70,7 +70,7 @@ export class DashboardPrismaRepository implements DashboardRepositoryPort {
       if (equipo && equipo.clientes) {
         const clienteId = equipo.clientes.id_cliente;
         const nombreEmpresa =
-          equipo.clientes.nombre_empresa ?? 'Empresa Cliente';
+          equipo.clientes.nombre_principal ?? 'Empresa Cliente';
         const current = clienteMap.get(clienteId) ?? {
           nombre: nombreEmpresa,
           count: 0,
