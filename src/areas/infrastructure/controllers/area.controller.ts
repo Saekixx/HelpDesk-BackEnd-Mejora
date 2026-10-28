@@ -8,7 +8,7 @@ import { ToggleAreaStatusUseCase } from '../../application/use-cases/toggle-area
 import { CreateAreaDto } from '../../application/dtos/create-area.dto';
 import { UpdateAreaDto } from '../../application/dtos/update-area.dto';
 import { FilterAreaDto } from '../../application/dtos/filter-area.dto';
-import { ApiGetAreas, ApiCreateArea, ApiGetAreaById, ApiUpdateArea, ApiToggleAreaStatus } from '../docs/area.swagger';
+import { ApiGetAreas, ApiCreateArea, ApiGetAreaById, ApiUpdateArea, ApiToggleAreaStatus, ApiGetAreaOptions } from '../docs/area.swagger';
 
 @ApiTags('Áreas')
 @Controller('areas')
@@ -31,6 +31,18 @@ export class AreaController {
       data: result.data,
       total: result.total,
       metrics: result.metrics,
+    };
+  }
+
+  @Get(':id/options')
+  @ApiGetAreaOptions()
+  async findOptions(@Param('id', ParseIntPipe) id: number) {
+    // Si usas un caso de uso específico para options, llámalo aquí; si no, reutiliza el byId u obtén la lista filtrada por sucursal
+    const area = await this.getAreaByIdUseCase.execute(id);
+    return {
+      status: 200,
+      message: 'Operación realizada con éxito',
+      data: area,
     };
   }
 
@@ -67,7 +79,7 @@ export class AreaController {
     };
   }
 
-  @Patch(':id/status')
+  @Patch(':id/toggle-status')
   @ApiToggleAreaStatus()
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     const area = await this.toggleAreaStatusUseCase.execute(id);

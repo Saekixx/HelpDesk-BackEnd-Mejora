@@ -14,6 +14,14 @@ export function ApiGetAreas() {
   );
 }
 
+export function ApiGetAreaOptions() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Listar áreas de una sucursal en formato opción' }),
+    ApiParam({ name: 'id', type: Number, description: 'ID de la sucursal' }),
+    ApiResponse({ status: 200, description: 'Opciones de áreas obtenidas exitosamente.' }),
+  );
+}
+
 export function ApiCreateArea() {
   return applyDecorators(
     ApiOperation({ summary: 'Crear una nueva área' }),
@@ -41,7 +49,7 @@ export function ApiUpdateArea() {
 
 export function ApiToggleAreaStatus() {
   return applyDecorators(
-    ApiOperation({ summary: 'Alternar estado activo/inactivo de un área (Soft Delete / Activación)' }),
+    ApiOperation({ summary: 'Activar/desactivar un área (Toggle status)' }),
     ApiParam({ name: 'id', type: Number }),
     ApiResponse({ status: 200, description: 'Estado del área actualizado exitosamente.' }),
   );
