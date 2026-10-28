@@ -37,7 +37,6 @@ export class AreaController {
   @Get(':id/options')
   @ApiGetAreaOptions()
   async findOptions(@Param('id', ParseIntPipe) id: number) {
-    // Si usas un caso de uso específico para options, llámalo aquí; si no, reutiliza el byId u obtén la lista filtrada por sucursal
     const area = await this.getAreaByIdUseCase.execute(id);
     return {
       status: 200,
