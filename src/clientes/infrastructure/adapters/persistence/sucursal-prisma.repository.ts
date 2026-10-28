@@ -15,6 +15,7 @@ import {
   CreateSucursalResult,
   Sucursal,
   SucursalDetail,
+  SucursalStats,
 } from '@/clientes/domain/entities/sucursal.entity';
 import {
   HASH_SERVICE,
@@ -137,6 +138,34 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
     });
     if (!entity) return null;
     return SucursalMapper.toDetail(entity);
+  }
+
+  // KPIs del dashboard de sucursales. Las cinco consultas son independientes,
+  // por lo que se resuelven en paralelo. `areasCoberturadas` cuenta las áreas
+  // vinculadas a sucursales activas.
+  async getStats(): Promise<SucursalStats> {
+    const now = new Date();
+    const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [total, nuevasEsteMes, principales, operativas, areas] =
+      await Promise.all([
+        this.prisma.sucursales.count(),
+        this.prisma.sucursales.count({
+          where: { created_at: { gte: inicioMes } },
+        }),
+        this.prisma.sucursales.count({ where: { is_principal: true } }),
+        this.prisma.sucursales.count({ where: { is_active: true } }),
+        this.prisma.area.count({
+          where: { sucursales: { is_active: true } },
+        }),
+      ]);
+
+    return {
+      totalSucursales: { cantidad: total, nuevasEsteMes },
+      sedesPrincipales: { cantidad: principales },
+      sucursalesOperativas: { cantidad: operativas },
+      areasCoberturadas: { cantidad: areas },
+    };
   }
 
   // Creación atómica de la sucursal y de la cuenta de su encargado local. Todo

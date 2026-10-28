@@ -3,6 +3,7 @@ import {
   Sucursal,
   SucursalDetail,
   SucursalListItem,
+  SucursalStats,
 } from '../entities/sucursal.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetSucursalesFilterDto } from '../dto/get-sucursales-filter.dto';
@@ -28,6 +29,9 @@ export interface SucursalRepositoryPort {
 
   // Detalle con áreas vinculadas, cliente y encargado (GET /sucursales/:id)
   findDetailById(id: number): Promise<SucursalDetail | null>;
+
+  // KPIs del dashboard de gestión de sucursales (GET /sucursales/estadisticas)
+  getStats(): Promise<SucursalStats>;
 
   // Crea de forma atómica la sucursal y la cuenta de usuario de su encargado
   create(data: CreateSucursalDto): Promise<CreateSucursalResult>;

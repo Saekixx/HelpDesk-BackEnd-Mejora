@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { SucursalListItemResponseDto } from '../dtos/sucursal-list-response.dto';
 import { GetSucursalDetailResponseDto } from '../dtos/get-sucursal-detail-response.dto';
+import { GetSucursalStatsResponseDto } from '../dtos/get-sucursal-stats-response.dto';
 import { CreateSucursalHttpDto } from '../dtos/create-sucursal-http.dto';
 import { CreateSucursalResponseDto } from '../dtos/create-sucursal-response.dto';
 
@@ -95,6 +96,53 @@ export function ApiFindAllSucursalesSwagger() {
   );
 }
 
+// Body de ejemplo de GET /sucursales/estadisticas (KPIs del dashboard)
+const SUCURSAL_STATS_EJEMPLO = {
+  totalSucursales: { cantidad: 24, nuevasEsteMes: 3 },
+  sedesPrincipales: { cantidad: 14 },
+  sucursalesOperativas: { cantidad: 22 },
+  areasCoberturadas: { cantidad: 68 },
+};
+
+export function ApiFindSucursalStatsSwagger() {
+  return applyDecorators(
+    ApiExtraModels(GetSucursalStatsResponseDto),
+    ApiOperation({
+      summary: 'Obtener estadísticas (KPIs) de sucursales',
+      description:
+        'Retorna los indicadores del dashboard de gestión de sucursales: total de sucursales y las creadas este mes, sedes principales, sucursales operativas (activas) y áreas cubiertas (vinculadas a sucursales activas).',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Estadísticas de sucursales obtenidas exitosamente.',
+      type: GetSucursalStatsResponseDto,
+      schema: {
+        properties: {
+          status: { type: 'number', example: 200 },
+          message: {
+            type: 'string',
+            example: 'Estadísticas de sucursales obtenidas exitosamente',
+          },
+          data: { $ref: getSchemaPath(GetSucursalStatsResponseDto) },
+        },
+        example: {
+          status: 200,
+          message: 'Estadísticas de sucursales obtenidas exitosamente',
+          data: SUCURSAL_STATS_EJEMPLO,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso de lectura.',
+    }),
+  );
+}
+
 export function ApiGetSucursalesOptionsSwagger() {
   return applyDecorators(
     ApiOperation({
@@ -117,7 +165,7 @@ export function ApiGetSucursalesOptionsSwagger() {
   );
 }
 
-// Body de ejemplo de GET /sucursales/:id
+// Body de ejemplo de GET /sucursales/:id (detalle para el modal del frontend)
 const SUCURSAL_DETAIL_EJEMPLO = {
   id_sucursal: 5,
   nombre_sucursal: 'Sede Miraflores',

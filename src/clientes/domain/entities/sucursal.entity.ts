@@ -109,7 +109,7 @@ export interface SucursalDetailEncargado {
   correo_corporativo: string;
 }
 
-// Detalle de una sucursal (GET /sucursales/:id)
+// Detalle de una sucursal (GET /sucursales/:id) para el modal del frontend
 export interface SucursalDetail {
   id_sucursal: number;
   nombre_sucursal: string;
@@ -121,4 +121,33 @@ export interface SucursalDetail {
   encargado: SucursalDetailEncargado | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Total de sucursales y las creadas durante el mes en curso
+export interface TotalSucursalesStats {
+  cantidad: number;
+  nuevasEsteMes: number;
+}
+
+// Sedes principales (is_principal)
+export interface SedesPrincipalesStats {
+  cantidad: number;
+}
+
+// Sucursales operativas (activas)
+export interface SucursalesOperativasStats {
+  cantidad: number;
+}
+
+// Áreas cubiertas por las sucursales
+export interface AreasCoberturadasStats {
+  cantidad: number;
+}
+
+// KPIs del dashboard de gestión de sucursales (GET /sucursales/estadisticas)
+export interface SucursalStats {
+  totalSucursales: TotalSucursalesStats;
+  sedesPrincipales: SedesPrincipalesStats;
+  sucursalesOperativas: SucursalesOperativasStats;
+  areasCoberturadas: AreasCoberturadasStats;
 }
