@@ -84,3 +84,41 @@ export interface SucursalListItem {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Área vinculada a la sucursal en el detalle (GET /sucursales/:id)
+export interface SucursalDetailArea {
+  id_area: number;
+  nombre_area: string;
+  is_active: boolean;
+}
+
+// Empresa (cliente) dueña de la sucursal en el detalle
+export interface SucursalDetailClienteEmpresa {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string | null;
+}
+
+// Encargado de la sucursal en el detalle: identidad del usuario vinculado y
+// contacto propio de la sucursal
+export interface SucursalDetailEncargado {
+  id_usuario: number;
+  nombre: string;
+  apellido: string;
+  telefono_contacto: string;
+  correo_corporativo: string;
+}
+
+// Detalle de una sucursal (GET /sucursales/:id)
+export interface SucursalDetail {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  is_active: boolean;
+  direccion: string;
+  id_zona: number | null;
+  areasVinculadas: SucursalDetailArea[];
+  clienteEmpresa: SucursalDetailClienteEmpresa | null;
+  encargado: SucursalDetailEncargado | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

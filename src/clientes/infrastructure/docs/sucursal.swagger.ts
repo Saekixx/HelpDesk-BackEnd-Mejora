@@ -7,6 +7,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { SucursalListItemResponseDto } from '../dtos/sucursal-list-response.dto';
+import { GetSucursalDetailResponseDto } from '../dtos/get-sucursal-detail-response.dto';
 import { CreateSucursalHttpDto } from '../dtos/create-sucursal-http.dto';
 import { CreateSucursalResponseDto } from '../dtos/create-sucursal-response.dto';
 
@@ -116,12 +117,63 @@ export function ApiGetSucursalesOptionsSwagger() {
   );
 }
 
+// Body de ejemplo de GET /sucursales/:id
+const SUCURSAL_DETAIL_EJEMPLO = {
+  id_sucursal: 5,
+  nombre_sucursal: 'Sede Miraflores',
+  is_active: true,
+  direccion: 'Av. Larco 345, Miraflores',
+  // null si la sucursal no tiene zona asignada
+  id_zona: 2,
+  areasVinculadas: [
+    { id_area: 8, nombre_area: 'Contabilidad', is_active: true },
+    { id_area: 9, nombre_area: 'Sistemas', is_active: false },
+  ],
+  // null si la sucursal no tiene cliente asignado
+  clienteEmpresa: {
+    id_cliente: 1,
+    nombre_principal: 'Corporación ACME S.A.C.',
+    numero_documento: '20123456789',
+  },
+  // null si la sucursal no tiene usuarios vinculados
+  encargado: {
+    id_usuario: 12,
+    nombre: 'María',
+    apellido: 'Gómez',
+    telefono_contacto: '987654321',
+    correo_corporativo: 'miraflores@acme.com',
+  },
+  createdAt: '2026-10-01T15:30:00.000Z',
+  updatedAt: '2026-10-10T09:12:00.000Z',
+};
+
 export function ApiFindSucursalByIdSwagger() {
   return applyDecorators(
-    ApiOperation({ summary: 'Obtener una sucursal por id' }),
+    ApiExtraModels(GetSucursalDetailResponseDto),
+    ApiOperation({
+      summary: 'Obtener una sucursal por id',
+      description:
+        'Retorna el detalle de la sucursal para el modal del frontend: datos generales, `areasVinculadas`, la empresa (`clienteEmpresa`) y el encargado (`encargado`, primer usuario vinculado). `id_zona`, `clienteEmpresa` y `encargado` pueden ser null.',
+    }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Sucursal obtenida exitosamente.',
+      type: GetSucursalDetailResponseDto,
+      schema: {
+        properties: {
+          status: { type: 'number', example: 200 },
+          message: {
+            type: 'string',
+            example: 'Sucursal obtenida exitosamente',
+          },
+          data: { $ref: getSchemaPath(GetSucursalDetailResponseDto) },
+        },
+        example: {
+          status: 200,
+          message: 'Sucursal obtenida exitosamente',
+          data: SUCURSAL_DETAIL_EJEMPLO,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,

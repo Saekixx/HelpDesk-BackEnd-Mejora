@@ -14,6 +14,7 @@ import {
 import {
   CreateSucursalResult,
   Sucursal,
+  SucursalDetail,
 } from '@/clientes/domain/entities/sucursal.entity';
 import {
   HASH_SERVICE,
@@ -108,6 +109,34 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
     });
     if (!entity) return null;
     return SucursalMapper.toDomain(entity);
+  }
+
+  // Detalle de la sucursal con sus relaciones: áreas, cliente y encargado
+  // (primer usuario vinculado). La zona se expone solo como `id_zona`.
+  async findDetailById(id: number): Promise<SucursalDetail | null> {
+    const entity = await this.prisma.sucursales.findUnique({
+      where: { id_sucursal: id },
+      include: {
+        area: {
+          select: { id_area: true, nombre_area: true, is_active: true },
+          orderBy: { id_area: 'asc' },
+        },
+        clientes: {
+          select: {
+            id_cliente: true,
+            nombre_principal: true,
+            numero_documento: true,
+          },
+        },
+        usuarios: {
+          select: { id_usuario: true, nombre: true, apellido: true },
+          orderBy: { id_usuario: 'asc' },
+          take: 1,
+        },
+      },
+    });
+    if (!entity) return null;
+    return SucursalMapper.toDetail(entity);
   }
 
   // Creación atómica de la sucursal y de la cuenta de su encargado local. Todo

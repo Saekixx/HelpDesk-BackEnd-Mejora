@@ -22,6 +22,7 @@ import { GetSucursalesQueryDto } from '../dtos/get-sucursales-query.dto';
 import { CreateSucursalHttpDto } from '../dtos/create-sucursal-http.dto';
 import { CreateSucursalResponseDto } from '../dtos/create-sucursal-response.dto';
 import { UpdateSucursalHttpDto } from '../dtos/update-sucursal-http.dto';
+import { GetSucursalDetailResponseDto } from '../dtos/get-sucursal-detail-response.dto';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
 import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
@@ -70,7 +71,9 @@ export class SucursalController {
   @Get(':id')
   @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindSucursalByIdSwagger()
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string; data: GetSucursalDetailResponseDto }> {
     const data = await this.getSucursalByIdUseCase.execute(id);
     return {
       message: 'Sucursal obtenida exitosamente',
