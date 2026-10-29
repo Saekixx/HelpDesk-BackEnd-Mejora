@@ -16,7 +16,6 @@ import { RedisModule } from './chat/infrastructure/cache/redis/redis.module';
 import { TicketModule } from './tickets/ticket.module';
 import { ZonasModule } from './zonas/zonas.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import {AreaModule} from './areas/area.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -54,8 +53,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ChatModule,
     TicketModule,
     ZonasModule,
-    DashboardModule,
-    AreaModule,
+    DashboardModule
   ],
   controllers: [],
   providers: [],
