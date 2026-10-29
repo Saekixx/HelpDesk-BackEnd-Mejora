@@ -17,6 +17,7 @@ import { ToggleAreaStatusUseCase } from './application/use-cases/area/toggle-are
 import { GetSucursalesOptionsUseCase } from './application/use-cases/sucursal/get-sucursales-options.use-case';
 import { GetSucursalesUseCase } from './application/use-cases/sucursal/get-sucursales.use-case';
 import { GetSucursalByIdUseCase } from './application/use-cases/sucursal/get-sucursal-by-id.use-case';
+import { GetSucursalStatsUseCase } from './application/use-cases/sucursal/get-sucursal-stats.use-case';
 import { CreateSucursalUseCase } from './application/use-cases/sucursal/create-sucursal.use-case';
 import { UpdateSucursalUseCase } from './application/use-cases/sucursal/update-sucursal.use-case';
 import { ToggleSucursalStatusUseCase } from './application/use-cases/sucursal/toggle-sucursal-status.use-case';
@@ -50,6 +51,7 @@ import { AreaController } from './infrastructure/controllers/area.controller';
     GetSucursalesOptionsUseCase,
     GetSucursalesUseCase,
     GetSucursalByIdUseCase,
+    GetSucursalStatsUseCase,
     CreateSucursalUseCase,
     UpdateSucursalUseCase,
     ToggleSucursalStatusUseCase,

@@ -40,6 +40,14 @@ export class Sucursal {
   }
 }
 
+// Resultado de la creación atómica de una sucursal junto con la cuenta de su
+// encargado local (POST /sucursales)
+export interface CreateSucursalResult {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  usuario_encargado_id: number;
+}
+
 // Empresa (cliente) dueña de la sucursal
 export interface SucursalListClienteEmpresa {
   id_cliente: number;
@@ -75,4 +83,71 @@ export interface SucursalListItem {
   zona: SucursalListZona | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Área vinculada a la sucursal en el detalle (GET /sucursales/:id)
+export interface SucursalDetailArea {
+  id_area: number;
+  nombre_area: string;
+  is_active: boolean;
+}
+
+// Empresa (cliente) dueña de la sucursal en el detalle
+export interface SucursalDetailClienteEmpresa {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string | null;
+}
+
+// Encargado de la sucursal en el detalle: identidad del usuario vinculado y
+// contacto propio de la sucursal
+export interface SucursalDetailEncargado {
+  id_usuario: number;
+  nombre: string;
+  apellido: string;
+  telefono_contacto: string;
+  correo_corporativo: string;
+}
+
+// Detalle de una sucursal (GET /sucursales/:id) para el modal del frontend
+export interface SucursalDetail {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  is_active: boolean;
+  direccion: string;
+  id_zona: number | null;
+  areasVinculadas: SucursalDetailArea[];
+  clienteEmpresa: SucursalDetailClienteEmpresa | null;
+  encargado: SucursalDetailEncargado | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Total de sucursales y las creadas durante el mes en curso
+export interface TotalSucursalesStats {
+  cantidad: number;
+  nuevasEsteMes: number;
+}
+
+// Sedes principales (is_principal)
+export interface SedesPrincipalesStats {
+  cantidad: number;
+}
+
+// Sucursales operativas (activas)
+export interface SucursalesOperativasStats {
+  cantidad: number;
+}
+
+// Áreas cubiertas por las sucursales
+export interface AreasCoberturadasStats {
+  cantidad: number;
+}
+
+// KPIs del dashboard de gestión de sucursales (GET /sucursales/estadisticas)
+export interface SucursalStats {
+  totalSucursales: TotalSucursalesStats;
+  sedesPrincipales: SedesPrincipalesStats;
+  sucursalesOperativas: SucursalesOperativasStats;
+  areasCoberturadas: AreasCoberturadasStats;
 }
