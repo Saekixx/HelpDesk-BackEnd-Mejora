@@ -1,5 +1,9 @@
 import { area as PrismaArea } from '@prisma/client';
-import { Area, AreaListItem } from '@/clientes/domain/entities/area.entity';
+import {
+  Area,
+  AreaListItem,
+  AreaDetailView,
+} from '@/clientes/domain/entities/area.entity';
 
 // Forma del resultado de Prisma cuando el findAll incluye la sucursal y,
 // anidado dentro de ella, el cliente (ver AreaPrismaRepository.findAll).
@@ -9,6 +13,18 @@ type PrismaAreaConDetalle = PrismaArea & {
     nombre_sucursal: string;
     clientes: { id_cliente: number; nombre_principal: string } | null;
   } | null;
+};
+
+// Forma del resultado de Prisma para la consulta por ID del modal (GET /areas/:id).
+type PrismaAreaConFicha = PrismaArea & {
+  sucursales: {
+    id_sucursal: number; // Aseguramos que traiga también el id_sucursal si se requiere
+    nombre_sucursal: string;
+    clientes: { nombre_principal: string } | null;
+  } | null;
+  _count: {
+    equipos: number;
+  };
 };
 
 export class AreaMapper {
@@ -44,6 +60,22 @@ export class AreaMapper {
             nombre: entity.sucursales.clientes.nombre_principal,
           }
         : null,
+    };
+  }
+
+  // Usado para alimentar el modal "Ficha de Área" (GET /areas/:id)
+  static toDetailView(entity: PrismaAreaConFicha): AreaDetailView {
+    return {
+      id_area: entity.id_area,
+      nombre_area: entity.nombre_area,
+      is_active: entity.is_active ?? true,
+      id_sucursal: entity.id_sucursal ?? 0, // <-- Incluido aquí para satisfacer AreaDetailView
+      empresa: entity.sucursales?.clientes?.nombre_principal ?? 'Sin empresa',
+      sucursal_asignada: entity.sucursales?.nombre_sucursal ?? 'Sin sucursal',
+      encargado_responsable: entity.contacto ?? 'No asignado',
+      total_equipos: entity._count?.equipos ?? 0,
+      telefono: entity.telefono ?? '',
+      correo: entity.correo ?? '',
     };
   }
 

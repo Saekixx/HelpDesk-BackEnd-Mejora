@@ -39,3 +39,16 @@ export interface AreaListItem extends Area {
   sucursal: { id_sucursal: number; nombre: string } | null;
   cliente: { id_cliente: number; nombre: string } | null;
 }
+
+export interface AreaDetailView {
+  id_area: number;
+  nombre_area: string;
+  is_active: boolean;
+  id_sucursal: number; // <-- Agregado para satisfacer la validación del update
+  empresa: string;
+  sucursal_asignada: string;
+  encargado_responsable: string;
+  total_equipos: number;
+  telefono: string;
+  correo: string;
+}

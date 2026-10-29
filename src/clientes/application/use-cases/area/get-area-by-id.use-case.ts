@@ -3,7 +3,7 @@ import {
   AREA_REPOSITORY,
   AreaRepositoryPort,
 } from '@/clientes/domain/ports/area.repository.port';
-import { Area } from '@/clientes/domain/entities/area.entity';
+import { AreaDetailView } from '@/clientes/domain/entities/area.entity';
 import { AreaNotFoundException } from '@/clientes/domain/exceptions/area.exceptions';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class GetAreaByIdUseCase {
     private readonly areaRepository: AreaRepositoryPort,
   ) {}
 
-  async execute(id: number): Promise<Area> {
+  async execute(id: number): Promise<AreaDetailView> {
     const area = await this.areaRepository.findById(id);
     if (!area) throw new AreaNotFoundException();
     return area;
