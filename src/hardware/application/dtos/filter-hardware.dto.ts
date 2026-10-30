@@ -1,33 +1,17 @@
-import { IsOptional, IsString, IsInt, Min, IsBoolean } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
 
-export class FilterHardwareDto {
-  @IsOptional()
-  @IsString()
+/**
+ * Criterios de filtrado y paginación del listado de hardware.
+ * La validación HTTP vive en `FindAllHardwareQueryDto` (infrastructure).
+ */
+export interface FilterHardwareDto {
   search?: string;
-
-  @IsOptional()
-  @IsString()
-  tipo?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value;
-  })
-  is_active?: boolean;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 10;
+  id_cliente?: number;
+  id_sucursal?: number;
+  id_area?: number;
+  tipo_componente?: string;
+  estado?: EstadoHardware;
+  proveedor?: string;
+  page?: number;
+  limit?: number;
 }

@@ -3,6 +3,7 @@ import {
   HARDWARE_REPOSITORY,
   HardwareRepositoryPort,
 } from '@/hardware/domain/ports/hardware.repository.port';
+import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
@@ -31,7 +32,10 @@ export class ToggleHardwareStatusUseCase {
       descripcion: existingHardware.descripcion,
       ult_revision: existingHardware.ult_revision,
       rev_programada: existingHardware.rev_programada,
-      is_active: !existingHardware.is_active, // Cambiar el estado
+      // Alterna entre instalado y disponible
+      estado: existingHardware.is_active
+        ? EstadoHardware.DISPONIBLE
+        : EstadoHardware.INSTALADO,
       created_at: existingHardware.created_at,
       updated_at: new Date(), // Actualizar la fecha de actualización
     });

@@ -25,7 +25,8 @@ import {
 } from '../docs/hardware.swagger';
 import { CreateHardwareRequestDto } from '../dtos/create-hardware.request.dto';
 import { UpdateHardwareRequestDto } from '../dtos/update-hardware.request.dto';
-import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.dto';
+import { FindAllHardwareQueryDto } from '../dtos/find-all-hardware.query.dto';
+import { HardwareMapper } from '../adapters/persistence/mappers/hardware.mapper';
 
 @ApiHardwareTag()
 @Controller('hardware')
@@ -41,13 +42,14 @@ export class HardwareController {
 
   @Get()
   @ApiFindAllHardwareSwagger()
-  async findAll(@Query() query: FilterHardwareDto) {
-    const result = await this.findAllHardwareUseCase.execute(query);
+  async findAll(@Query() query: FindAllHardwareQueryDto) {
+    const { data, meta } = await this.findAllHardwareUseCase.execute(query);
 
+    // El ResponseInterceptor solo conserva `message` y `data`, por eso la
+    // paginación viaja dentro de `data` (igual que en equipos y clientes).
     return {
       message: 'Hardware obtenidos exitosamente',
-      data: result.data,
-      meta: result.meta,
+      data: { data: data.map(HardwareMapper.toResponse), meta },
     };
   }
 
@@ -64,10 +66,10 @@ export class HardwareController {
   @Get(':id')
   @ApiFindByIdHardwareSwagger()
   async findById(@Param('id', ParseIntPipe) id: number) {
-    const data = await this.findByIdHardwareUseCase.execute(id);
+    const hardware = await this.findByIdHardwareUseCase.execute(id);
     return {
       message: 'Hardware obtenido exitosamente',
-      data,
+      data: hardware ? HardwareMapper.toResponse(hardware) : null,
     };
   }
 

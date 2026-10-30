@@ -203,7 +203,7 @@ model hardware {
   proveedor         String?            @db.VarChar(150)
   fecha_compra      DateTime?          @db.Date
   url_factura       String?            @db.VarChar(255)
-  estado            hardware_estado?   @default(En_Stock)
+  estado            EstadoHardware     @default(DISPONIBLE)
   id_equipo_actual  Int?              
   created_at        DateTime?          @default(now()) @db.DateTime(0)
   updated_at        DateTime?          @default(now()) @db.DateTime(0)
@@ -212,6 +212,7 @@ model hardware {
   registro_hardware registro_hardware[]
 
   @@index([id_equipo_actual], map: "fk_hw_equipo_actual")
+  @@index([estado], map: "idx_hw_estado")
 }
 
 model registro_hardware {
@@ -395,11 +396,11 @@ enum equipos_estado {
   Retirado         @map("Retirado")
 }
 
-enum hardware_estado {
-  Instalado
-  En_Stock         @map("En Stock")
-  En_Mantenimiento @map("En Mantenimiento")
-  De_Baja          @map("De Baja")
+enum EstadoHardware {
+  INSTALADO        @map("Instalado")
+  DISPONIBLE       @map("Disponible")
+  EN_MANTENIMIENTO @map("En Mantenimiento")
+  BAJA             @map("Baja / Descarte")
 }
 
 enum tipo_licencia_enum {

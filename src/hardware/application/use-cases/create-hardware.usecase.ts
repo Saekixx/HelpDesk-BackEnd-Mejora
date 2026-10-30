@@ -29,7 +29,6 @@ export class CreateHardwareUseCase {
       rev_programada: hardwareData.rev_programada
         ? new Date(hardwareData.rev_programada)
         : undefined,
-      is_active: hardwareData.is_active ?? true,
     });
 
     // Guardar el nuevo hardware en el repositorio

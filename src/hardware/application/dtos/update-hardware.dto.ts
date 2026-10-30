@@ -8,5 +8,4 @@ export interface UpdateHardwareDto {
   descripcion?: string;
   ult_revision?: Date | string;
   rev_programada?: Date | string;
-  is_active?: boolean;
 }

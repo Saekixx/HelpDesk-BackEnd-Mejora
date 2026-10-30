@@ -253,7 +253,7 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       await tx.hardware.update({
         where: { id_hardware: dto.id_hardware },
         data: {
-          estado: 'Instalado',
+          estado: 'INSTALADO',
           id_equipo_actual: id_equipo,
         },
       });
@@ -302,12 +302,12 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
 
       await tx.hardware.update({
         where: { id_hardware: saliente.id_hardware },
-        data: { estado: 'En_Stock', id_equipo_actual: null },
+        data: { estado: 'DISPONIBLE', id_equipo_actual: null },
       });
 
       await tx.hardware.update({
         where: { id_hardware: dto.id_hardware_nuevo },
-        data: { estado: 'Instalado', id_equipo_actual: id_equipo },
+        data: { estado: 'INSTALADO', id_equipo_actual: id_equipo },
       });
 
       const nuevo = await tx.registro_hardware.create({

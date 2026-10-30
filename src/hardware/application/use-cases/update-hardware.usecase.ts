@@ -38,7 +38,7 @@ export class UpdateHardwareUseCase {
       rev_programada: hardwareData.rev_programada
         ? new Date(hardwareData.rev_programada)
         : existingHardware.rev_programada,
-      is_active: hardwareData.is_active ?? existingHardware.is_active,
+      estado: existingHardware.estado,
       created_at: existingHardware.created_at,
       updated_at: new Date(), // Actualizar la fecha de actualización
     });

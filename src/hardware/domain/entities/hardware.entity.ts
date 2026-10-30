@@ -1,3 +1,20 @@
+import { EstadoHardware } from '../enums/estado-hardware.enum';
+
+// Referencia resumida a una entidad relacionada (cliente, sucursal, área).
+export interface HardwareRelacion {
+  id: number;
+  nombre: string;
+}
+
+// Equipo al que está asignado actualmente el hardware y su ubicación.
+export interface HardwareEquipoActual {
+  id_equipo: number;
+  nombre_equipo?: string;
+  cliente: HardwareRelacion | null;
+  sucursal: HardwareRelacion | null;
+  area: HardwareRelacion | null;
+}
+
 export interface HardwareProps {
   id_hardware?: number;
   tipo_equipo: string;
@@ -9,7 +26,9 @@ export interface HardwareProps {
   descripcion?: string;
   ult_revision?: Date;
   rev_programada?: Date;
-  is_active?: boolean;
+  estado?: EstadoHardware;
+  // undefined = la relación no fue cargada; null = sin equipo asignado.
+  equipo_actual?: HardwareEquipoActual | null;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -25,7 +44,8 @@ export class Hardware {
   public readonly descripcion?: string;
   public readonly ult_revision?: Date;
   public readonly rev_programada?: Date;
-  public readonly is_active: boolean;
+  public readonly estado: EstadoHardware;
+  public readonly equipo_actual?: HardwareEquipoActual | null;
   public readonly created_at: Date;
   public readonly updated_at: Date;
 
@@ -40,8 +60,15 @@ export class Hardware {
     this.descripcion = props.descripcion;
     this.ult_revision = props.ult_revision;
     this.rev_programada = props.rev_programada;
-    this.is_active = props.is_active ?? true;
+    // Un hardware recién registrado queda disponible hasta que se instale.
+    this.estado = props.estado ?? EstadoHardware.DISPONIBLE;
+    this.equipo_actual = props.equipo_actual;
     this.created_at = props.created_at ?? new Date();
     this.updated_at = props.updated_at ?? new Date();
+  }
+
+  /** true cuando el componente está instalado en un equipo. */
+  get is_active(): boolean {
+    return this.estado === EstadoHardware.INSTALADO;
   }
 }
