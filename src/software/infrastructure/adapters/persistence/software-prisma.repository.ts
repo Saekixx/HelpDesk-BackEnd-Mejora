@@ -37,7 +37,7 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
       totalPages: number;
     };
   }> {
-    const { search, is_active, page = 1, limit = 10 } = filterDto;
+    const { search, estado, is_active, page = 1, limit = 10 } = filterDto as any;
     const skip = (page - 1) * limit;
 
     const where: Prisma.softwareWhereInput = {};
@@ -46,7 +46,13 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
       where.OR = [
         { nombre_software: { contains: search } },
         { proveedor: { contains: search } },
+        { categoria: { contains: search } },
       ];
+    }
+
+    // Filtro por estado basado en el enum de la tabla
+    if (estado !== undefined) {
+      where.estado = estado;
     }
 
     if (is_active !== undefined) {
@@ -84,7 +90,7 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
 
   async getSoftwareOptions(): Promise<SoftwareOptionDto[]> {
     const entities = await this.prisma.software.findMany({
-      where: { is_active: true },
+      where: { estado: 'Activo' },
       select: {
         id_software: true,
         nombre_software: true,
