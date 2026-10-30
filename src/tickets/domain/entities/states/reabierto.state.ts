@@ -29,4 +29,8 @@ export class ReabiertoState implements TicketState {
   derivarInsitu(ticket: Ticket): void {
     ticket.changeState(new DerivadoInsituState());
   }
+
+  enEsperaRepuesto(): void {
+    throw new InvalidStateTransitionException(this.name, 'enEsperaRepuesto');
+  }
 }

@@ -5,6 +5,7 @@ import { EnProgresoState } from './states/en-progreso.state';
 import { CerradoState } from './states/cerrado.state';
 import { ReabiertoState } from './states/reabierto.state';
 import { DerivadoInsituState } from './states/derivado-insitu.state';
+import { EnEsperaRepuestoState } from './states/en-espera-repuesto';
 
 export enum EstadoTicket {
   PENDIENTE = 'Pendiente',
@@ -12,7 +13,8 @@ export enum EstadoTicket {
   EN_PROGRESO = 'En Progreso',
   REABIERTO = 'Reabierto',
   CERRADO = 'Cerrado',
-  DERIVADO_INSITU = 'Derivado Insitu',
+  DERIVADO_INSITU = 'Derivado InSitu',
+  EN_ESPERA_REPUESTO = 'En Espera Repuesto',
 }
 
 export enum RolUsuario {
@@ -30,6 +32,7 @@ export interface TicketProps {
   asunto: string;
   detalle: string;
   estado?: EstadoTicket;
+  reporte_cierre?: string;
   id_equipo: number;
   id_trabajador: number;
   id_soporte?: number | null;
@@ -51,6 +54,7 @@ export class Ticket {
   private _id_soporte?: number | null;
   private _state: TicketState;
   private _updatedAt: Date;
+  private _reporte_cierre?: string;
 
   constructor(props: TicketProps) {
     this.id_tickets = props.id_tickets;
@@ -63,6 +67,7 @@ export class Ticket {
     this.es_software = props.es_software ?? false;
     this.createdAt = props.createdAt ?? new Date();
     this._updatedAt = props.updatedAt ?? new Date();
+    this._reporte_cierre = props.reporte_cierre;
 
     this._state = this.resolveStateInstance(
       props.estado ?? EstadoTicket.PENDIENTE,
@@ -81,6 +86,10 @@ export class Ticket {
     return this._updatedAt;
   }
 
+  public get reporte_cierre(): string | undefined {
+    return this._reporte_cierre;
+  }
+
   public changeState(newState: TicketState): void {
     this._state = newState;
     this._updatedAt = new Date();
@@ -88,6 +97,12 @@ export class Ticket {
 
   public setIdSoporte(idSoporte: number): void {
     this._id_soporte = idSoporte;
+    this._updatedAt = new Date();
+  }
+
+  public setReporteCierre(reporte: string): void {
+    this._reporte_cierre = reporte;
+    this._updatedAt = new Date();
   }
 
   public puedeSerCerradoPor(
@@ -141,12 +156,19 @@ export class Ticket {
     this._state.iniciarChat(this);
   }
 
-  public cerrar(): void {
+  public cerrar(reporteCierre?: string): void {
+    if (reporteCierre) {
+      this.setReporteCierre(reporteCierre);
+    }
     this._state.cerrar(this);
   }
 
   public reabrir(): void {
     this._state.reabrir(this);
+  }
+
+  public enEsperaRepuesto(): void {
+    this._state.enEsperaRepuesto(this);
   }
 
   private resolveStateInstance(estado: EstadoTicket): TicketState {
@@ -163,6 +185,8 @@ export class Ticket {
         return new ReabiertoState();
       case EstadoTicket.DERIVADO_INSITU:
         return new DerivadoInsituState();
+      case EstadoTicket.EN_ESPERA_REPUESTO:
+        return new EnEsperaRepuestoState();
       default:
         return new PendienteState();
     }

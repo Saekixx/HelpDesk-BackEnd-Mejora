@@ -13,6 +13,7 @@ export class TicketMapper {
       pin: prismaTicket.pin,
       asunto: prismaTicket.asunto,
       detalle: prismaTicket.detalle,
+      reporte_cierre: prismaTicket.reporte_cierre ?? undefined,
       estado: (prismaTicket.estado as unknown as EstadoTicket) ?? undefined,
       id_equipo: prismaTicket.id_equipo,
       id_trabajador: prismaTicket.id_trabajador,
@@ -31,6 +32,7 @@ export class TicketMapper {
       pin: domain.pin,
       asunto: domain.asunto,
       detalle: domain.detalle,
+      reporte_cierre: domain.reporte_cierre ?? null,
       estado: domain.estado as unknown as PrismaEstadoTicket,
       id_equipo: Number(domain.id_equipo),
       id_trabajador: Number(domain.id_trabajador),
@@ -42,47 +44,55 @@ export class TicketMapper {
   }
 
   static toCriteriaResponse(raw: any): TicketResponseCriteria {
-    const trabajador = raw.usuarios_tickets_id_trabajadorTousuarios;
-    const soporte = raw.usuarios_tickets_id_soporteTousuarios;
     const equipo = raw.equipos;
     const cliente = equipo?.clientes;
+    const sucursal = equipo?.sucursales;
+    const area = equipo?.area;
+    const soporte = raw.usuarios_tickets_id_soporteTousuarios;
 
     return {
-      id_tickets: raw.id_tickets,
+      id_ticket: raw.id_tickets,
       pin: raw.pin,
       asunto: raw.asunto,
-      fecha_creacion: raw.created_at,
+      detalle: raw.detalle,
       estado: raw.estado,
-      usuario: {
-        id: trabajador.id_usuario,
-        nombre: `${trabajador.nombre} ${trabajador.apellido}`.trim(),
-      },
-      equipo: {
-        id: equipo.id_equipo,
-        tipo_equipo: equipo.tipo,
-      },
+
+      equipo: equipo
+        ? {
+            id_equipo: equipo.id_equipo,
+            nombre: equipo.nombre_equipo,
+            marca_modelo: equipo.marca_modelo,
+            tipo: equipo.tipo,
+            numero_serie: equipo.num_serie,
+          }
+        : null,
+
       cliente: cliente
         ? {
-            id: cliente.id_cliente,
+            id_cliente: cliente.id_cliente,
             nombre: cliente.nombre_principal,
           }
-        : { id: 0, nombre: 'Sin cliente asignado' },
-      sucursal: equipo?.sucursales
+        : null,
+
+      sucursal: sucursal
         ? {
-            id: equipo.sucursales.id_sucursal,
-            nombre: equipo.sucursales.nombre_sucursal,
+            id_sucursal: sucursal.id_sucursal,
+            nombre: sucursal.nombre_sucursal,
           }
         : null,
-      area: equipo?.area
+
+      area: area
         ? {
-            id: equipo.area.id_area,
-            nombre: equipo.area.nombre_area,
+            id_area: area.id_area,
+            nombre: area.nombre_area,
           }
         : null,
+
       soporte: soporte
         ? {
-            id: soporte.id_usuario,
-            nombre: `${soporte.nombre} ${soporte.apellido}`.trim(),
+            id_soporte: soporte.id_usuario,
+            nombre: soporte.nombre,
+            apellido: soporte.apellido,
           }
         : null,
     };

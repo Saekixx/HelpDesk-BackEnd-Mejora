@@ -2,6 +2,7 @@ import { TicketState } from './ticket-state.interface';
 import { Ticket } from '../ticket.entity';
 import { CerradoState } from './cerrado.state';
 import { InvalidStateTransitionException } from '../../exceptions/invalid-state-transition.exception';
+import { EnEsperaRepuestoState } from './en-espera-repuesto';
 
 export class DerivadoInsituState implements TicketState {
   readonly name = 'Derivado Insitu';
@@ -28,5 +29,10 @@ export class DerivadoInsituState implements TicketState {
   derivarInsitu(): void {
     // No se permite derivar un ticket que ya está en estado Derivado Insitu
     throw new InvalidStateTransitionException(this.name, 'derivarInsitu');
+  }
+
+  enEsperaRepuesto(ticket: Ticket): void {
+    // Cambia el estado del ticket a En Espera de Repuesto
+    ticket.changeState(new EnEsperaRepuestoState());
   }
 }

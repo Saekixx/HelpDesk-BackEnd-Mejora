@@ -295,6 +295,7 @@ model tickets {
   pin                                     String    @unique(map: "pin") @db.VarChar(6)
   asunto                                  String    @db.VarChar(255)
   detalle                                 String    @db.Text
+  reporte_cierre                          String?   @db.Text
   estado                                  tickets_estado? @default(Pendiente)
   id_equipo                               Int
   id_trabajador                           Int
@@ -387,6 +388,7 @@ enum tickets_estado {
   Asignado
   En_Progreso      @map("En Progreso")
   Derivado_InSitu  @map("Derivado InSitu")
+  En_Espera_Repuesto @map("En Espera Repuesto")
   Reabierto
   Cerrado
 }

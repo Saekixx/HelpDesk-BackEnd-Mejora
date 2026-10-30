@@ -27,4 +27,8 @@ export class PendienteState implements TicketState {
   derivarInsitu(): void {
     throw new InvalidStateTransitionException(this.name, 'derivarInsitu');
   }
+
+  enEsperaRepuesto(): void {
+    throw new InvalidStateTransitionException(this.name, 'enEsperaRepuesto');
+  }
 }

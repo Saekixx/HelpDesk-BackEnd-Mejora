@@ -28,4 +28,9 @@ export class AsignadoState implements TicketState {
   derivarInsitu(): void {
     throw new InvalidStateTransitionException(this.name, 'derivarInsitu');
   }
+
+  enEsperaRepuesto(ticket: Ticket): void {
+    // No se puede derivar a "En Espera de Repuesto" desde el estado "Asignado"
+    throw new InvalidStateTransitionException(this.name, 'enEsperaRepuesto');
+  }
 }

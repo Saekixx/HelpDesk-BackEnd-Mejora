@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { AssignSupportCommand } from '../dtos/assign-support.request';
 import { CreateTicketDto } from '../dtos/create-ticket.dto';
+import { EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 
 export function ApiFindAllTicketsSwagger() {
   return applyDecorators(
@@ -39,7 +40,7 @@ export function ApiFindAllTicketsSwagger() {
     ApiQuery({
       name: 'estado',
       required: false,
-      enum: ['Pendiente', 'Asignado', 'En Progreso', 'Reabierto', 'Cerrado'],
+      enum: EstadoTicket,
       description: 'Filtrar por estado del ticket',
     }),
     ApiQuery({
@@ -59,12 +60,6 @@ export function ApiFindAllTicketsSwagger() {
       required: false,
       type: Number,
       description: 'Filtrar por ID del área',
-    }),
-    ApiQuery({
-      name: 'id_soporte',
-      required: false,
-      type: Number,
-      description: 'Filtrar por ID del usuario de soporte asignado',
     }),
     ApiResponse({
       status: 200,

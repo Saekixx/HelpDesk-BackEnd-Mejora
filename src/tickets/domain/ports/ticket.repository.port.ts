@@ -19,7 +19,7 @@ export interface TicketRepositoryPort {
 
   findByPin(pin: string): Promise<Ticket | null>;
 
-  findAllWhitFilters(
+  findAllWithFilters(
     filters: TicketFilterCriteria,
   ): Promise<PaginatedTicketsResult>;
 }
