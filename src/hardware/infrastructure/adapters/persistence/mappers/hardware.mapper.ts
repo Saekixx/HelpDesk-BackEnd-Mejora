@@ -1,4 +1,4 @@
-import { hardware as PrismaHardware } from '@prisma/client';
+import { hardware as PrismaHardware, Prisma } from '@prisma/client';
 import {
   Hardware,
   HardwareEquipoActual,
@@ -7,6 +7,10 @@ import {
   ESTADO_HARDWARE_LABEL,
   EstadoHardware,
 } from '@/hardware/domain/enums/estado-hardware.enum';
+import {
+  TIPO_COMPONENTE_LABEL,
+  TipoComponente,
+} from '@/hardware/domain/enums/tipo-componente.enum';
 import {
   HardwareEquipoActualResponseDto,
   HardwareResponseDto,
@@ -27,32 +31,34 @@ export class HardwareMapper {
   static toDomain(entity: PrismaHardwareConEquipo): Hardware {
     return new Hardware({
       id_hardware: entity.id_hardware,
-      tipo_equipo: entity.tipo_componente,
+      tipo_componente: TipoComponente[entity.tipo_componente],
       numero_serie: entity.numero_serie,
-      fecha_compra: entity.fecha_compra ?? new Date(),
-      marca: entity.marca_modelo,
-      proveedor: entity.proveedor ?? '',
+      marca_modelo: entity.marca_modelo,
+      proveedor: entity.proveedor ?? undefined,
+      fecha_compra: entity.fecha_compra ?? undefined,
+      // Decimal de Prisma -> number
+      costo_unitario: Number(entity.costo_unitario ?? 0),
       url_factura: entity.url_factura ?? undefined,
-      descripcion: undefined,
-      ult_revision: undefined,
-      rev_programada: undefined,
       estado: EstadoHardware[entity.estado],
+      id_equipo_actual: entity.id_equipo_actual,
       equipo_actual: HardwareMapper.toEquipoActual(entity.equipo_actual),
       created_at: entity.created_at ?? undefined,
       updated_at: entity.updated_at ?? undefined,
     });
   }
 
-  static toPersistence(domain: Hardware): Partial<PrismaHardware> {
+  // Entidad de dominio -> datos de escritura de Prisma (crear y actualizar).
+  static toPersistence(domain: Hardware): Prisma.hardwareUncheckedCreateInput {
     return {
-      ...(domain.id_hardware && { id_hardware: domain.id_hardware }),
-      tipo_componente: domain.tipo_equipo,
+      tipo_componente: domain.tipo_componente,
       numero_serie: domain.numero_serie,
-      fecha_compra: domain.fecha_compra,
-      marca_modelo: domain.marca,
-      proveedor: domain.proveedor,
-      url_factura: domain.url_factura,
+      marca_modelo: domain.marca_modelo,
+      proveedor: domain.proveedor ?? null,
+      fecha_compra: domain.fecha_compra ?? null,
+      costo_unitario: new Prisma.Decimal(domain.costo_unitario),
+      url_factura: domain.url_factura ?? null,
       estado: domain.estado,
+      id_equipo_actual: domain.id_equipo_actual,
       created_at: domain.created_at,
       updated_at: domain.updated_at,
     };
@@ -64,10 +70,12 @@ export class HardwareMapper {
     return {
       id_hardware: domain.id_hardware as number,
       numero_serie: domain.numero_serie,
-      tipo_equipo: domain.tipo_equipo,
-      marca: domain.marca,
-      proveedor: domain.proveedor,
-      fecha_compra: domain.fecha_compra,
+      tipo_componente: domain.tipo_componente,
+      tipo_componente_label: TIPO_COMPONENTE_LABEL[domain.tipo_componente],
+      marca_modelo: domain.marca_modelo,
+      proveedor: domain.proveedor ?? null,
+      fecha_compra: domain.fecha_compra ?? null,
+      costo_unitario: domain.costo_unitario,
       url_factura: domain.url_factura,
       estado: domain.estado,
       estado_label: ESTADO_HARDWARE_LABEL[domain.estado],

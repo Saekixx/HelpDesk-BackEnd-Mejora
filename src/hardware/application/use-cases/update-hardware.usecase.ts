@@ -23,27 +23,24 @@ export class UpdateHardwareUseCase {
     // Fusionar valores anteriores con los nuevos para soportar actualización parcial
     const updatedHardware = new Hardware({
       id_hardware: existingHardware.id_hardware,
-      tipo_equipo: hardwareData.tipo_equipo ?? existingHardware.tipo_equipo,
+      tipo_componente:
+        hardwareData.tipo_componente ?? existingHardware.tipo_componente,
       numero_serie: hardwareData.numero_serie ?? existingHardware.numero_serie,
+      marca_modelo: hardwareData.marca_modelo ?? existingHardware.marca_modelo,
+      proveedor: hardwareData.proveedor ?? existingHardware.proveedor,
       fecha_compra: hardwareData.fecha_compra
         ? new Date(hardwareData.fecha_compra)
         : existingHardware.fecha_compra,
-      marca: hardwareData.marca ?? existingHardware.marca,
-      proveedor: hardwareData.proveedor ?? existingHardware.proveedor,
+      costo_unitario:
+        hardwareData.costo_unitario ?? existingHardware.costo_unitario,
       url_factura: hardwareData.url_factura ?? existingHardware.url_factura,
-      descripcion: hardwareData.descripcion ?? existingHardware.descripcion,
-      ult_revision: hardwareData.ult_revision
-        ? new Date(hardwareData.ult_revision)
-        : existingHardware.ult_revision,
-      rev_programada: hardwareData.rev_programada
-        ? new Date(hardwareData.rev_programada)
-        : existingHardware.rev_programada,
       estado: existingHardware.estado,
+      id_equipo_actual: existingHardware.id_equipo_actual,
       created_at: existingHardware.created_at,
       updated_at: new Date(), // Actualizar la fecha de actualización
     });
 
     // Guardar el hardware actualizado en el repositorio
-    await this.hardwareRepository.save(updatedHardware);
+    await this.hardwareRepository.update(updatedHardware);
   }
 }

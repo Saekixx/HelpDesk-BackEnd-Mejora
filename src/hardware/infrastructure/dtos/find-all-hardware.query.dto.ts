@@ -1,13 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.dto';
 import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
+import {
+  normalizarTipoComponente,
+  TipoComponente,
+} from '@/hardware/domain/enums/tipo-componente.enum';
 
 export class FindAllHardwareQueryDto implements FilterHardwareDto {
   @ApiPropertyOptional({
     description:
-      'Búsqueda por número de serie, marca/modelo, tipo de componente o proveedor',
+      'Búsqueda por número de serie, marca/modelo, nombre del tipo de componente o proveedor',
     example: 'Kingston',
   })
   @IsOptional()
@@ -46,12 +50,17 @@ export class FindAllHardwareQueryDto implements FilterHardwareDto {
   id_area?: number;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por tipo de componente (ej. RAM, SSD, Procesador)',
-    example: 'RAM',
+    description: 'Filtrar por tipo de componente',
+    enum: TipoComponente,
+    enumName: 'TipoComponente',
+    example: TipoComponente.MEMORIA_RAM,
   })
   @IsOptional()
-  @IsString({ message: 'El tipo de componente debe ser una cadena de texto' })
-  tipo_componente?: string;
+  @Transform(({ value }) => normalizarTipoComponente(value))
+  @IsEnum(TipoComponente, {
+    message: `El tipo de componente debe ser uno de: ${Object.values(TipoComponente).join(', ')}`,
+  })
+  tipo_componente?: TipoComponente;
 
   @ApiPropertyOptional({
     description: 'Filtrar por estado del hardware',

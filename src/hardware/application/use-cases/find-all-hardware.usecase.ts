@@ -27,7 +27,6 @@ export class FindAllHardwareUseCase {
     return {
       ...filterDto,
       search: this.cleanText(filterDto.search),
-      tipo_componente: this.cleanText(filterDto.tipo_componente),
       proveedor: this.cleanText(filterDto.proveedor),
       page: filterDto.page ?? DEFAULT_PAGE,
       limit: filterDto.limit ?? DEFAULT_LIMIT,

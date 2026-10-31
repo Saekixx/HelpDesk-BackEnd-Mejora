@@ -6,6 +6,10 @@ import { HardwareMapper } from './mappers/hardware.mapper';
 import { Prisma } from '@prisma/client';
 import { HardwareOptionDto } from '@/hardware/domain/dtos/get-hardware.dto';
 import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.dto';
+import {
+  TIPO_COMPONENTE_LABEL,
+  TipoComponente,
+} from '@/hardware/domain/enums/tipo-componente.enum';
 
 // Equipo asignado al hardware con su ubicación (cliente, sucursal, área).
 const HARDWARE_INCLUDE = {
@@ -24,21 +28,45 @@ const HARDWARE_INCLUDE = {
 export class HardwarePrismaRepository implements HardwareRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(hardware: Hardware): Promise<Hardware> {
+  async create(hardware: Hardware): Promise<Hardware> {
     const data = HardwareMapper.toPersistence(hardware);
 
-    if (hardware.id_hardware) {
-      const updated = await this.prisma.hardware.update({
-        where: { id_hardware: hardware.id_hardware },
+    // Hardware y registro de instalación se crean juntos o no se crea nada.
+    const created = await this.prisma.$transaction(async (tx) => {
+      const nuevo = await tx.hardware.create({
         data,
+        include: HARDWARE_INCLUDE,
       });
-      return HardwareMapper.toDomain(updated);
-    }
 
-    const created = await this.prisma.hardware.create({
-      data: data as Prisma.hardwareCreateInput,
+      if (nuevo.id_equipo_actual !== null) {
+        await tx.registro_hardware.create({
+          data: {
+            id_hardware: nuevo.id_hardware,
+            id_equipo: nuevo.id_equipo_actual,
+            is_actual: true,
+            fecha_instalacion: new Date(),
+          },
+        });
+      }
+
+      return nuevo;
     });
+
     return HardwareMapper.toDomain(created);
+  }
+
+  async update(hardware: Hardware): Promise<Hardware> {
+    const updated = await this.prisma.hardware.update({
+      // Solo se actualiza hardware ya persistido: `id_hardware` está definido.
+      where: { id_hardware: hardware.id_hardware as number },
+      data: HardwareMapper.toPersistence(hardware),
+    });
+    return HardwareMapper.toDomain(updated);
+  }
+
+  async existeEquipo(id_equipo: number): Promise<boolean> {
+    const total = await this.prisma.equipos.count({ where: { id_equipo } });
+    return total > 0;
   }
 
   async findAll(filterDto: FilterHardwareDto): Promise<{
@@ -99,7 +127,7 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
     return entities.map((entity) => ({
       id: entity.id_hardware,
       nombre:
-        `${entity.tipo_componente} ${entity.marca_modelo ?? ''} (${entity.numero_serie})`.trim(),
+        `${TIPO_COMPONENTE_LABEL[TipoComponente[entity.tipo_componente]]} ${entity.marca_modelo ?? ''} (${entity.numero_serie})`.trim(),
     }));
   }
 
@@ -124,11 +152,15 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
     const where: Prisma.hardwareWhereInput = {};
 
     if (search) {
+      // `tipo_componente` es un enum: no admite `contains`, así que se busca
+      // por los tipos cuya etiqueta legible coincide con el texto.
+      const tipos = this.tiposQueCoinciden(search);
+
       where.OR = [
         { numero_serie: { contains: search } },
         { marca_modelo: { contains: search } },
-        { tipo_componente: { contains: search } },
         { proveedor: { contains: search } },
+        ...(tipos.length > 0 ? [{ tipo_componente: { in: tipos } }] : []),
       ];
     }
 
@@ -163,5 +195,12 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
     }
 
     return where;
+  }
+
+  private tiposQueCoinciden(search: string): TipoComponente[] {
+    const texto = search.toLowerCase();
+    return Object.values(TipoComponente).filter((tipo) =>
+      TIPO_COMPONENTE_LABEL[tipo].toLowerCase().includes(texto),
+    );
   }
 }

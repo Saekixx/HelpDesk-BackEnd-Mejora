@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
+import { TipoComponente } from '@/hardware/domain/enums/tipo-componente.enum';
 
 // Referencia resumida a una entidad relacionada (cliente, sucursal, área).
 export class HardwareRelacionResponseDto {
@@ -60,24 +61,42 @@ export class HardwareResponseDto {
 
   @ApiProperty({
     description: 'Tipo de componente',
+    enum: TipoComponente,
+    enumName: 'TipoComponente',
+    example: TipoComponente.MEMORIA_RAM,
+  })
+  tipo_componente: TipoComponente;
+
+  @ApiProperty({
+    description: 'Tipo de componente en texto legible para mostrar en la tabla',
     example: 'Memoria RAM',
   })
-  tipo_equipo: string;
+  tipo_componente_label: string;
 
   @ApiProperty({ description: 'Marca y modelo', example: 'Kingston Fury 16GB' })
-  marca: string;
+  marca_modelo: string;
 
   @ApiProperty({
     description: 'Proveedor',
     example: 'TechSupply Peru S.A.C.',
+    type: String,
+    nullable: true,
   })
-  proveedor: string;
+  proveedor: string | null;
 
   @ApiProperty({
     description: 'Fecha de compra',
     example: '2026-01-15T00:00:00.000Z',
+    type: Date,
+    nullable: true,
   })
-  fecha_compra: Date;
+  fecha_compra: Date | null;
+
+  @ApiProperty({
+    description: 'Costo unitario (2 decimales)',
+    example: 350.5,
+  })
+  costo_unitario: number;
 
   @ApiProperty({
     description: 'URL de la factura de compra',

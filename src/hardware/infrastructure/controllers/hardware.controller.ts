@@ -76,9 +76,10 @@ export class HardwareController {
   @Post()
   @ApiCreateHardwareSwagger()
   async create(@Body() dto: CreateHardwareRequestDto) {
-    await this.createHardwareUseCase.execute(dto);
+    const hardware = await this.createHardwareUseCase.execute(dto);
     return {
       message: 'Hardware registrado exitosamente',
+      data: HardwareMapper.toResponse(hardware),
     };
   }
 
@@ -91,6 +92,7 @@ export class HardwareController {
     await this.updateHardwareUseCase.execute(id, dto);
     return {
       message: 'Hardware actualizado exitosamente',
+      data: null,
     };
   }
 
@@ -98,6 +100,6 @@ export class HardwareController {
   @ApiToggleHardwareStatusSwagger()
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     const message = await this.toggleHardwareStatusUseCase.execute(id);
-    return { message };
+    return { message, data: null };
   }
 }

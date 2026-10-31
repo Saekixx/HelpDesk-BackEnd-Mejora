@@ -23,25 +23,24 @@ export class ToggleHardwareStatusUseCase {
     // Cambiar el estado del hardware
     const updatedHardware = new Hardware({
       id_hardware: existingHardware.id_hardware,
-      tipo_equipo: existingHardware.tipo_equipo,
+      tipo_componente: existingHardware.tipo_componente,
       numero_serie: existingHardware.numero_serie,
-      fecha_compra: existingHardware.fecha_compra,
-      marca: existingHardware.marca,
+      marca_modelo: existingHardware.marca_modelo,
       proveedor: existingHardware.proveedor,
+      fecha_compra: existingHardware.fecha_compra,
+      costo_unitario: existingHardware.costo_unitario,
       url_factura: existingHardware.url_factura,
-      descripcion: existingHardware.descripcion,
-      ult_revision: existingHardware.ult_revision,
-      rev_programada: existingHardware.rev_programada,
       // Alterna entre instalado y disponible
       estado: existingHardware.is_active
         ? EstadoHardware.DISPONIBLE
         : EstadoHardware.INSTALADO,
+      id_equipo_actual: existingHardware.id_equipo_actual,
       created_at: existingHardware.created_at,
       updated_at: new Date(), // Actualizar la fecha de actualización
     });
 
     // Guardar el hardware actualizado en el repositorio
-    await this.hardwareRepository.save(updatedHardware);
+    await this.hardwareRepository.update(updatedHardware);
 
     // Devolver un mensaje indicando el nuevo estado del hardware
     return `El hardware con ID ${id} ahora está ${

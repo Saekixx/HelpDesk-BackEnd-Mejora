@@ -8,6 +8,10 @@ import {
   SoftwareInstalado,
 } from '@/equipos/domain/entities/equipo.entity';
 import type { PrismaEquipoDetalleCompleto } from '../equipo-prisma.repository';
+import {
+  TIPO_COMPONENTE_LABEL,
+  TipoComponente,
+} from '@/hardware/domain/enums/tipo-componente.enum';
 
 type PrismaEquipoConDetalle = PrismaEquipo & {
   clientes: { id_cliente: number; nombre_principal: string } | null;
@@ -77,7 +81,9 @@ export class EquipoMapper {
   ): ComponenteHardware {
     return {
       id_RH: rh.id_RH,
-      tipo: rh.hardware?.tipo_componente ?? '',
+      tipo: rh.hardware
+        ? TIPO_COMPONENTE_LABEL[TipoComponente[rh.hardware.tipo_componente]]
+        : '',
       marca: rh.hardware?.marca_modelo ?? '',
       url_factura: rh.hardware?.url_factura ?? undefined,
       descripcion: rh.motivo_retiro ?? '',

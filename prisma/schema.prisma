@@ -197,11 +197,12 @@ model equipos {
 
 model hardware {
   id_hardware       Int                @id @default(autoincrement())
-  tipo_componente   String             @db.VarChar(100)
+  tipo_componente   TipoComponente
   marca_modelo      String             @db.VarChar(150)
   numero_serie      String             @db.VarChar(100)
   proveedor         String?            @db.VarChar(150)
   fecha_compra      DateTime?          @db.Date
+  costo_unitario    Decimal?           @default(0.00) @db.Decimal(10, 2)
   url_factura       String?            @db.VarChar(255)
   estado            EstadoHardware     @default(DISPONIBLE)
   id_equipo_actual  Int?              
@@ -401,6 +402,16 @@ enum EstadoHardware {
   DISPONIBLE       @map("Disponible")
   EN_MANTENIMIENTO @map("En Mantenimiento")
   BAJA             @map("Baja / Descarte")
+}
+
+enum TipoComponente {
+  MEMORIA_RAM        @map("Memoria RAM")
+  ALMACENAMIENTO_SSD @map("Almacenamiento SSD/NVMe")
+  ALMACENAMIENTO_HDD @map("Almacenamiento HDD")
+  FUENTE_PODER       @map("Fuente de Poder (PSU)")
+  PROCESADOR         @map("Procesador (CPU)")
+  TARJETA_GRAFICA    @map("Tarjeta Gráfica (GPU)")
+  PLACA_BASE         @map("Placa Base")
 }
 
 enum tipo_licencia_enum {

@@ -1,4 +1,5 @@
 import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
+import { TipoComponente } from '@/hardware/domain/enums/tipo-componente.enum';
 
 /**
  * Criterios de filtrado y paginación del listado de hardware.
@@ -9,7 +10,7 @@ export interface FilterHardwareDto {
   id_cliente?: number;
   id_sucursal?: number;
   id_area?: number;
-  tipo_componente?: string;
+  tipo_componente?: TipoComponente;
   estado?: EstadoHardware;
   proveedor?: string;
   page?: number;
