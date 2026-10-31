@@ -3,6 +3,7 @@ export class TicketResponseCriteria {
   pin: string;
   asunto: string;
   detalle: string;
+  es_software: boolean;
   estado: string;
 
   equipo: {

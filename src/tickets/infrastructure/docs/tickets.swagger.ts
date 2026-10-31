@@ -68,6 +68,30 @@ export function ApiFindAllTicketsSwagger() {
   );
 }
 
+export function ApiFindOneTicketSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Obtener detalle completo de un ticket por ID',
+      description:
+        'Retorna toda la información detallada de un ticket específico incluyendo datos del trabajador, equipo, cliente, sucursal, área y soporte asignado.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID único del ticket',
+      type: Number,
+      example: 1,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Detalle del ticket obtenido exitosamente.',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Ticket no encontrado.',
+    }),
+  );
+}
+
 export function ApiCreateTicketSwagger() {
   return applyDecorators(
     ApiOperation({

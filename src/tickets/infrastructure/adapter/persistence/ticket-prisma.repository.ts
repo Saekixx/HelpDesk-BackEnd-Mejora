@@ -8,6 +8,7 @@ import { TicketFilterCriteria } from '@/tickets/domain/criteria/ticket-filter.cr
 import { Prisma, tickets_estado } from '@prisma/client';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import { TicketMapper } from './mappers/ticket.mapper';
+import { TicketDetalleCriteria } from '@/tickets/domain/criteria/ticket-detalle.criteria';
 
 @Injectable()
 export class TicketPrismaRepository implements TicketRepositoryPort {
@@ -42,6 +43,60 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
       where: { pin },
     });
     return raw ? TicketMapper.toDomain(raw) : null;
+  }
+
+  async findDetailById(id: number): Promise<TicketDetalleCriteria | null> {
+    const raw = await this.prisma.tickets.findUnique({
+      where: { id_tickets: id },
+      include: {
+        // 1. Trabajador que reporta y sus datos organizacionales
+        usuarios_tickets_id_trabajadorTousuarios: {
+          select: {
+            id_usuario: true,
+            nombre: true,
+            apellido: true,
+            telefono: true,
+            correo: true,
+          },
+        },
+        // 2. Equipo afectado y sus relaciones (Cliente, Sucursal, Área)
+        equipos: {
+          select: {
+            id_equipo: true,
+            nombre_equipo: true,
+            tipo: true,
+            num_serie: true,
+            marca_modelo: true,
+            clientes: {
+              select: { id_cliente: true, nombre_principal: true },
+            },
+            sucursales: {
+              select: { id_sucursal: true, nombre_sucursal: true },
+            },
+            area: {
+              select: { id_area: true, nombre_area: true },
+            },
+          },
+        },
+        // 3. Técnico de soporte asignado
+        usuarios_tickets_id_soporteTousuarios: {
+          select: {
+            id_usuario: true,
+            nombre: true,
+            apellido: true,
+            telefono: true,
+            correo: true,
+            rol: {
+              select: {
+                nombre: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return raw ? TicketMapper.toDetailResponse(raw) : null;
   }
 
   async findAllWithFilters(
@@ -106,6 +161,7 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
         { pin: { contains: searchTerm } },
         { asunto: { contains: searchTerm } },
         { detalle: { contains: searchTerm } },
+        { es_software: { equals: searchTerm === 'true' } },
       ];
     }
 

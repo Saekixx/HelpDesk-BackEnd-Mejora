@@ -16,6 +16,7 @@ import {
   ApiCloseTicketSwagger,
   ApiCreateTicketSwagger,
   ApiFindAllTicketsSwagger,
+  ApiFindOneTicketSwagger,
   ApiReopenTicketSwagger,
   ApiStartChatSwagger,
 } from '../docs/tickets.swagger';
@@ -35,6 +36,7 @@ import { StartChatTicketUseCase } from '@/tickets/application/use-cases/start-ch
 import { ReopenTicketUseCase } from '@/tickets/application/use-cases/reopen-ticket.use-case';
 import { CloseTicketUseCase } from '@/tickets/application/use-cases/close-ticket.use-case';
 import { RolUsuario } from '@/tickets/domain/entities/ticket.entity';
+import { GetTicketDetalleUseCase } from '@/tickets/application/use-cases/get-ticket-detalle.use-case';
 
 @ApiTags('Tickets')
 @ApiBearerAuth('access-token')
@@ -43,6 +45,7 @@ import { RolUsuario } from '@/tickets/domain/entities/ticket.entity';
 export class TicketsController {
   constructor(
     private readonly getTicketsUseCase: GetTicketsUseCase,
+    private readonly getTicketDetalleUseCase: GetTicketDetalleUseCase,
     private readonly createTicketUseCase: CreateTicketUseCase,
     private readonly assignTicketUseCase: AssignSupportTicketUseCase,
     private readonly startChatTicketUseCase: StartChatTicketUseCase,
@@ -56,6 +59,16 @@ export class TicketsController {
     const data = await this.getTicketsUseCase.execute(query);
     return {
       message: 'Tickets obtenidos exitosamente',
+      data,
+    };
+  }
+
+  @Get(':id')
+  @ApiFindOneTicketSwagger()
+  async findById(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.getTicketDetalleUseCase.execute(id);
+    return {
+      message: 'Ticket obtenido exitosamente',
       data,
     };
   }

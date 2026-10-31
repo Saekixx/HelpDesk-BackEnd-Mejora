@@ -1,3 +1,4 @@
+import { TicketDetalleCriteria } from '../criteria/ticket-detalle.criteria';
 import { TicketFilterCriteria } from '../criteria/ticket-filter.criteria';
 import { TicketResponseCriteria } from '../criteria/ticket-response.criteria';
 import { Ticket } from '../entities/ticket.entity';
@@ -22,4 +23,6 @@ export interface TicketRepositoryPort {
   findAllWithFilters(
     filters: TicketFilterCriteria,
   ): Promise<PaginatedTicketsResult>;
+
+  findDetailById(id: number): Promise<TicketDetalleCriteria | null>;
 }

@@ -5,6 +5,7 @@ import {
 } from '@prisma/client';
 import { Ticket, EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 import { TicketResponseCriteria } from '@/tickets/domain/criteria/ticket-response.criteria';
+import { TicketDetalleCriteria } from '@/tickets/domain/criteria/ticket-detalle.criteria';
 
 export class TicketMapper {
   static toDomain(prismaTicket: PrismaTicket): Ticket {
@@ -43,6 +44,65 @@ export class TicketMapper {
     };
   }
 
+  static toDetailResponse(raw: any): TicketDetalleCriteria {
+    const trabajador = raw.usuarios_tickets_id_trabajadorTousuarios;
+    const equipo = raw.equipos;
+    const soporte = raw.usuarios_tickets_id_soporteTousuarios;
+
+    const cliente = equipo?.clientes;
+    const sucursal = equipo?.sucursales;
+    const area = equipo?.area;
+
+    return {
+      id_ticket: raw.id_tickets,
+      pin: raw.pin,
+      asunto: raw.asunto,
+      detalle: raw.detalle,
+      es_software: raw.es_software ?? false,
+      createdAt: raw.created_at,
+      updatedAt: raw.updated_at,
+      estado: raw.estado,
+
+      trabajador: trabajador
+        ? {
+            id_trabajador: trabajador.id_usuario,
+            nombre: trabajador.nombre,
+            apellido: trabajador.apellido,
+            telefono: trabajador.telefono ?? '',
+            correo: trabajador.correo ?? '',
+            id_cliente: cliente?.id_cliente ?? 0,
+            nombre_cliente: cliente?.nombre_principal ?? '',
+            id_sucursal: sucursal?.id_sucursal ?? 0,
+            nombre_sucursal: sucursal?.nombre_sucursal ?? '',
+            id_area: area?.id_area ?? 0,
+            nombre_area: area?.nombre_area ?? '',
+          }
+        : null,
+
+      equipo: equipo
+        ? {
+            id_equipo: equipo.id_equipo,
+            nombre_equipo: equipo.nombre_equipo ?? '',
+            tipo: equipo.tipo,
+            numero_serie: equipo.num_serie ?? '',
+            marca_modelo: equipo.marca_modelo ?? '',
+          }
+        : null,
+
+      soporte: soporte
+        ? {
+            id_soporte: soporte.id_usuario,
+            nombre: soporte.nombre,
+            apellido: soporte.apellido,
+            telefono: soporte.telefono ?? '',
+            correo: soporte.correo ?? '',
+            area: soporte.area?.nombre_area ?? 'Soporte Técnico',
+            rol: soporte.rol ?? 'SOPORTE_TECNICO',
+          }
+        : null,
+    };
+  }
+
   static toCriteriaResponse(raw: any): TicketResponseCriteria {
     const equipo = raw.equipos;
     const cliente = equipo?.clientes;
@@ -55,6 +115,7 @@ export class TicketMapper {
       pin: raw.pin,
       asunto: raw.asunto,
       detalle: raw.detalle,
+      es_software: raw.es_software,
       estado: raw.estado,
 
       equipo: equipo

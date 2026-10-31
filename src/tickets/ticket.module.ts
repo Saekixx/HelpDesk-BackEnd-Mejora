@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { forwardRef, Get, Module } from '@nestjs/common';
 import { TicketsController } from './infrastructure/controller/tickets.controller';
 import { ConfigModule } from '@nestjs/config';
 import { CommonModule } from '@/common/common.module';
@@ -14,6 +14,7 @@ import { StartChatTicketUseCase } from '@/tickets/application/use-cases/start-ch
 import { ReopenTicketUseCase } from '@/tickets/application/use-cases/reopen-ticket.use-case';
 import { CloseTicketUseCase } from '@/tickets/application/use-cases/close-ticket.use-case';
 import { EquiposModule } from '@/equipos/equipos.module';
+import { GetTicketDetalleUseCase } from './application/use-cases/get-ticket-detalle.use-case';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { EquiposModule } from '@/equipos/equipos.module';
   providers: [
     // Casos de Uso
     GetTicketsUseCase,
+    GetTicketDetalleUseCase,
     CreateTicketUseCase,
     AssignSupportTicketUseCase,
     StartChatTicketUseCase,
