@@ -26,6 +26,29 @@ const HARDWARE_INCLUDE = {
   },
 } satisfies Prisma.hardwareInclude;
 
+// Detalle del hardware ("Hoja de Vida del Componente"): además del equipo
+// actual con su ubicación, incluye el historial de movimientos
+// (`registro_hardware`) con el equipo y el técnico responsable, del más
+// reciente al más antiguo. `id_RH` desempata movimientos de la misma fecha
+// (la instalación guarda la fecha con precisión de segundos).
+const HARDWARE_DETALLE_INCLUDE = {
+  ...HARDWARE_INCLUDE,
+  registro_hardware: {
+    orderBy: [{ fecha_instalacion: 'desc' }, { id_RH: 'desc' }],
+    select: {
+      id_RH: true,
+      fecha_instalacion: true,
+      fecha_retiro: true,
+      motivo_retiro: true,
+      is_actual: true,
+      equipos: { select: { id_equipo: true, nombre_equipo: true } },
+      tecnico_responsable: {
+        select: { id_usuario: true, nombre: true, apellido: true },
+      },
+    },
+  },
+} satisfies Prisma.hardwareInclude;
+
 @Injectable()
 export class HardwarePrismaRepository implements HardwareRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
@@ -106,10 +129,11 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
     };
   }
 
+  // Hardware con su ubicación actual e historial completo de movimientos.
   async findById(id: number): Promise<Hardware | null> {
     const entity = await this.prisma.hardware.findUnique({
       where: { id_hardware: id },
-      include: HARDWARE_INCLUDE,
+      include: HARDWARE_DETALLE_INCLUDE,
     });
     if (!entity) return null;
     return HardwareMapper.toDomain(entity);

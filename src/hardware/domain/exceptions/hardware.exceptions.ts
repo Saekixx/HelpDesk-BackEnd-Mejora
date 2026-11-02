@@ -11,3 +11,9 @@ export class EquipoDestinoNotFoundException extends DomainException {
     super(`El equipo destino con ID ${id_equipo} no existe`, 404);
   }
 }
+
+export class HardwareNotFoundException extends DomainException {
+  constructor(id_hardware: number) {
+    super(`El hardware con ID ${id_hardware} no existe`, 404);
+  }
+}

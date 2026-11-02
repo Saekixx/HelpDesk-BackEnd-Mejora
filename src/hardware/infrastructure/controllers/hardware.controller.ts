@@ -70,7 +70,7 @@ export class HardwareController {
     const hardware = await this.findByIdHardwareUseCase.execute(id);
     return {
       message: 'Hardware obtenido exitosamente',
-      data: hardware ? HardwareMapper.toResponse(hardware) : null,
+      data: HardwareMapper.toDetailResponse(hardware),
     };
   }
 

@@ -22,6 +22,10 @@ export interface HardwareRepositoryPort {
       totalPages: number;
     };
   }>;
+  /**
+   * Hardware con su equipo actual (cliente, sucursal, área) y su historial de
+   * movimientos, del más reciente al más antiguo. null si no existe.
+   */
   findById(id: number): Promise<Hardware | null>;
   /**
    * Listado simplificado (sin paginación) para selectores y autocompletados,

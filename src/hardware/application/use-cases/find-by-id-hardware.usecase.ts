@@ -1,4 +1,5 @@
 import { Hardware } from '@/hardware/domain/entities/hardware.entity';
+import { HardwareNotFoundException } from '@/hardware/domain/exceptions/hardware.exceptions';
 import {
   HARDWARE_REPOSITORY,
   HardwareRepositoryPort,
@@ -12,7 +13,12 @@ export class FindByIdHardwareUseCase {
     private readonly hardwareRepository: HardwareRepositoryPort,
   ) {}
 
-  async execute(id: number): Promise<Hardware | null> {
-    return this.hardwareRepository.findById(id);
+  // Retorna el hardware con su ubicación actual e historial de movimientos
+  // (la "Hoja de Vida del Componente"). Lanza 404 si no existe.
+  async execute(id: number): Promise<Hardware> {
+    const hardware = await this.hardwareRepository.findById(id);
+    if (!hardware) throw new HardwareNotFoundException(id);
+
+    return hardware;
   }
 }

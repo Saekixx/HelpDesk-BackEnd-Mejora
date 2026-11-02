@@ -14,6 +14,7 @@ import {
   HardwareResponseDto,
   PaginatedHardwareResponseDto,
 } from '../dtos/hardware-response.dto';
+import { HardwareDetailResponseDto } from '../dtos/hardware-detail-response.dto';
 
 // Ubicación de ejemplo (cliente > sucursal > área) del equipo donde está instalado.
 const EQUIPO_ACTUAL_EJEMPLO = {
@@ -220,10 +221,64 @@ export const ApiGetHardwareOptionsSwagger = () =>
     }),
   );
 
+// Hoja de vida de un componente INSTALADO: ubicación actual y dos movimientos
+// (la instalación vigente y un retiro anterior), del más reciente al más antiguo.
+const HARDWARE_DETALLE_EJEMPLO = {
+  id_hardware: 7,
+  numero_serie: 'SN-9876543210',
+  marca_modelo: 'Kingston Fury 16GB',
+  proveedor: 'TechSupply Peru S.A.C.',
+  fecha_compra: '2026-01-15T00:00:00.000Z',
+  costo_unitario: 350.5,
+  url_factura: 'https://storage.empresa.com/facturas/fac-001.pdf',
+  tipo_componente: 'MEMORIA_RAM',
+  tipo_componente_label: 'Memoria RAM',
+  estado: 'INSTALADO',
+  estado_label: 'Instalado',
+  equipo_actual: {
+    id_equipo: 12,
+    codigo: 'EQ-12',
+    nombre_equipo: 'PC-Contabilidad-01',
+    cliente: { id_cliente: 1, nombre_principal: 'Acme Corp SAC' },
+    sucursal: { id_sucursal: 1, nombre_sucursal: 'Sucursal Central' },
+    area: { id_area: 1, nombre_area: 'Sistemas' },
+  },
+  historial: [
+    {
+      id_RH: 31,
+      fecha_instalacion: '2026-02-10T14:20:00.000Z',
+      fecha_retiro: null,
+      motivo_retiro: null,
+      is_actual: true,
+      equipo: { id_equipo: 12, nombre_equipo: 'PC-Contabilidad-01' },
+      tecnico_responsable: {
+        id_usuario: 4,
+        nombre: 'Carlos',
+        apellido: 'Ramírez',
+      },
+    },
+    {
+      id_RH: 18,
+      fecha_instalacion: '2026-01-20T10:30:00.000Z',
+      fecha_retiro: '2026-02-10T14:15:00.000Z',
+      motivo_retiro: 'Reubicado a otro equipo por reasignación de recursos',
+      is_actual: false,
+      equipo: { id_equipo: 9, nombre_equipo: 'PC-Recepcion-02' },
+      tecnico_responsable: null,
+    },
+  ],
+  created_at: '2026-01-20T10:30:00.000Z',
+  updated_at: '2026-02-10T14:20:00.000Z',
+};
+
 export const ApiFindByIdHardwareSwagger = () =>
   applyDecorators(
-    ApiExtraModels(HardwareResponseDto),
-    ApiOperation({ summary: 'Obtener hardware por ID' }),
+    ApiExtraModels(HardwareDetailResponseDto),
+    ApiOperation({
+      summary: 'Obtener la hoja de vida de un componente de hardware',
+      description:
+        'Retorna el detalle del componente: datos de compra y factura, estado oficial, equipo donde está instalado con su ubicación (cliente, sucursal y área; `equipo_actual` es `null` si no está asignado) y el historial de movimientos (instalaciones y retiros) con el equipo y el técnico responsable, del más reciente al más antiguo.',
+    }),
     ApiParam({
       name: 'id',
       type: Number,
@@ -231,7 +286,7 @@ export const ApiFindByIdHardwareSwagger = () =>
     }),
     ApiResponse({
       status: HttpStatus.OK,
-      description: 'Hardware encontrado.',
+      description: 'Hoja de vida del componente obtenida exitosamente.',
       schema: {
         type: 'object',
         properties: {
@@ -240,18 +295,48 @@ export const ApiFindByIdHardwareSwagger = () =>
             type: 'string',
             example: 'Hardware obtenido exitosamente',
           },
-          data: { $ref: getSchemaPath(HardwareResponseDto) },
+          data: { $ref: getSchemaPath(HardwareDetailResponseDto) },
         },
         example: {
           status: HttpStatus.OK,
           message: 'Hardware obtenido exitosamente',
-          data: HARDWARE_EJEMPLO,
+          data: HARDWARE_DETALLE_EJEMPLO,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'El ID indicado no es un número válido.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.BAD_REQUEST },
+          message: { type: 'string' },
+          data: { type: 'object', nullable: true, example: null },
+        },
+        example: {
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Validation failed (numeric string is expected)',
+          data: null,
         },
       },
     }),
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'Hardware no encontrado.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.NOT_FOUND },
+          message: { type: 'string' },
+          data: { type: 'object', nullable: true, example: null },
+        },
+        example: {
+          status: HttpStatus.NOT_FOUND,
+          message: 'El hardware con ID 999 no existe',
+          data: null,
+        },
+      },
     }),
   );
 
