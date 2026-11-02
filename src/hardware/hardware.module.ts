@@ -5,7 +5,7 @@ import { HardwarePrismaRepository } from './infrastructure/adapters/persistence/
 import { CreateHardwareUseCase } from './application/use-cases/create-hardware.usecase';
 import { FindAllHardwareUseCase } from './application/use-cases/find-all-hardware.usecase';
 import { FindByIdHardwareUseCase } from './application/use-cases/find-by-id-hardware.usecase';
-import { GetHardwareUseCase } from './application/use-cases/get-hardware.usecase';
+import { GetHardwareOptionsUseCase } from './application/use-cases/get-hardware-options.usecase';
 import { ToggleHardwareStatusUseCase } from './application/use-cases/toggle-hardware-status.usecase';
 import { UpdateHardwareUseCase } from './application/use-cases/update-hardware.usecase';
 import { HardwareController } from './infrastructure/controllers/hardware.controller';
@@ -18,7 +18,7 @@ import { HardwareController } from './infrastructure/controllers/hardware.contro
     CreateHardwareUseCase,
     FindAllHardwareUseCase,
     FindByIdHardwareUseCase,
-    GetHardwareUseCase,
+    GetHardwareOptionsUseCase,
     UpdateHardwareUseCase,
     ToggleHardwareStatusUseCase,
 

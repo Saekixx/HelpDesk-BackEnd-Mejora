@@ -1,6 +1,7 @@
 import { Hardware } from '../entities/hardware.entity';
-import { HardwareOptionDto } from '../dtos/get-hardware.dto';
 import { FilterHardwareDto } from '../../application/dtos/filter-hardware.dto';
+import { GetHardwareOptionsQueryDto } from '../../application/dtos/get-hardware-options.query.dto';
+import { HardwareOptionResponseDto } from '../../application/dtos/hardware-option-response.dto';
 
 export const HARDWARE_REPOSITORY = 'HARDWARE_REPOSITORY';
 
@@ -22,5 +23,11 @@ export interface HardwareRepositoryPort {
     };
   }>;
   findById(id: number): Promise<Hardware | null>;
-  getHardwareOptions(): Promise<HardwareOptionDto[]>;
+  /**
+   * Listado simplificado (sin paginación) para selectores y autocompletados,
+   * con filtros opcionales por estado, tipo de componente y equipo actual.
+   */
+  findOptions(
+    filters: GetHardwareOptionsQueryDto,
+  ): Promise<HardwareOptionResponseDto[]>;
 }

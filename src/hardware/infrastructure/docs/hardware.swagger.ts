@@ -105,6 +105,24 @@ const HARDWARE_LISTADO_EJEMPLO = [
   },
 ];
 
+// Opciones de hardware para selectores y autocompletados (sin paginación).
+const HARDWARE_OPCIONES_EJEMPLO = [
+  {
+    id_hardware: 8,
+    numero_serie: 'SN-5521800417',
+    marca_modelo: 'Samsung 980 Pro 1TB',
+    tipo_componente: 'ALMACENAMIENTO_SSD',
+    estado: 'DISPONIBLE',
+  },
+  {
+    id_hardware: 11,
+    numero_serie: 'SN-1100234988',
+    marca_modelo: 'Kingston Fury 16GB',
+    tipo_componente: 'MEMORIA_RAM',
+    estado: 'DISPONIBLE',
+  },
+];
+
 export const ApiHardwareTag = () => ApiTags('Hardware');
 
 export const ApiFindAllHardwareSwagger = () =>
@@ -154,10 +172,51 @@ export const ApiGetHardwareOptionsSwagger = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Obtener opciones reducidas de hardware para selectores',
+      description:
+        'Retorna un arreglo plano (sin paginación) con `id_hardware`, `numero_serie`, `marca_modelo`, `tipo_componente` y `estado` (claves del enum), ordenado por marca/modelo. Filtros opcionales: `estado` (ej. DISPONIBLE para elegir hardware a instalar), `tipo_componente` e `id_equipo_actual` (hardware instalado en un equipo). `estado` y `tipo_componente` aceptan la clave o la etiqueta, sin distinguir mayúsculas.',
     }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Opciones de hardware obtenidas exitosamente.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.OK },
+          message: {
+            type: 'string',
+            example: 'Opciones de hardware obtenidas exitosamente',
+          },
+          data: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id_hardware: { type: 'number', example: 8 },
+                numero_serie: { type: 'string', example: 'SN-5521800417' },
+                marca_modelo: {
+                  type: 'string',
+                  example: 'Samsung 980 Pro 1TB',
+                },
+                tipo_componente: {
+                  type: 'string',
+                  example: 'ALMACENAMIENTO_SSD',
+                },
+                estado: { type: 'string', example: 'DISPONIBLE' },
+              },
+            },
+          },
+        },
+        example: {
+          status: HttpStatus.OK,
+          message: 'Opciones de hardware obtenidas exitosamente',
+          data: HARDWARE_OPCIONES_EJEMPLO,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Filtros inválidos (estado o tipo de componente inexistente, o id_equipo_actual no numérico o menor a 1).',
     }),
   );
 

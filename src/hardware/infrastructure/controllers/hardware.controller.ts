@@ -11,7 +11,7 @@ import {
 import { CreateHardwareUseCase } from '@/hardware/application/use-cases/create-hardware.usecase';
 import { FindAllHardwareUseCase } from '@/hardware/application/use-cases/find-all-hardware.usecase';
 import { FindByIdHardwareUseCase } from '@/hardware/application/use-cases/find-by-id-hardware.usecase';
-import { GetHardwareUseCase } from '@/hardware/application/use-cases/get-hardware.usecase';
+import { GetHardwareOptionsUseCase } from '@/hardware/application/use-cases/get-hardware-options.usecase';
 import { ToggleHardwareStatusUseCase } from '@/hardware/application/use-cases/toggle-hardware-status.usecase';
 import { UpdateHardwareUseCase } from '@/hardware/application/use-cases/update-hardware.usecase';
 import {
@@ -26,6 +26,7 @@ import {
 import { CreateHardwareRequestDto } from '../dtos/create-hardware.request.dto';
 import { UpdateHardwareRequestDto } from '../dtos/update-hardware.request.dto';
 import { FindAllHardwareQueryDto } from '../dtos/find-all-hardware.query.dto';
+import { FindHardwareOptionsQueryDto } from '../dtos/find-hardware-options.query.dto';
 import { HardwareMapper } from '../adapters/persistence/mappers/hardware.mapper';
 
 @ApiHardwareTag()
@@ -34,7 +35,7 @@ export class HardwareController {
   constructor(
     private readonly findAllHardwareUseCase: FindAllHardwareUseCase,
     private readonly findByIdHardwareUseCase: FindByIdHardwareUseCase,
-    private readonly getHardwareUseCase: GetHardwareUseCase,
+    private readonly getHardwareOptionsUseCase: GetHardwareOptionsUseCase,
     private readonly createHardwareUseCase: CreateHardwareUseCase,
     private readonly updateHardwareUseCase: UpdateHardwareUseCase,
     private readonly toggleHardwareStatusUseCase: ToggleHardwareStatusUseCase,
@@ -55,8 +56,8 @@ export class HardwareController {
 
   @Get('options')
   @ApiGetHardwareOptionsSwagger()
-  async getHardwareOptions() {
-    const data = await this.getHardwareUseCase.execute();
+  async getHardwareOptions(@Query() query: FindHardwareOptionsQueryDto) {
+    const data = await this.getHardwareOptionsUseCase.execute(query);
     return {
       message: 'Opciones de hardware obtenidas exitosamente',
       data,

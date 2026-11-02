@@ -4,8 +4,10 @@ import { HardwareRepositoryPort } from '@/hardware/domain/ports/hardware.reposit
 import { Hardware } from '@/hardware/domain/entities/hardware.entity';
 import { HardwareMapper } from './mappers/hardware.mapper';
 import { Prisma } from '@prisma/client';
-import { HardwareOptionDto } from '@/hardware/domain/dtos/get-hardware.dto';
 import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.dto';
+import { GetHardwareOptionsQueryDto } from '@/hardware/application/dtos/get-hardware-options.query.dto';
+import { HardwareOptionResponseDto } from '@/hardware/application/dtos/hardware-option-response.dto';
+import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
 import {
   TIPO_COMPONENTE_LABEL,
   TipoComponente,
@@ -113,21 +115,36 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
     return HardwareMapper.toDomain(entity);
   }
 
-  async getHardwareOptions(): Promise<HardwareOptionDto[]> {
+  // Listado plano (sin paginación) para selectores y autocompletados:
+  // solo las columnas necesarias y filtros opcionales por estado, tipo de
+  // componente y equipo donde está instalado.
+  async findOptions(
+    filters: GetHardwareOptionsQueryDto,
+  ): Promise<HardwareOptionResponseDto[]> {
+    const { estado, tipo_componente, id_equipo_actual } = filters;
+
     const entities = await this.prisma.hardware.findMany({
-      where: { estado: 'DISPONIBLE' },
+      where: {
+        ...(estado && { estado }),
+        ...(tipo_componente && { tipo_componente }),
+        ...(id_equipo_actual !== undefined && { id_equipo_actual }),
+      },
       select: {
         id_hardware: true,
-        tipo_componente: true,
-        marca_modelo: true,
         numero_serie: true,
+        marca_modelo: true,
+        tipo_componente: true,
+        estado: true,
       },
+      orderBy: [{ marca_modelo: 'asc' }, { numero_serie: 'asc' }],
     });
 
     return entities.map((entity) => ({
-      id: entity.id_hardware,
-      nombre:
-        `${TIPO_COMPONENTE_LABEL[TipoComponente[entity.tipo_componente]]} ${entity.marca_modelo ?? ''} (${entity.numero_serie})`.trim(),
+      id_hardware: entity.id_hardware,
+      numero_serie: entity.numero_serie,
+      marca_modelo: entity.marca_modelo,
+      tipo_componente: TipoComponente[entity.tipo_componente],
+      estado: EstadoHardware[entity.estado],
     }));
   }
 
