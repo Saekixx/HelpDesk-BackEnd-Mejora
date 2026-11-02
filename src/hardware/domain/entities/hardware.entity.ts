@@ -16,6 +16,23 @@ export interface HardwareEquipoActual {
   area: HardwareRelacion | null;
 }
 
+// Movimiento de la hoja de vida del componente (tabla registro_hardware):
+// cada vez que se instala o retira de un equipo.
+export interface HardwareMovimiento {
+  id_RH: number;
+  fecha_instalacion: Date;
+  fecha_retiro: Date | null;
+  motivo_retiro: string | null;
+  // true en el movimiento vigente (el componente sigue instalado en ese equipo).
+  is_actual: boolean;
+  equipo: { id_equipo: number; nombre_equipo: string | null };
+  tecnico_responsable: {
+    id_usuario: number;
+    nombre: string;
+    apellido: string;
+  } | null;
+}
+
 export interface HardwareProps {
   id_hardware?: number;
   tipo_componente: TipoComponente;
@@ -30,6 +47,8 @@ export interface HardwareProps {
   id_equipo_actual?: number | null;
   // undefined = la relación no fue cargada; null = sin equipo asignado.
   equipo_actual?: HardwareEquipoActual | null;
+  // undefined = el historial no fue cargado.
+  historial?: HardwareMovimiento[];
   created_at?: Date;
   updated_at?: Date;
 }
@@ -46,6 +65,7 @@ export class Hardware {
   public readonly estado: EstadoHardware;
   public readonly id_equipo_actual: number | null;
   public readonly equipo_actual?: HardwareEquipoActual | null;
+  public readonly historial?: HardwareMovimiento[];
   public readonly created_at: Date;
   public readonly updated_at: Date;
 
@@ -62,6 +82,7 @@ export class Hardware {
     this.estado = props.estado ?? EstadoHardware.DISPONIBLE;
     this.id_equipo_actual = props.id_equipo_actual ?? null;
     this.equipo_actual = props.equipo_actual;
+    this.historial = props.historial;
     this.created_at = props.created_at ?? new Date();
     this.updated_at = props.updated_at ?? new Date();
   }
