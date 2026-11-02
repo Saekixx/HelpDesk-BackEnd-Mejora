@@ -196,22 +196,24 @@ model equipos {
 }
 
 model hardware {
-  id_hardware      Int                @id @default(autoincrement())
-  tipo_componente  String             @db.VarChar(100)
-  marca_modelo     String             @db.VarChar(150)
-  numero_serie     String             @db.VarChar(100)
-  proveedor        String?            @db.VarChar(150)
-  fecha_compra     DateTime?          @db.Date
-  url_factura      String?            @db.VarChar(255)
-  estado           hardware_estado?   @default(En_Stock)
-  id_equipo_actual Int?              
-  created_at       DateTime?          @default(now()) @db.DateTime(0)
-  updated_at       DateTime?          @default(now()) @db.DateTime(0)
+  id_hardware       Int                @id @default(autoincrement())
+  tipo_componente   TipoComponente
+  marca_modelo      String             @db.VarChar(150)
+  numero_serie      String             @db.VarChar(100)
+  proveedor         String?            @db.VarChar(150)
+  fecha_compra      DateTime?          @db.Date
+  costo_unitario    Decimal?           @default(0.00) @db.Decimal(10, 2)
+  url_factura       String?            @db.VarChar(255)
+  estado            EstadoHardware     @default(DISPONIBLE)
+  id_equipo_actual  Int?              
+  created_at        DateTime?          @default(now()) @db.DateTime(0)
+  updated_at        DateTime?          @default(now()) @db.DateTime(0)
   
   equipo_actual    equipos?           @relation("hardware_equipo_actual", fields: [id_equipo_actual], references: [id_equipo], onDelete: SetNull, onUpdate: Restrict, map: "fk_hw_equipo_actual")
   registro_hardware registro_hardware[]
 
   @@index([id_equipo_actual], map: "fk_hw_equipo_actual")
+  @@index([estado], map: "idx_hw_estado")
 }
 
 model registro_hardware {
@@ -400,11 +402,21 @@ enum equipos_estado {
   Retirado         @map("Retirado")
 }
 
-enum hardware_estado {
-  Instalado
-  En_Stock         @map("En Stock")
-  En_Mantenimiento @map("En Mantenimiento")
-  De_Baja          @map("De Baja")
+enum EstadoHardware {
+  INSTALADO        @map("Instalado")
+  DISPONIBLE       @map("Disponible")
+  EN_MANTENIMIENTO @map("En Mantenimiento")
+  BAJA             @map("Baja / Descarte")
+}
+
+enum TipoComponente {
+  MEMORIA_RAM        @map("Memoria RAM")
+  ALMACENAMIENTO_SSD @map("Almacenamiento SSD/NVMe")
+  ALMACENAMIENTO_HDD @map("Almacenamiento HDD")
+  FUENTE_PODER       @map("Fuente de Poder (PSU)")
+  PROCESADOR         @map("Procesador (CPU)")
+  TARJETA_GRAFICA    @map("Tarjeta Gráfica (GPU)")
+  PLACA_BASE         @map("Placa Base")
 }
 
 enum tipo_licencia_enum {
