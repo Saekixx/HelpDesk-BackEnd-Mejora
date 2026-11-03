@@ -1,6 +1,7 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
+  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiParam,
@@ -16,6 +17,8 @@ import {
 } from '../dtos/hardware-response.dto';
 import { HardwareDetailResponseDto } from '../dtos/hardware-detail-response.dto';
 import { HardwareUpdateResponseDto } from '../dtos/hardware-update-response.dto';
+import { TransitionHardwareRequestDto } from '../dtos/transition-hardware.request.dto';
+import { HardwareTransitionResponseDto } from '../dtos/hardware-transition-response.dto';
 
 // Ubicación de ejemplo (cliente > sucursal > área) del equipo donde está instalado.
 const EQUIPO_ACTUAL_EJEMPLO = {
@@ -580,20 +583,152 @@ export const ApiUpdateHardwareSwagger = () =>
     }),
   );
 
-export const ApiToggleHardwareStatusSwagger = () =>
+// Bodies de ejemplo de PATCH /hardware/:id/transition (uno por estado destino).
+const TRANSICION_INSTALAR_EJEMPLO = {
+  estado: 'INSTALADO',
+  id_equipo: 12,
+  motivo: 'Instalación en PC-Contabilidad-01 por ampliación de memoria',
+};
+const TRANSICION_DISPONIBLE_EJEMPLO = {
+  estado: 'DISPONIBLE',
+  motivo: 'Retirado del equipo tras la migración a un nuevo modelo',
+};
+const TRANSICION_MANTENIMIENTO_EJEMPLO = {
+  estado: 'EN_MANTENIMIENTO',
+  motivo: 'Falla detectada en pruebas de memoria; se envía a revisión',
+};
+const TRANSICION_BAJA_EJEMPLO = {
+  estado: 'BAJA',
+  motivo: 'Componente irreparable; se descarta del inventario',
+};
+
+// Hardware tras instalarse: `equipo_actual` con su ubicación.
+const TRANSICION_RESPUESTA_EJEMPLO = {
+  id_hardware: 7,
+  numero_serie: 'SN-9876543210',
+  marca_modelo: 'Kingston Fury 16GB',
+  estado: 'INSTALADO',
+  estado_label: 'Instalado',
+  equipo_actual: EQUIPO_ACTUAL_EJEMPLO,
+  updated_at: '2026-10-30T15:45:00.000Z',
+};
+
+export const ApiTransitionHardwareSwagger = () =>
   applyDecorators(
+    ApiBearerAuth('access-token'),
+    ApiExtraModels(HardwareTransitionResponseDto),
     ApiOperation({
-      summary: 'Alternar estado del hardware (Instalado/Disponible)',
+      summary: 'Cambiar el estado de un hardware (con trazabilidad)',
       description:
-        'Si el hardware está INSTALADO pasa a DISPONIBLE; en cualquier otro estado pasa a INSTALADO. `is_active` siempre es true solo cuando el estado es INSTALADO.',
+        'Cambia el estado del hardware y deja registro en su hoja de vida (`registro_hardware`) con el motivo y el técnico autenticado como responsable. `estado` acepta la clave (`EN_MANTENIMIENTO`) o la etiqueta (`En Mantenimiento`). Con `INSTALADO` el `id_equipo` es obligatorio y el componente queda asignado a ese equipo; con `DISPONIBLE`, `EN_MANTENIMIENTO` o `BAJA` se cierra la instalación vigente y `equipo_actual` pasa a null. `BAJA` es definitivo. Roles: ADMINISTRADOR, SOPORTE_INSITU y SOPORTE_TECNICO.',
     }),
-    ApiParam({ name: 'id', type: Number, description: 'ID del hardware' }),
+    ApiParam({
+      name: 'id',
+      type: Number,
+      description: 'ID del hardware cuyo estado se cambia',
+    }),
+    ApiBody({
+      type: TransitionHardwareRequestDto,
+      examples: {
+        instalar: {
+          summary: 'Instalar en un equipo (requiere id_equipo)',
+          value: TRANSICION_INSTALAR_EJEMPLO,
+        },
+        disponible: {
+          summary: 'Retirar y dejar disponible',
+          value: TRANSICION_DISPONIBLE_EJEMPLO,
+        },
+        mantenimiento: {
+          summary: 'Enviar a mantenimiento',
+          value: TRANSICION_MANTENIMIENTO_EJEMPLO,
+        },
+        baja: {
+          summary: 'Dar de baja / descarte (definitivo)',
+          value: TRANSICION_BAJA_EJEMPLO,
+        },
+      },
+    }),
     ApiResponse({
       status: HttpStatus.OK,
-      description: 'Estado actualizado correctamente.',
+      description: 'Estado del hardware actualizado exitosamente.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.OK },
+          message: {
+            type: 'string',
+            example: 'Estado del hardware actualizado exitosamente',
+          },
+          data: { $ref: getSchemaPath(HardwareTransitionResponseDto) },
+        },
+        example: {
+          status: HttpStatus.OK,
+          message: 'Estado del hardware actualizado exitosamente',
+          data: TRANSICION_RESPUESTA_EJEMPLO,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos inválidos: ID no numérico, estado inexistente, motivo vacío o de más de 500 caracteres, o falta id_equipo al instalar.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.BAD_REQUEST },
+          message: { type: 'string' },
+          data: { type: 'object', nullable: true, example: null },
+        },
+        example: {
+          status: HttpStatus.BAD_REQUEST,
+          message: 'El equipo es obligatorio al instalar el hardware',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description:
+        'El rol del usuario no puede cambiar el estado del hardware.',
     }),
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
-      description: 'Hardware no encontrado.',
+      description: 'Hardware o equipo destino no encontrado.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.NOT_FOUND },
+          message: { type: 'string' },
+          data: { type: 'object', nullable: true, example: null },
+        },
+        example: {
+          status: HttpStatus.NOT_FOUND,
+          message: 'El hardware con ID 999 no existe',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'Transición no permitida desde el estado actual, el hardware ya está en ese estado (y equipo), o fue modificado por otra operación mientras se aplicaba.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.CONFLICT },
+          message: { type: 'string' },
+          data: { type: 'object', nullable: true, example: null },
+        },
+        example: {
+          status: HttpStatus.CONFLICT,
+          message:
+            "No se puede cambiar un hardware de 'Disponible' a 'En Mantenimiento'",
+          data: null,
+        },
+      },
     }),
   );

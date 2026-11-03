@@ -159,7 +159,7 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
             is_actual: true,
             fecha_instalacion: ahora,
             motivo_retiro: motivo,
-            id_tecnico_resp: id_tecnico_resp ?? null,
+            id_tecnico_resp: id_tecnico_resp ? Number(id_tecnico_resp) : null,
           },
         });
       }

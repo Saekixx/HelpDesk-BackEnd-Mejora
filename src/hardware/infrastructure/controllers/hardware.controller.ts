@@ -7,13 +7,19 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateHardwareUseCase } from '@/hardware/application/use-cases/create-hardware.usecase';
 import { FindAllHardwareUseCase } from '@/hardware/application/use-cases/find-all-hardware.usecase';
 import { FindByIdHardwareUseCase } from '@/hardware/application/use-cases/find-by-id-hardware.usecase';
 import { GetHardwareOptionsUseCase } from '@/hardware/application/use-cases/get-hardware-options.usecase';
-import { ToggleHardwareStatusUseCase } from '@/hardware/application/use-cases/toggle-hardware-status.usecase';
+import { TransitionHardwareUseCase } from '@/hardware/application/use-cases/transition-hardware.usecase';
 import { UpdateHardwareUseCase } from '@/hardware/application/use-cases/update-hardware.usecase';
+import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
+import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
+import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
+import { CurrentUser } from '@/auth/infrastructure/decorators/current-user.decorator';
+import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import {
   ApiHardwareTag,
   ApiFindAllHardwareSwagger,
@@ -21,10 +27,11 @@ import {
   ApiFindByIdHardwareSwagger,
   ApiCreateHardwareSwagger,
   ApiUpdateHardwareSwagger,
-  ApiToggleHardwareStatusSwagger,
+  ApiTransitionHardwareSwagger,
 } from '../docs/hardware.swagger';
 import { CreateHardwareRequestDto } from '../dtos/create-hardware.request.dto';
 import { UpdateHardwareRequestDto } from '../dtos/update-hardware.request.dto';
+import { TransitionHardwareRequestDto } from '../dtos/transition-hardware.request.dto';
 import { FindAllHardwareQueryDto } from '../dtos/find-all-hardware.query.dto';
 import { FindHardwareOptionsQueryDto } from '../dtos/find-hardware-options.query.dto';
 import { HardwareMapper } from '../adapters/persistence/mappers/hardware.mapper';
@@ -38,7 +45,7 @@ export class HardwareController {
     private readonly getHardwareOptionsUseCase: GetHardwareOptionsUseCase,
     private readonly createHardwareUseCase: CreateHardwareUseCase,
     private readonly updateHardwareUseCase: UpdateHardwareUseCase,
-    private readonly toggleHardwareStatusUseCase: ToggleHardwareStatusUseCase,
+    private readonly transitionHardwareUseCase: TransitionHardwareUseCase,
   ) {}
 
   @Get()
@@ -97,10 +104,28 @@ export class HardwareController {
     };
   }
 
-  @Patch(':id/toggle-status')
-  @ApiToggleHardwareStatusSwagger()
-  async toggleStatus(@Param('id', ParseIntPipe) id: number) {
-    const message = await this.toggleHardwareStatusUseCase.execute(id);
-    return { message, data: null };
+  // Requiere autenticación: el usuario del token queda como técnico
+  // responsable en la hoja de vida del componente.
+  @Patch(':id/transition')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
+  @ApiTransitionHardwareSwagger()
+  async transition(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: TransitionHardwareRequestDto,
+    @CurrentUser('userId') userId: number,
+  ) {
+    // El JWT firma `sub` como string (login/register), así que `userId` llega
+    // como texto en tiempo de ejecución aunque el tipo diga number.
+    const tecnicoId = userId ? Number(userId) : undefined;
+    const hardware = await this.transitionHardwareUseCase.execute(
+      id,
+      dto,
+      tecnicoId,
+    );
+    return {
+      message: 'Estado del hardware actualizado exitosamente',
+      data: HardwareMapper.toTransitionResponse(hardware),
+    };
   }
 }
