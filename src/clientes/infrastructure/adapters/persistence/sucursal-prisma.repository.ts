@@ -24,7 +24,10 @@ import {
 import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { GetSucursalesFilterDto } from '@/clientes/domain/dto/get-sucursales-filter.dto';
 import { CreateSucursalDto } from '@/clientes/domain/dto/create-sucursal.dto';
-import { UpdateSucursalDto } from '@/clientes/domain/dto/update-sucursal.dto';
+import {
+  UpdateSucursalDto,
+  UpdateSucursalEncargadoCommand,
+} from '@/clientes/domain/dto/update-sucursal.dto';
 import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
 import { SucursalNotFoundException } from '@/clientes/domain/exceptions/sucursal.exceptions';
 import { SucursalMapper } from './mappers/sucursal.mapper';
@@ -273,8 +276,12 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
   // Actualiza la sucursal y, si llega `encargado`, también la cuenta del usuario
   // vinculado. Todo ocurre en una única transacción: si falla un paso (p. ej.
   // correo duplicado) no se persiste ninguno de los dos.
+  // `data.encargado` admite dos formas: un string con el nombre completo (se
+  // separa en nombre y apellido) o el objeto con los campos a modificar. En
+  // ambos casos se trabaja con el mismo comando normalizado, de modo que la
+  // sucursal y el usuario vinculado nunca queden desfasados.
   async update(id: number, data: UpdateSucursalDto): Promise<Sucursal> {
-    const { encargado } = data;
+    const encargado = this.toEncargadoCommand(data.encargado);
     const correoEncargado = encargado?.correo_corporativo?.trim().toLowerCase();
 
     try {
@@ -317,7 +324,10 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
         // los datos del encargado (igual que en el alta). El texto `encargado`
         // se recompone con el nombre y apellido nuevos, completando el que no
         // llegue con el del usuario vinculado.
-        const nombreCompleto = this.buildNombreEncargado(encargado, usuario);
+        const nombreCompleto = this.buildNombreEncargado(
+          data.encargado,
+          usuario,
+        );
         const updated = await tx.sucursales.update({
           where: { id_sucursal: id },
           data: {
@@ -367,20 +377,58 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
     }
   }
 
-  // Texto de la columna `sucursales.encargado` (nombre y apellido). Solo se
-  // recalcula si llega nombre o apellido; el dato que falte se toma del usuario
-  // vinculado y, si no hay usuario, solo se recalcula cuando llegan ambos.
+  // Normaliza el encargado recibido a un único comando de actualización:
+  // - string: se limpia y se separa en nombre y apellido.
+  // - objeto: se usa tal cual (solo se modifican los campos enviados).
+  // - undefined: no hay cambios en el encargado.
+  private toEncargadoCommand(
+    encargado: UpdateSucursalDto['encargado'],
+  ): UpdateSucursalEncargadoCommand | undefined {
+    if (typeof encargado !== 'string') return encargado ?? undefined;
+
+    const { nombre, apellido } = this.parseNombreCompleto(encargado);
+    if (!nombre) {
+      throw new BadRequestException(
+        'El nombre del encargado no puede estar vacío',
+      );
+    }
+    return { nombre, apellido };
+  }
+
+  // Limpia espacios sobrantes (extremos y repetidos) y separa el texto: el primer
+  // bloque es el nombre y el resto el apellido. Si solo hay una palabra, el
+  // apellido queda vacío (`usuarios.apellido` es NOT NULL, por lo que no puede
+  // ser undefined).
+  private parseNombreCompleto(texto: string): {
+    nombre: string;
+    apellido: string;
+    nombreCompleto: string;
+  } {
+    const nombreCompleto = texto.trim().replace(/\s+/g, ' ');
+    const [nombre = '', ...resto] = nombreCompleto.split(' ');
+    return { nombre, apellido: resto.join(' '), nombreCompleto };
+  }
+
+  // Texto de la columna `sucursales.encargado` (nombre y apellido):
+  // - string: es el propio nombre completo ya limpio.
+  // - objeto: solo se recalcula si llega nombre o apellido; el dato que falte se
+  //   toma del usuario vinculado y, si no hay usuario, solo se recalcula cuando
+  //   llegan ambos.
   private buildNombreEncargado(
     encargado: UpdateSucursalDto['encargado'],
     usuario: { nombre: string; apellido: string } | null,
   ): string | undefined {
-    if (encargado?.nombre === undefined && encargado?.apellido === undefined) {
+    if (typeof encargado === 'string') {
+      return this.parseNombreCompleto(encargado).nombreCompleto;
+    }
+    if (!encargado) return undefined;
+    if (encargado.nombre === undefined && encargado.apellido === undefined) {
       return undefined;
     }
     const nombre = encargado.nombre ?? usuario?.nombre;
     const apellido = encargado.apellido ?? usuario?.apellido;
     return nombre !== undefined && apellido !== undefined
-      ? `${nombre} ${apellido}`
+      ? `${nombre} ${apellido}`.trim()
       : undefined;
   }
 
@@ -388,8 +436,15 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
   // - P2002 (unique): otro registro tomó el mismo correo entre la validación y
   //   la escritura; la restricción única de la BD detiene la segunda.
   // - P2003 (foreign key): la zona o el cliente indicados no existen.
+  // - P2000 (valor demasiado largo): nombre o apellido superan los 50
+  //   caracteres de `usuarios`, o el encargado los 255 de `sucursales`.
   private translateUpdateError(error: unknown): unknown {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2000') {
+        return new BadRequestException(
+          'El nombre o apellido del encargado supera la longitud permitida',
+        );
+      }
       if (error.code === 'P2002') {
         return new ConflictException(
           'Ya existe un usuario registrado con ese correo',

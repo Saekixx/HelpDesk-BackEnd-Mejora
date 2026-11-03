@@ -399,12 +399,12 @@ export function ApiUpdateSucursalSwagger() {
     ApiOperation({
       summary: 'Actualizar una sucursal existente',
       description:
-        'Actualiza parcialmente una sucursal: solo se modifican los campos enviados. Si se envía `encargado`, se sincronizan en una sola transacción las columnas de contacto de la sucursal (`encargado`, `telefono`, `correo`) y la cuenta del usuario encargado vinculado (`nombre`, `apellido`, `telefono`, `correo`). El correo corporativo se normaliza (sin espacios y en minúsculas) y debe ser único entre los usuarios. Enviar `id_zona: null` desasigna la zona. Si falla cualquier paso no se guarda nada. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
+        'Actualiza parcialmente una sucursal: solo se modifican los campos enviados. El campo `encargado` acepta un string con el nombre completo (p. ej. `"Carlos Vargas"`: la primera palabra es el nombre y el resto el apellido) o un objeto con `nombre`, `apellido`, `telefono_contacto` y `correo_corporativo`. En ambos casos se sincronizan en una sola transacción la columna `encargado` de la sucursal y la cuenta del usuario encargado vinculado (`nombre` y `apellido`); con el objeto también se actualizan `telefono` y `correo` de ambos. El correo corporativo se normaliza (sin espacios y en minúsculas) y debe ser único entre los usuarios. Enviar `id_zona: null` desasigna la zona. Si falla cualquier paso no se guarda nada. Solo puede ejecutarlo un usuario con rol `ADMINISTRADOR`.',
     }),
     ApiBody({
       type: UpdateSucursalHttpDto,
       description:
-        'Campos de la sucursal a actualizar. Todos son opcionales; el encargado se envía anidado en `encargado`.',
+        'Campos de la sucursal a actualizar. Todos son opcionales; `encargado` se envía como objeto anidado o como string con el nombre completo.',
       examples: {
         completo: {
           summary: 'Sucursal y encargado',
@@ -418,6 +418,10 @@ export function ApiUpdateSucursalSwagger() {
               correo_corporativo: 'maria.gomez@acme.com',
             },
           },
+        },
+        encargadoTextoPlano: {
+          summary: 'Encargado como texto plano (nombre completo)',
+          value: { encargado: 'Carlos Vargas' },
         },
         desasignarZona: {
           summary: 'Desasignar la zona',
