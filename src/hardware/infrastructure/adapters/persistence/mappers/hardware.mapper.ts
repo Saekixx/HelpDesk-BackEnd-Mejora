@@ -20,6 +20,7 @@ import {
   HardwareDetailEquipoActualResponseDto,
   HardwareDetailResponseDto,
 } from '@/hardware/infrastructure/dtos/hardware-detail-response.dto';
+import { HardwareUpdateResponseDto } from '@/hardware/infrastructure/dtos/hardware-update-response.dto';
 
 // Hardware tal como lo devuelve Prisma cuando se incluye `equipo_actual` y,
 // en el detalle, el historial de movimientos (`registro_hardware`).
@@ -128,6 +129,25 @@ export class HardwareMapper {
         : null,
       historial: domain.historial ?? [],
       created_at: domain.created_at,
+      updated_at: domain.updated_at,
+    };
+  }
+
+  // Entidad de dominio -> JSON de respuesta tras actualizar la ficha técnica
+  // (PATCH /hardware/:id): datos editables, estado y fecha de actualización.
+  static toUpdateResponse(domain: Hardware): HardwareUpdateResponseDto {
+    return {
+      id_hardware: domain.id_hardware as number,
+      numero_serie: domain.numero_serie,
+      marca_modelo: domain.marca_modelo,
+      proveedor: domain.proveedor ?? null,
+      fecha_compra: domain.fecha_compra ?? null,
+      costo_unitario: domain.costo_unitario,
+      url_factura: domain.url_factura ?? null,
+      tipo_componente: domain.tipo_componente,
+      tipo_componente_label: TIPO_COMPONENTE_LABEL[domain.tipo_componente],
+      estado: domain.estado,
+      estado_label: ESTADO_HARDWARE_LABEL[domain.estado],
       updated_at: domain.updated_at,
     };
   }
