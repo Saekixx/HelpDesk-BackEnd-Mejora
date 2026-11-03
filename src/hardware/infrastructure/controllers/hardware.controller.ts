@@ -90,10 +90,10 @@ export class HardwareController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateHardwareRequestDto,
   ) {
-    await this.updateHardwareUseCase.execute(id, dto);
+    const hardware = await this.updateHardwareUseCase.execute(id, dto);
     return {
       message: 'Hardware actualizado exitosamente',
-      data: null,
+      data: HardwareMapper.toUpdateResponse(hardware),
     };
   }
 

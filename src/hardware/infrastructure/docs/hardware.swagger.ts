@@ -15,6 +15,7 @@ import {
   PaginatedHardwareResponseDto,
 } from '../dtos/hardware-response.dto';
 import { HardwareDetailResponseDto } from '../dtos/hardware-detail-response.dto';
+import { HardwareUpdateResponseDto } from '../dtos/hardware-update-response.dto';
 
 // Ubicación de ejemplo (cliente > sucursal > área) del equipo donde está instalado.
 const EQUIPO_ACTUAL_EJEMPLO = {
@@ -464,26 +465,118 @@ export const ApiCreateHardwareSwagger = () =>
     }),
   );
 
+// Cuerpos de ejemplo de PATCH /hardware/:id (todos los campos son opcionales).
+const ACTUALIZAR_HARDWARE_PARCIAL_EJEMPLO = {
+  marca_modelo: 'Kingston Fury Beast 32GB DDR5 6000MHz CL36',
+  costo_unitario: 350.5,
+};
+
+const ACTUALIZAR_HARDWARE_COMPLETO_EJEMPLO = {
+  tipo_componente: 'Memoria RAM',
+  numero_serie: 'SN-9876543210',
+  marca_modelo: 'Kingston Fury Beast 32GB DDR5 6000MHz CL36',
+  proveedor: 'TechSupply Peru S.A.C.',
+  fecha_compra: '2026-01-15',
+  costo_unitario: 350.5,
+  url_factura: 'facturas/fac-001.pdf',
+};
+
+// Hardware tras actualizar su ficha técnica: el estado no cambia con el PATCH.
+const HARDWARE_ACTUALIZADO_EJEMPLO = {
+  id_hardware: 7,
+  numero_serie: 'SN-9876543210',
+  marca_modelo: 'Kingston Fury Beast 32GB DDR5 6000MHz CL36',
+  proveedor: 'TechSupply Peru S.A.C.',
+  fecha_compra: '2026-01-15T00:00:00.000Z',
+  costo_unitario: 350.5,
+  url_factura: 'facturas/fac-001.pdf',
+  tipo_componente: 'MEMORIA_RAM',
+  tipo_componente_label: 'Memoria RAM',
+  estado: 'INSTALADO',
+  estado_label: 'Instalado',
+  updated_at: '2026-10-30T15:45:00.000Z',
+};
+
 export const ApiUpdateHardwareSwagger = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Actualizar un hardware existente' }),
+    ApiExtraModels(HardwareUpdateResponseDto),
+    ApiOperation({
+      summary: 'Actualizar la ficha técnica de un hardware',
+      description:
+        'Actualización parcial: solo se modifican los campos enviados (`tipo_componente`, `numero_serie`, `marca_modelo`, `proveedor`, `fecha_compra`, `costo_unitario`, `url_factura`); los omitidos conservan su valor. `tipo_componente` acepta la clave del enum (`MEMORIA_RAM`) o la etiqueta (`Memoria RAM`). El estado y el equipo asignado no se editan aquí: enviar cualquier otra propiedad devuelve 400. Un body vacío no modifica nada. Devuelve el hardware actualizado.',
+    }),
     ApiParam({
       name: 'id',
       type: Number,
       description: 'ID del hardware a actualizar',
     }),
-    ApiBody({ type: UpdateHardwareRequestDto }),
+    ApiBody({
+      type: UpdateHardwareRequestDto,
+      examples: {
+        actualizacionParcial: {
+          summary: 'Actualización parcial (solo algunos campos)',
+          value: ACTUALIZAR_HARDWARE_PARCIAL_EJEMPLO,
+        },
+        todosLosCampos: {
+          summary: 'Todos los campos editables',
+          value: ACTUALIZAR_HARDWARE_COMPLETO_EJEMPLO,
+        },
+      },
+    }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Hardware actualizado exitosamente.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.OK },
+          message: {
+            type: 'string',
+            example: 'Hardware actualizado exitosamente',
+          },
+          data: { $ref: getSchemaPath(HardwareUpdateResponseDto) },
+        },
+        example: {
+          status: HttpStatus.OK,
+          message: 'Hardware actualizado exitosamente',
+          data: HARDWARE_ACTUALIZADO_EJEMPLO,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos inválidos: ID no numérico, tipo de componente inexistente, campos de texto vacíos o que superan su longitud máxima, fecha no ISO 8601, costo negativo o con más de 2 decimales, o propiedades no permitidas (como `estado`).',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.BAD_REQUEST },
+          message: { type: 'string' },
+          data: { type: 'object', nullable: true, example: null },
+        },
+        example: {
+          status: HttpStatus.BAD_REQUEST,
+          message: 'El costo unitario no puede ser negativo',
+          data: null,
+        },
+      },
     }),
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'Hardware no encontrado.',
-    }),
-    ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.NOT_FOUND },
+          message: { type: 'string' },
+          data: { type: 'object', nullable: true, example: null },
+        },
+        example: {
+          status: HttpStatus.NOT_FOUND,
+          message: 'El hardware con ID 999 no existe',
+          data: null,
+        },
+      },
     }),
   );
 

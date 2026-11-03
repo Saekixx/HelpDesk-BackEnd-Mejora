@@ -8,6 +8,7 @@ import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.d
 import { GetHardwareOptionsQueryDto } from '@/hardware/application/dtos/get-hardware-options.query.dto';
 import { HardwareOptionResponseDto } from '@/hardware/application/dtos/hardware-option-response.dto';
 import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
+import { HardwareNotFoundException } from '@/hardware/domain/exceptions/hardware.exceptions';
 import {
   TIPO_COMPONENTE_LABEL,
   TipoComponente,
@@ -81,12 +82,25 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
   }
 
   async update(hardware: Hardware): Promise<Hardware> {
-    const updated = await this.prisma.hardware.update({
-      // Solo se actualiza hardware ya persistido: `id_hardware` está definido.
-      where: { id_hardware: hardware.id_hardware as number },
-      data: HardwareMapper.toPersistence(hardware),
-    });
-    return HardwareMapper.toDomain(updated);
+    // Solo se actualiza hardware ya persistido: `id_hardware` está definido.
+    const id_hardware = hardware.id_hardware as number;
+
+    try {
+      const updated = await this.prisma.hardware.update({
+        where: { id_hardware },
+        data: HardwareMapper.toPersistence(hardware),
+      });
+      return HardwareMapper.toDomain(updated);
+    } catch (error) {
+      // P2025: el registro dejó de existir entre la lectura y la escritura.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new HardwareNotFoundException(id_hardware);
+      }
+      throw error;
+    }
   }
 
   async existeEquipo(id_equipo: number): Promise<boolean> {

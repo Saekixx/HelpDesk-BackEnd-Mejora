@@ -1,9 +1,10 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { Hardware } from '@/hardware/domain/entities/hardware.entity';
+import { HardwareNotFoundException } from '@/hardware/domain/exceptions/hardware.exceptions';
 import {
   HARDWARE_REPOSITORY,
   HardwareRepositoryPort,
 } from '@/hardware/domain/ports/hardware.repository.port';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateHardwareDto } from '../dtos/update-hardware.dto';
 
 @Injectable()
@@ -13,34 +14,43 @@ export class UpdateHardwareUseCase {
     private readonly hardwareRepository: HardwareRepositoryPort,
   ) {}
 
-  async execute(id: number, hardwareData: UpdateHardwareDto): Promise<void> {
-    // Validar si el hardware existe usando excepciones HTTP de NestJS
-    const existingHardware = await this.hardwareRepository.findById(id);
-    if (!existingHardware) {
-      throw new NotFoundException(`El hardware con ID ${id} no existe`);
-    }
+  /**
+   * Actualiza parcialmente la ficha técnica de un hardware.
+   * Solo se modifican los campos enviados: los omitidos (o null) conservan su
+   * valor actual. El estado y el equipo asignado nunca cambian aquí.
+   * Lanza HardwareNotFoundException (404) si el hardware no existe.
+   */
+  async execute(id: number, dto: UpdateHardwareDto): Promise<Hardware> {
+    const existing = await this.hardwareRepository.findById(id);
+    if (!existing) throw new HardwareNotFoundException(id);
 
-    // Fusionar valores anteriores con los nuevos para soportar actualización parcial
-    const updatedHardware = new Hardware({
-      id_hardware: existingHardware.id_hardware,
-      tipo_componente:
-        hardwareData.tipo_componente ?? existingHardware.tipo_componente,
-      numero_serie: hardwareData.numero_serie ?? existingHardware.numero_serie,
-      marca_modelo: hardwareData.marca_modelo ?? existingHardware.marca_modelo,
-      proveedor: hardwareData.proveedor ?? existingHardware.proveedor,
-      fecha_compra: hardwareData.fecha_compra
-        ? new Date(hardwareData.fecha_compra)
-        : existingHardware.fecha_compra,
-      costo_unitario:
-        hardwareData.costo_unitario ?? existingHardware.costo_unitario,
-      url_factura: hardwareData.url_factura ?? existingHardware.url_factura,
-      estado: existingHardware.estado,
-      id_equipo_actual: existingHardware.id_equipo_actual,
-      created_at: existingHardware.created_at,
-      updated_at: new Date(), // Actualizar la fecha de actualización
+    // Sin campos que cambiar no se escribe en BD ni se altera `updated_at`.
+    if (!this.hayCambios(dto)) return existing;
+
+    const updated = new Hardware({
+      id_hardware: existing.id_hardware,
+      tipo_componente: dto.tipo_componente ?? existing.tipo_componente,
+      numero_serie: dto.numero_serie ?? existing.numero_serie,
+      marca_modelo: dto.marca_modelo ?? existing.marca_modelo,
+      proveedor: dto.proveedor ?? existing.proveedor,
+      fecha_compra: dto.fecha_compra
+        ? new Date(dto.fecha_compra)
+        : existing.fecha_compra,
+      // `??` y no `||`: un costo de 0 es un valor válido, no "sin valor".
+      costo_unitario: dto.costo_unitario ?? existing.costo_unitario,
+      url_factura: dto.url_factura ?? existing.url_factura,
+      estado: existing.estado,
+      id_equipo_actual: existing.id_equipo_actual,
+      created_at: existing.created_at,
+      updated_at: new Date(),
     });
 
-    // Guardar el hardware actualizado en el repositorio
-    await this.hardwareRepository.update(updatedHardware);
+    return this.hardwareRepository.update(updated);
+  }
+
+  private hayCambios(dto: UpdateHardwareDto): boolean {
+    return Object.values(dto).some(
+      (valor) => valor !== undefined && valor !== null,
+    );
   }
 }
