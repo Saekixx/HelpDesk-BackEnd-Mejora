@@ -13,6 +13,7 @@ import { CreateHardwareUseCase } from '@/hardware/application/use-cases/create-h
 import { FindAllHardwareUseCase } from '@/hardware/application/use-cases/find-all-hardware.usecase';
 import { FindByIdHardwareUseCase } from '@/hardware/application/use-cases/find-by-id-hardware.usecase';
 import { GetHardwareOptionsUseCase } from '@/hardware/application/use-cases/get-hardware-options.usecase';
+import { GetHardwareStatsUseCase } from '@/hardware/application/use-cases/get-hardware-stats.usecase';
 import { TransitionHardwareUseCase } from '@/hardware/application/use-cases/transition-hardware.usecase';
 import { UpdateHardwareUseCase } from '@/hardware/application/use-cases/update-hardware.usecase';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
@@ -24,6 +25,7 @@ import {
   ApiHardwareTag,
   ApiFindAllHardwareSwagger,
   ApiGetHardwareOptionsSwagger,
+  ApiGetHardwareStatsSwagger,
   ApiFindByIdHardwareSwagger,
   ApiCreateHardwareSwagger,
   ApiUpdateHardwareSwagger,
@@ -43,6 +45,7 @@ export class HardwareController {
     private readonly findAllHardwareUseCase: FindAllHardwareUseCase,
     private readonly findByIdHardwareUseCase: FindByIdHardwareUseCase,
     private readonly getHardwareOptionsUseCase: GetHardwareOptionsUseCase,
+    private readonly getHardwareStatsUseCase: GetHardwareStatsUseCase,
     private readonly createHardwareUseCase: CreateHardwareUseCase,
     private readonly updateHardwareUseCase: UpdateHardwareUseCase,
     private readonly transitionHardwareUseCase: TransitionHardwareUseCase,
@@ -68,6 +71,18 @@ export class HardwareController {
     return {
       message: 'Opciones de hardware obtenidas exitosamente',
       data,
+    };
+  }
+
+  // Debe declararse antes de @Get(':id'); de lo contrario "estadisticas" se
+  // interpretaría como un ID y ParseIntPipe respondería 400.
+  @Get('estadisticas')
+  @ApiGetHardwareStatsSwagger()
+  async getEstadisticas() {
+    const estadisticas = await this.getHardwareStatsUseCase.execute();
+    return {
+      message: 'Estadísticas de hardware obtenidas exitosamente',
+      data: HardwareMapper.toStatsResponse(estadisticas),
     };
   }
 

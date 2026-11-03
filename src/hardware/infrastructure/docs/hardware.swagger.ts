@@ -19,6 +19,7 @@ import { HardwareDetailResponseDto } from '../dtos/hardware-detail-response.dto'
 import { HardwareUpdateResponseDto } from '../dtos/hardware-update-response.dto';
 import { TransitionHardwareRequestDto } from '../dtos/transition-hardware.request.dto';
 import { HardwareTransitionResponseDto } from '../dtos/hardware-transition-response.dto';
+import { HardwareStatsResponseDto } from '../dtos/hardware-stats-response.dto';
 
 // Ubicación de ejemplo (cliente > sucursal > área) del equipo donde está instalado.
 const EQUIPO_ACTUAL_EJEMPLO = {
@@ -222,6 +223,45 @@ export const ApiGetHardwareOptionsSwagger = () =>
       status: HttpStatus.BAD_REQUEST,
       description:
         'Filtros inválidos (estado o tipo de componente inexistente, o id_equipo_actual no numérico o menor a 1).',
+    }),
+  );
+
+// Resumen de ejemplo: totalComponentes = asignadosEquipos + enStock + enBaja + enMantenimiento.
+const HARDWARE_ESTADISTICAS_EJEMPLO = {
+  totalComponentes: 120,
+  asignadosEquipos: 80,
+  enStock: 25,
+  enBaja: 5,
+  enMantenimiento: 10,
+};
+
+export const ApiGetHardwareStatsSwagger = () =>
+  applyDecorators(
+    ApiExtraModels(HardwareStatsResponseDto),
+    ApiOperation({
+      summary: 'Obtener estadísticas de hardware por estado',
+      description:
+        'Retorna un objeto plano con la cantidad de componentes por estado: `asignadosEquipos` (INSTALADO), `enStock` (DISPONIBLE), `enMantenimiento` (EN_MANTENIMIENTO) y `enBaja` (BAJA). `totalComponentes` es la suma de los cuatro, por lo que siempre coincide con el desglose. Resume todo el inventario y no acepta filtros. Se calcula con una sola consulta agrupada en base de datos, sin cargar los registros en memoria.',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Estadísticas de hardware obtenidas exitosamente.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.OK },
+          message: {
+            type: 'string',
+            example: 'Estadísticas de hardware obtenidas exitosamente',
+          },
+          data: { $ref: getSchemaPath(HardwareStatsResponseDto) },
+        },
+        example: {
+          status: HttpStatus.OK,
+          message: 'Estadísticas de hardware obtenidas exitosamente',
+          data: HARDWARE_ESTADISTICAS_EJEMPLO,
+        },
+      },
     }),
   );
 
