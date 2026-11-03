@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import {
+  HardwareEstadisticas,
   HardwareRepositoryPort,
   TransitionHardwareParams,
 } from '@/hardware/domain/ports/hardware.repository.port';
@@ -170,6 +171,31 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
       });
       return HardwareMapper.toDomain(actualizado);
     });
+  }
+
+  // Una sola consulta agrupada por estado (usa el índice idx_hw_estado). El
+  // total se calcula sumando los grupos, así siempre coincide con el desglose
+  // aunque se registren componentes mientras se consulta.
+  async getEstadisticas(): Promise<HardwareEstadisticas> {
+    const grupos = await this.prisma.hardware.groupBy({
+      by: ['estado'],
+      _count: { _all: true },
+    });
+    const contar = (estado: EstadoHardware): number =>
+      grupos.find((g) => g.estado === estado)?._count._all ?? 0;
+
+    const instalados = contar(EstadoHardware.INSTALADO);
+    const disponibles = contar(EstadoHardware.DISPONIBLE);
+    const baja = contar(EstadoHardware.BAJA);
+    const mantenimiento = contar(EstadoHardware.EN_MANTENIMIENTO);
+
+    return {
+      total: instalados + disponibles + baja + mantenimiento,
+      instalados,
+      disponibles,
+      baja,
+      mantenimiento,
+    };
   }
 
   async existeEquipo(id_equipo: number): Promise<boolean> {

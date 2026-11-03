@@ -22,6 +22,8 @@ import {
 } from '@/hardware/infrastructure/dtos/hardware-detail-response.dto';
 import { HardwareUpdateResponseDto } from '@/hardware/infrastructure/dtos/hardware-update-response.dto';
 import { HardwareTransitionResponseDto } from '@/hardware/infrastructure/dtos/hardware-transition-response.dto';
+import { HardwareStatsResponseDto } from '@/hardware/infrastructure/dtos/hardware-stats-response.dto';
+import { HardwareEstadisticas } from '@/hardware/domain/ports/hardware.repository.port';
 
 // Hardware tal como lo devuelve Prisma cuando se incluye `equipo_actual` y,
 // en el detalle, el historial de movimientos (`registro_hardware`).
@@ -168,6 +170,19 @@ export class HardwareMapper {
         ? HardwareMapper.toEquipoActualResponse(domain.equipo_actual)
         : null,
       updated_at: domain.updated_at,
+    };
+  }
+
+  // Conteos de dominio -> JSON de respuesta de GET /hardware/estadisticas
+  static toStatsResponse(
+    estadisticas: HardwareEstadisticas,
+  ): HardwareStatsResponseDto {
+    return {
+      totalComponentes: estadisticas.total,
+      asignadosEquipos: estadisticas.instalados,
+      enStock: estadisticas.disponibles,
+      enBaja: estadisticas.baja,
+      enMantenimiento: estadisticas.mantenimiento,
     };
   }
 

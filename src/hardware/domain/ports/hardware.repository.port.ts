@@ -17,6 +17,15 @@ export interface TransitionHardwareParams {
   id_tecnico_resp?: number;
 }
 
+// Cantidad de componentes por estado. `total` es la suma de los cuatro estados.
+export interface HardwareEstadisticas {
+  total: number;
+  instalados: number;
+  disponibles: number;
+  baja: number;
+  mantenimiento: number;
+}
+
 export interface HardwareRepositoryPort {
   /**
    * Registra un hardware nuevo. Si trae `id_equipo_actual` crea, en la misma
@@ -55,4 +64,9 @@ export interface HardwareRepositoryPort {
   findOptions(
     filters: GetHardwareOptionsQueryDto,
   ): Promise<HardwareOptionResponseDto[]>;
+  /**
+   * Conteo de todos los componentes agrupado por estado (instalados,
+   * disponibles, en mantenimiento y de baja) y su total.
+   */
+  getEstadisticas(): Promise<HardwareEstadisticas>;
 }
