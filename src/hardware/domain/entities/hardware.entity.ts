@@ -1,5 +1,11 @@
 import { EstadoHardware } from '../enums/estado-hardware.enum';
 import { TipoComponente } from '../enums/tipo-componente.enum';
+import {
+  EquipoDestinoRequeridoException,
+  HardwareSinCambioDeEstadoException,
+  TransicionHardwareInvalidaException,
+} from '../exceptions/hardware.exceptions';
+import { TRANSICIONES_HARDWARE } from '../rules/transiciones-hardware';
 
 // Referencia resumida a una entidad relacionada (cliente, sucursal, área).
 export interface HardwareRelacion {
@@ -90,5 +96,42 @@ export class Hardware {
   /** true cuando el componente está instalado en un equipo. */
   get is_active(): boolean {
     return this.estado === EstadoHardware.INSTALADO;
+  }
+
+  /**
+   * Aplica una transición de estado y devuelve el hardware resultante; la
+   * entidad actual no se modifica. Solo un hardware INSTALADO tiene equipo
+   * asignado: con cualquier otro estado `id_equipo_actual` queda en null.
+   * Lanza una excepción de dominio si la transición no es válida.
+   */
+  transicionarA(destino: EstadoHardware, id_equipo?: number): Hardware {
+    const instalar = destino === EstadoHardware.INSTALADO;
+    if (instalar && id_equipo === undefined) {
+      throw new EquipoDestinoRequeridoException();
+    }
+    const equipoDestino = instalar ? (id_equipo as number) : null;
+
+    if (destino === this.estado && equipoDestino === this.id_equipo_actual) {
+      throw new HardwareSinCambioDeEstadoException(destino, equipoDestino);
+    }
+    if (!TRANSICIONES_HARDWARE[this.estado].includes(destino)) {
+      throw new TransicionHardwareInvalidaException(this.estado, destino);
+    }
+
+    // La ubicación cargada (`equipo_actual`) y el historial quedan obsoletos.
+    return new Hardware({
+      id_hardware: this.id_hardware,
+      tipo_componente: this.tipo_componente,
+      numero_serie: this.numero_serie,
+      marca_modelo: this.marca_modelo,
+      proveedor: this.proveedor,
+      fecha_compra: this.fecha_compra,
+      costo_unitario: this.costo_unitario,
+      url_factura: this.url_factura,
+      estado: destino,
+      id_equipo_actual: equipoDestino,
+      created_at: this.created_at,
+      updated_at: new Date(),
+    });
   }
 }

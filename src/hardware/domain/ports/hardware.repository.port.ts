@@ -5,6 +5,18 @@ import { HardwareOptionResponseDto } from '../../application/dtos/hardware-optio
 
 export const HARDWARE_REPOSITORY = 'HARDWARE_REPOSITORY';
 
+// Datos de una transición de estado ya validada por el dominio.
+export interface TransitionHardwareParams {
+  // Hardware tal como se leyó antes de la transición.
+  anterior: Hardware;
+  // Hardware resultante (estado y equipo destino ya aplicados).
+  nuevo: Hardware;
+  // Observación de la intervención, para la trazabilidad.
+  motivo: string;
+  // Técnico que realiza la intervención, si se conoce.
+  id_tecnico_resp?: number;
+}
+
 export interface HardwareRepositoryPort {
   /**
    * Registra un hardware nuevo. Si trae `id_equipo_actual` crea, en la misma
@@ -12,6 +24,15 @@ export interface HardwareRepositoryPort {
    */
   create(hardware: Hardware): Promise<Hardware>;
   update(hardware: Hardware): Promise<Hardware>;
+  /**
+   * Aplica una transición de estado de forma atómica: actualiza el hardware,
+   * cierra sus movimientos abiertos en `registro_hardware` y, si queda
+   * instalado, registra el nuevo movimiento. Devuelve el hardware con su
+   * equipo actual y ubicación (cliente, sucursal, área).
+   * Lanza HardwareModificadoConcurrentementeException si el hardware cambió
+   * (o fue eliminado) desde que se leyó `anterior`.
+   */
+  transition(params: TransitionHardwareParams): Promise<Hardware>;
   existeEquipo(id_equipo: number): Promise<boolean>;
   findAll(filterDto: FilterHardwareDto): Promise<{
     data: Hardware[];

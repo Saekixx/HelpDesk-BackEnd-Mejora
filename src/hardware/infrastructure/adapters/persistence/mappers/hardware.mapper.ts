@@ -21,6 +21,7 @@ import {
   HardwareDetailResponseDto,
 } from '@/hardware/infrastructure/dtos/hardware-detail-response.dto';
 import { HardwareUpdateResponseDto } from '@/hardware/infrastructure/dtos/hardware-update-response.dto';
+import { HardwareTransitionResponseDto } from '@/hardware/infrastructure/dtos/hardware-transition-response.dto';
 
 // Hardware tal como lo devuelve Prisma cuando se incluye `equipo_actual` y,
 // en el detalle, el historial de movimientos (`registro_hardware`).
@@ -148,6 +149,24 @@ export class HardwareMapper {
       tipo_componente_label: TIPO_COMPONENTE_LABEL[domain.tipo_componente],
       estado: domain.estado,
       estado_label: ESTADO_HARDWARE_LABEL[domain.estado],
+      updated_at: domain.updated_at,
+    };
+  }
+
+  // Entidad de dominio -> JSON de respuesta tras cambiar de estado
+  // (PATCH /hardware/:id/transition): nuevo estado y equipo donde queda
+  // instalado con su ubicación. El repositorio debe cargar `equipo_actual`;
+  // `null` (sin equipo, o relación no cargada) se informa como sin asignar.
+  static toTransitionResponse(domain: Hardware): HardwareTransitionResponseDto {
+    return {
+      id_hardware: domain.id_hardware as number,
+      numero_serie: domain.numero_serie,
+      marca_modelo: domain.marca_modelo,
+      estado: domain.estado,
+      estado_label: ESTADO_HARDWARE_LABEL[domain.estado],
+      equipo_actual: domain.equipo_actual
+        ? HardwareMapper.toEquipoActualResponse(domain.equipo_actual)
+        : null,
       updated_at: domain.updated_at,
     };
   }

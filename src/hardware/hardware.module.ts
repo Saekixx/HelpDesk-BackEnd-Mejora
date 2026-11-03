@@ -7,6 +7,7 @@ import { FindAllHardwareUseCase } from './application/use-cases/find-all-hardwar
 import { FindByIdHardwareUseCase } from './application/use-cases/find-by-id-hardware.usecase';
 import { GetHardwareOptionsUseCase } from './application/use-cases/get-hardware-options.usecase';
 import { ToggleHardwareStatusUseCase } from './application/use-cases/toggle-hardware-status.usecase';
+import { TransitionHardwareUseCase } from './application/use-cases/transition-hardware.usecase';
 import { UpdateHardwareUseCase } from './application/use-cases/update-hardware.usecase';
 import { HardwareController } from './infrastructure/controllers/hardware.controller';
 
@@ -21,6 +22,7 @@ import { HardwareController } from './infrastructure/controllers/hardware.contro
     GetHardwareOptionsUseCase,
     UpdateHardwareUseCase,
     ToggleHardwareStatusUseCase,
+    TransitionHardwareUseCase,
 
     // Repositorio
     {

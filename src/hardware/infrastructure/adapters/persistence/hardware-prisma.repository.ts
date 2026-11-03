@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
-import { HardwareRepositoryPort } from '@/hardware/domain/ports/hardware.repository.port';
+import {
+  HardwareRepositoryPort,
+  TransitionHardwareParams,
+} from '@/hardware/domain/ports/hardware.repository.port';
 import { Hardware } from '@/hardware/domain/entities/hardware.entity';
 import { HardwareMapper } from './mappers/hardware.mapper';
 import { Prisma } from '@prisma/client';
@@ -8,7 +11,10 @@ import { FilterHardwareDto } from '@/hardware/application/dtos/filter-hardware.d
 import { GetHardwareOptionsQueryDto } from '@/hardware/application/dtos/get-hardware-options.query.dto';
 import { HardwareOptionResponseDto } from '@/hardware/application/dtos/hardware-option-response.dto';
 import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
-import { HardwareNotFoundException } from '@/hardware/domain/exceptions/hardware.exceptions';
+import {
+  HardwareModificadoConcurrentementeException,
+  HardwareNotFoundException,
+} from '@/hardware/domain/exceptions/hardware.exceptions';
 import {
   TIPO_COMPONENTE_LABEL,
   TipoComponente,
@@ -101,6 +107,69 @@ export class HardwarePrismaRepository implements HardwareRepositoryPort {
       }
       throw error;
     }
+  }
+
+  async transition({
+    anterior,
+    nuevo,
+    motivo,
+    id_tecnico_resp,
+  }: TransitionHardwareParams): Promise<Hardware> {
+    // Solo se hacen transiciones de hardware ya persistido.
+    const id_hardware = nuevo.id_hardware as number;
+    // Misma marca de tiempo para el hardware y sus movimientos.
+    const ahora = nuevo.updated_at;
+
+    return this.prisma.$transaction(async (tx) => {
+      // Bloqueo optimista: solo se actualiza si el hardware sigue como se leyó.
+      // Evita que dos transiciones simultáneas lo dejen en un estado incoherente.
+      const { count } = await tx.hardware.updateMany({
+        where: {
+          id_hardware,
+          estado: anterior.estado,
+          id_equipo_actual: anterior.id_equipo_actual,
+        },
+        data: {
+          estado: nuevo.estado,
+          id_equipo_actual: nuevo.id_equipo_actual,
+          updated_at: ahora,
+        },
+      });
+      if (count === 0) throw new HardwareModificadoConcurrentementeException();
+
+      // Cierra el/los movimientos abiertos; `motivo_retiro` guarda por qué se
+      // retiró el componente del equipo.
+      await tx.registro_hardware.updateMany({
+        where: { id_hardware, is_actual: true },
+        data: {
+          is_actual: false,
+          fecha_retiro: ahora,
+          motivo_retiro: motivo,
+          updated_at: ahora,
+        },
+      });
+
+      // Solo un hardware instalado tiene movimiento abierto: se registra el
+      // nuevo con el motivo de la intervención y el técnico responsable.
+      if (nuevo.id_equipo_actual !== null) {
+        await tx.registro_hardware.create({
+          data: {
+            id_hardware,
+            id_equipo: nuevo.id_equipo_actual,
+            is_actual: true,
+            fecha_instalacion: ahora,
+            motivo_retiro: motivo,
+            id_tecnico_resp: id_tecnico_resp ?? null,
+          },
+        });
+      }
+
+      const actualizado = await tx.hardware.findUniqueOrThrow({
+        where: { id_hardware },
+        include: HARDWARE_INCLUDE,
+      });
+      return HardwareMapper.toDomain(actualizado);
+    });
   }
 
   async existeEquipo(id_equipo: number): Promise<boolean> {
