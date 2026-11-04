@@ -52,7 +52,7 @@ export function ApiFindAllEquiposSwagger() {
     ApiOperation({
       summary: 'Listar equipos',
       description:
-        'Retorna un listado paginado de equipos, con filtro opcional por cliente, sucursal, texto de búsqueda y estado activo/inactivo.',
+        'Retorna un listado paginado de equipos, con filtro opcional por cliente, sucursal, id_trabajador, texto de búsqueda y estado activo/inactivo.',
     }),
     ApiResponse({
       status: HttpStatus.OK,

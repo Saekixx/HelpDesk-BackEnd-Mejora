@@ -70,6 +70,7 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       is_active,
       id_cliente,
       id_sucursal,
+      id_trabajador,
     } = filters;
 
     const where: Prisma.equiposWhereInput = {};
@@ -77,6 +78,7 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     if (id_cliente !== undefined) where.id_cliente = id_cliente;
     if (id_sucursal !== undefined) where.id_sucursal = id_sucursal;
     if (is_active !== undefined) where.is_active = is_active;
+    if (id_trabajador !== undefined) where.id_trabajador = id_trabajador;
 
     if (search) {
       where.OR = [
