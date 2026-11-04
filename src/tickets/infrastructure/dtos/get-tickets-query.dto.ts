@@ -64,6 +64,30 @@ export class GetTicketsFilterDto {
   @IsInt()
   id_area?: number;
 
+  // NUEVO: Filtro por ID del trabajador
+  @ApiPropertyOptional({
+    description: 'Filtrar por ID del trabajador creador/asignado',
+    example: 5,
+  })
+  @IsOptional()
+  @Transform(({ value }) =>
+    value && !isNaN(Number(value)) ? Number(value) : undefined,
+  )
+  @IsInt()
+  id_trabajador?: number;
+
+  // NUEVO: Filtro por ID del soporte técnico
+  @ApiPropertyOptional({
+    description: 'Filtrar por ID del técnico de soporte asignado',
+    example: 2,
+  })
+  @IsOptional()
+  @Transform(({ value }) =>
+    value && !isNaN(Number(value)) ? Number(value) : undefined,
+  )
+  @IsInt()
+  id_soporte?: number;
+
   @ApiPropertyOptional({
     description: 'Número de página para la paginación',
     default: 1,

@@ -56,10 +56,18 @@ export class TicketsController {
   @Get()
   @ApiFindAllTicketsSwagger()
   async findAll(@Query() query: GetTicketsFilterDto) {
-    const data = await this.getTicketsUseCase.execute(query);
+    const result = await this.getTicketsUseCase.execute(query);
     return {
       message: 'Tickets obtenidos exitosamente',
-      data,
+      data: {
+        data: result.data,
+        meta: {
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: result.totalPages,
+        },
+      },
     };
   }
 

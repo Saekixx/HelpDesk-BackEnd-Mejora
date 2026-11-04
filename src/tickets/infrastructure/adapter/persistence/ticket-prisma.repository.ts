@@ -181,7 +181,10 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
     const clienteId = parseNum(filters?.id_cliente);
     const sucursalId = parseNum(filters?.id_sucursal);
     const areaId = parseNum(filters?.id_area);
+    const trabajadorId = parseNum(filters?.id_trabajador);
+    const soporteId = parseNum(filters?.id_soporte);
 
+    // Filtros que pertenecen a la relación de equipos
     let equiposCondition: any = undefined;
     if (
       clienteId !== undefined ||
@@ -196,11 +199,12 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
     }
 
     // 4. Construcción declarativa del where:
-    // Si la variable es undefined, la propiedad NO se incluye en el objeto.
     const where: Prisma.ticketsWhereInput = {
       ...(estadoEnum !== undefined && { estado: estadoEnum }),
       ...(searchCondition && { OR: searchCondition }),
       ...(equiposCondition && { equipos: equiposCondition }),
+      ...(trabajadorId !== undefined && { id_trabajador: trabajadorId }),
+      ...(soporteId !== undefined && { id_soporte: soporteId }),
     };
 
     const [rawTickets, total] = await Promise.all([

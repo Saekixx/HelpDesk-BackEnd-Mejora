@@ -15,7 +15,7 @@ export function ApiFindAllTicketsSwagger() {
     ApiOperation({
       summary: 'Obtener lista de tickets con filtros y paginación',
       description:
-        'Retorna los tickets registrados permitiendo filtrar por término de búsqueda, estado, cliente, sucursal, área y soporte.',
+        'Retorna los tickets registrados permitiendo filtrar por término de búsqueda, estado, cliente, sucursal, área, trabajador y soporte.',
     }),
     ApiQuery({
       name: 'page',
@@ -60,6 +60,20 @@ export function ApiFindAllTicketsSwagger() {
       required: false,
       type: Number,
       description: 'Filtrar por ID del área',
+    }),
+    // NUEVO EN SWAGGER
+    ApiQuery({
+      name: 'id_trabajador',
+      required: false,
+      type: Number,
+      description: 'Filtrar por ID del trabajador',
+    }),
+    // NUEVO EN SWAGGER
+    ApiQuery({
+      name: 'id_soporte',
+      required: false,
+      type: Number,
+      description: 'Filtrar por ID del técnico de soporte',
     }),
     ApiResponse({
       status: 200,
