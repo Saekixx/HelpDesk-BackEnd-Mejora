@@ -35,7 +35,9 @@ import {
   ApiToggleEquipoStatusSwagger,
   ApiAgregarComponenteEquipoSwagger,
   ApiReemplazarComponenteEquipoSwagger,
+  ApiGetEquipoOptionsSwagger,
 } from '../docs/equipo.swagger';
+import { GetEquipoOptionsUseCase } from '@/equipos/application/use-cases/get-equipo-options.use-case';
 
 @ApiTags('Equipos')
 @ApiBearerAuth('access-token')
@@ -45,6 +47,7 @@ export class EquipoController {
   constructor(
     private readonly getEquiposUseCase: GetEquiposUseCase,
     private readonly getEquipoByIdUseCase: GetEquipoByIdUseCase,
+    private readonly getEquipoOptionsUseCase: GetEquipoOptionsUseCase,
     private readonly createEquipoUseCase: CreateEquipoUseCase,
     private readonly updateEquipoUseCase: UpdateEquipoUseCase,
     private readonly toggleStatusEquipoUseCase: ToggleStatusEquipoUseCase,
@@ -61,6 +64,14 @@ export class EquipoController {
       message: 'Equipos obtenidos exitosamente',
       data: { data, meta },
     };
+  }
+
+  @Get('/options/:id_area')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
+  @ApiGetEquipoOptionsSwagger()
+  async getEquipoOptions(@Param('id_area', ParseIntPipe) id_area: number) {
+    const data = await this.getEquipoOptionsUseCase.execute(id_area);
+    return { message: 'Opciones de equipos obtenidas exitosamente', data };
   }
 
   @Get(':id')

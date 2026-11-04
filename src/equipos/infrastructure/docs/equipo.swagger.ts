@@ -322,3 +322,26 @@ export function ApiReemplazarComponenteEquipoSwagger() {
     }),
   );
 }
+
+export function ApiGetEquipoOptionsSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Obtener opciones de equipos para filtros',
+      description:
+        'Devuelve un listado de equipos con id y nombre, opcionalmente filtrado por área. Este endpoint se utiliza para alimentar los selectores de búsqueda en el frontend.',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Opciones de equipos obtenidas exitosamente.',
+      schema: {
+        example: {
+          message: 'Opciones de equipos obtenidas exitosamente',
+          data: [
+            { id_equipo: 1, nombre_equipo: 'PC-Contabilidad-01' },
+            { id_equipo: 2, nombre_equipo: 'Laptop-Soporte-02' },
+          ],
+        },
+      },
+    }),
+  );
+}

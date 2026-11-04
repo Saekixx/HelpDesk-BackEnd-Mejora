@@ -32,6 +32,11 @@ export interface EquipoRepositoryPort {
   // instalado.
   findDetailById(id: number): Promise<EquipoDetail | null>;
 
+  // Devuelve un objeto con las opciones de búsqueda para el listado de equipos
+  getEquipoOptions(
+    id_area?: number,
+  ): Promise<{ id_equipo: number; nombre_equipo: string }[]>;
+
   // create y update devuelven el equipo con sus relaciones resumidas (cliente,
   // sucursal, área y trabajador asignado), igual que el listado.
   create(data: CreateEquipoDto): Promise<EquipoListItem>;

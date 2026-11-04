@@ -325,4 +325,17 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       return EquipoMapper.toComponenteHardware(nuevo);
     });
   }
+
+  async getEquipoOptions(
+    id_area: number,
+  ): Promise<{ id_equipo: number; nombre_equipo: string }[]> {
+    const equipos = await this.prisma.equipos.findMany({
+      where: { id_area: id_area },
+      select: { id_equipo: true, nombre_equipo: true },
+    });
+    return equipos.map((equipo) => ({
+      id_equipo: equipo.id_equipo,
+      nombre_equipo: equipo.nombre_equipo ?? '',
+    }));
+  }
 }
