@@ -4,6 +4,8 @@ import { FindByIdSoftwareUseCase } from '@/software/application/use-cases/find-b
 import { GetSoftwareUseCase } from '@/software/application/use-cases/get-software.usecase';
 import { ToggleSoftwareStatusUseCase } from '@/software/application/use-cases/toggle-software-status.usecase';
 import { UpdateSoftwareUseCase } from '@/software/application/use-cases/update-software.usecase';
+import { AssignEquipmentUseCase } from '@/software/application/use-cases/assign-equipment.usecase';
+import { ReleaseEquipmentUseCase } from '@/software/application/use-cases/release-equipment.usecase';
 import {
   Body,
   Controller,
@@ -22,10 +24,13 @@ import {
   ApiCreateSoftwareSwagger,
   ApiUpdateSoftwareSwagger,
   ApiToggleSoftwareStatusSwagger,
+  ApiAssignEquipmentSwagger,
+  ApiReleaseEquipmentSwagger,
 } from '../docs/software.swagger';
 import { CreateSoftwareRequestDto } from '../dtos/create-software.request.dto';
 import { UpdateSoftwareRequestDto } from '../dtos/update-software.request.dto';
 import { FindAllSoftwareQueryDto } from '../dtos/find-all-software.query.dto';
+import { AssignSoftwareEquipmentDto } from '../../application/dtos/assign-software-equipment.dto';
 
 @ApiSoftwareTag()
 @Controller('software')
@@ -37,6 +42,8 @@ export class SoftwareController {
     private readonly createSoftwareUseCase: CreateSoftwareUseCase,
     private readonly updateSoftwareUseCase: UpdateSoftwareUseCase,
     private readonly toggleSoftwareStatusUseCase: ToggleSoftwareStatusUseCase,
+    private readonly assignEquipmentUseCase: AssignEquipmentUseCase,
+    private readonly releaseEquipmentUseCase: ReleaseEquipmentUseCase,
   ) {}
 
   @Get()
@@ -77,6 +84,29 @@ export class SoftwareController {
     await this.createSoftwareUseCase.execute(dto);
     return {
       message: 'Software registrado exitosamente',
+    };
+  }
+
+  @Post(':id/assign')
+  @ApiAssignEquipmentSwagger()
+  async assignEquipment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AssignSoftwareEquipmentDto,
+  ) {
+    await this.assignEquipmentUseCase.execute(id, dto);
+    return {
+      message: 'Equipo asignado exitosamente al software',
+    };
+  }
+
+  @Patch('equipment/:idAssignment/release')
+  @ApiReleaseEquipmentSwagger()
+  async releaseEquipment(
+    @Param('idAssignment', ParseIntPipe) idAssignment: number,
+  ) {
+    await this.releaseEquipmentUseCase.execute(idAssignment);
+    return {
+      message: 'Equipo liberado exitosamente',
     };
   }
 
