@@ -251,4 +251,23 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async findPendientesParaAutoAsignacion(
+    minutosAntiguedad: number,
+  ): Promise<Ticket[]> {
+    // Calculamos la fecha límite (Fecha Actual - X minutos)
+    const fechaLimite = new Date(Date.now() - minutosAntiguedad * 60 * 1000);
+
+    const records = await this.prisma.tickets.findMany({
+      where: {
+        estado: 'Pendiente',
+        created_at: {
+          lte: fechaLimite, // Creados hace más de X minutos
+        },
+        id_soporte: null, // Que aún no tengan soporte asignado
+      },
+    });
+
+    return records.map((record) => TicketMapper.toDomain(record));
+  }
 }

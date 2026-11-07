@@ -25,4 +25,9 @@ export interface TicketRepositoryPort {
   ): Promise<PaginatedTicketsResult>;
 
   findDetailById(id: number): Promise<TicketDetalleCriteria | null>;
+
+  // Método para obtener tickets pendientes para auto-asignación según la antigüedad en minutos
+  findPendientesParaAutoAsignacion(
+    minutosAntiguedad: number,
+  ): Promise<Ticket[]>;
 }

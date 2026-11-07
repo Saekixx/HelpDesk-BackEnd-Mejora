@@ -1,34 +1,24 @@
-import { TicketState } from './ticket-state.interface';
+import { BaseTicketState } from './base-ticket.state';
 import { Ticket } from '../ticket.entity';
 import { CerradoState } from './cerrado.state';
-import { InvalidStateTransitionException } from '../../exceptions/invalid-state-transition.exception';
 import { DerivadoInsituState } from './derivado-insitu.state';
 
-export class EnProgresoState implements TicketState {
+export class EnProgresoState extends BaseTicketState {
   readonly name = 'En Progreso';
 
   asignarSoporte(ticket: Ticket, idSoporte: number): void {
-    // Permite reasignar soporte en caliente durante la atención
     ticket.setIdSoporte(idSoporte);
   }
 
   iniciarChat(): void {
-    // El chat ya está activo, no requiere cambio de estado
+    // El chat ya está activo, no requiere cambio de estado (puede ser no-op o lanzar excepción según estrictez)
   }
 
   cerrar(ticket: Ticket): void {
     ticket.changeState(new CerradoState());
   }
 
-  reabrir(): void {
-    throw new InvalidStateTransitionException(this.name, 'reabrir');
-  }
-
   derivarInsitu(ticket: Ticket): void {
     ticket.changeState(new DerivadoInsituState());
-  }
-
-  enEsperaRepuesto(): void {
-    throw new InvalidStateTransitionException(this.name, 'enEsperaRepuesto');
   }
 }

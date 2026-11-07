@@ -9,13 +9,29 @@ import { TicketDetalleCriteria } from '@/tickets/domain/criteria/ticket-detalle.
 
 export class TicketMapper {
   static toDomain(prismaTicket: PrismaTicket): Ticket {
+    // Forzamos la lectura exacta del estado desde Prisma
+    let estadoDominio = prismaTicket.estado as unknown as string;
+
+    // Normalizamos las variantes que puedan venir de la base de datos o Prisma
+    if (
+      estadoDominio === 'En_Progreso' ||
+      estadoDominio === 'EN_PROGRESO' ||
+      estadoDominio === 'En Progreso'
+    ) {
+      estadoDominio = 'En Progreso'; // O el valor que use tu entidad de dominio para este estado
+    } else if (estadoDominio === 'Pendiente' || estadoDominio === 'PENDIENTE') {
+      estadoDominio = 'Pendiente';
+    } else if (estadoDominio === 'Asignado' || estadoDominio === 'ASIGNADO') {
+      estadoDominio = 'Asignado';
+    }
+
     return new Ticket({
       id_tickets: prismaTicket.id_tickets,
       pin: prismaTicket.pin,
       asunto: prismaTicket.asunto,
       detalle: prismaTicket.detalle,
       reporte_cierre: prismaTicket.reporte_cierre ?? undefined,
-      estado: (prismaTicket.estado as unknown as EstadoTicket) ?? undefined,
+      estado: estadoDominio as EstadoTicket,
       id_equipo: prismaTicket.id_equipo,
       id_trabajador: prismaTicket.id_trabajador,
       id_soporte: prismaTicket.id_soporte ?? undefined,
@@ -26,6 +42,41 @@ export class TicketMapper {
   }
 
   static toPersistence(domain: Ticket): Prisma.ticketsUncheckedCreateInput {
+    let estadoPersistencia: PrismaEstadoTicket = PrismaEstadoTicket.Pendiente;
+
+    const estadoStr = String(domain.estado).trim().toLowerCase();
+
+    switch (estadoStr) {
+      case 'pendiente':
+        estadoPersistencia = PrismaEstadoTicket.Pendiente;
+        break;
+      case 'asignado':
+        estadoPersistencia = PrismaEstadoTicket.Asignado;
+        break;
+      case 'en progreso':
+      case 'en_progreso':
+        estadoPersistencia = PrismaEstadoTicket.En_Progreso;
+        break;
+      case 'derivado insitu':
+      case 'derivado_insitu':
+      case 'derivado in situ':
+        estadoPersistencia = PrismaEstadoTicket.Derivado_InSitu;
+        break;
+      case 'en espera repuesto':
+      case 'en_espera_repuesto':
+        estadoPersistencia = PrismaEstadoTicket.En_Espera_Repuesto;
+        break;
+      case 'reabierto':
+        estadoPersistencia = PrismaEstadoTicket.Reabierto;
+        break;
+      case 'cerrado':
+        estadoPersistencia = PrismaEstadoTicket.Cerrado;
+        break;
+      default:
+        estadoPersistencia = domain.estado as unknown as PrismaEstadoTicket;
+        break;
+    }
+
     return {
       ...(domain.id_tickets !== undefined && {
         id_tickets: Number(domain.id_tickets),
@@ -34,7 +85,7 @@ export class TicketMapper {
       asunto: domain.asunto,
       detalle: domain.detalle,
       reporte_cierre: domain.reporte_cierre ?? null,
-      estado: domain.estado as unknown as PrismaEstadoTicket,
+      estado: estadoPersistencia,
       id_equipo: Number(domain.id_equipo),
       id_trabajador: Number(domain.id_trabajador),
       id_soporte: domain.id_soporte ? Number(domain.id_soporte) : null,

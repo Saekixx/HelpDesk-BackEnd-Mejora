@@ -1,10 +1,9 @@
-import { TicketState } from './ticket-state.interface';
+import { BaseTicketState } from './base-ticket.state';
 import { Ticket } from '../ticket.entity';
 import { EnProgresoState } from './en-progreso.state';
 import { CerradoState } from './cerrado.state';
-import { InvalidStateTransitionException } from '../../exceptions/invalid-state-transition.exception';
 
-export class AsignadoState implements TicketState {
+export class AsignadoState extends BaseTicketState {
   readonly name = 'Asignado';
 
   asignarSoporte(ticket: Ticket, idSoporte: number): void {
@@ -13,24 +12,10 @@ export class AsignadoState implements TicketState {
   }
 
   iniciarChat(ticket: Ticket): void {
-    // Al iniciar la conversación pasa a 'En Progreso'
     ticket.changeState(new EnProgresoState());
   }
 
   cerrar(ticket: Ticket): void {
     ticket.changeState(new CerradoState());
-  }
-
-  reabrir(): void {
-    throw new InvalidStateTransitionException(this.name, 'reabrir');
-  }
-
-  derivarInsitu(): void {
-    throw new InvalidStateTransitionException(this.name, 'derivarInsitu');
-  }
-
-  enEsperaRepuesto(ticket: Ticket): void {
-    // No se puede derivar a "En Espera de Repuesto" desde el estado "Asignado"
-    throw new InvalidStateTransitionException(this.name, 'enEsperaRepuesto');
   }
 }

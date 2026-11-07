@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import {
   PaginatedUsersResult,
+  TechnicianWorkload,
   UserRepositoryPort,
 } from '@/usuarios/domain/ports/user.repository.port';
 import { User } from '@/usuarios/domain/entities/user.entity';
@@ -12,6 +13,7 @@ import { UserSelectFilterDto } from '../../dtos/user-select-filter-dto';
 import { UserOptions } from '../../dtos/user-options.dto';
 import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { UserStatsCriteria } from '@/usuarios/domain/criteria/user-stats.criteria';
+import { UserRole } from '@/usuarios/domain/enum/user-role.enum';
 
 const ROLES_TECNICOS: string[] = [
   RolEnum.ADMINISTRADOR,
@@ -213,5 +215,89 @@ export class UserPrismaRepository implements UserRepositoryPort {
       personalTecnico: { cantidad: tecnicos },
       cuentasClientes: { cantidad: clientes },
     };
+  }
+
+  /**
+   * Obtiene los técnicos remotos activos ordenados por su carga de trabajo actual
+   */
+  async findRemoteTechniciansWithWorkload(
+    role: UserRole.SOPORTE_TECNICO,
+  ): Promise<TechnicianWorkload[]> {
+    // 1. Buscamos el ID del rol correspondiente en la tabla 'rol' o filtramos por nombre de rol
+    const tecnicos = await this.prisma.usuarios.findMany({
+      where: {
+        is_active: true,
+        rol: {
+          nombre: role, // 'SOPORTE_TECNICO'
+        },
+      },
+      include: {
+        // Contamos los tickets que tiene asignados en estados activos
+        _count: {
+          select: {
+            tickets_tickets_id_soporteTousuarios: {
+              where: {
+                estado: {
+                  in: ['Asignado', 'En_Progreso'], // Estados activos de soporte
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Mapeamos al objeto de dominio TechnicianWorkload
+    return tecnicos.map((tec) => ({
+      id_usuario: tec.id_usuario,
+      nombre: tec.nombre,
+      apellido: tec.apellido,
+      correo: tec.correo ?? '',
+      carga_actual: tec._count.tickets_tickets_id_soporteTousuarios,
+    }));
+  }
+
+  /**
+   * Obtiene los técnicos in-situ de una zona específica con su carga de trabajo actual
+   */
+  async findInsituTechniciansByZoneAndWorkload(
+    idZona: number,
+    role: UserRole.SOPORTE_INSITU,
+  ): Promise<TechnicianWorkload[]> {
+    const tecnicos = await this.prisma.usuarios.findMany({
+      where: {
+        is_active: true,
+        rol: {
+          nombre: role, // 'SOPORTE_INSITU'
+        },
+        // Filtramos a través de la tabla intermedia 'tecnicos_zonas' que diseñamos en la BD
+        tecnicos_zonas: {
+          some: {
+            id_zona: idZona,
+          },
+        },
+      },
+      include: {
+        _count: {
+          select: {
+            tickets_tickets_id_soporteTousuarios: {
+              where: {
+                estado: {
+                  in: ['Asignado', 'En_Progreso'],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return tecnicos.map((tec) => ({
+      id_usuario: tec.id_usuario,
+      nombre: tec.nombre,
+      apellido: tec.apellido,
+      correo: tec.correo ?? '',
+      carga_actual: tec._count.tickets_tickets_id_soporteTousuarios,
+    }));
   }
 }

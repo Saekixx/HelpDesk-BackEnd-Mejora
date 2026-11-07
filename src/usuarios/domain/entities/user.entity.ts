@@ -30,7 +30,6 @@ export class User {
   public readonly id_sucursal: number | null;
   public readonly id_area: number | null;
 
-
   public readonly zonas: { id_zona: number; nombre_zona: string }[];
 
   public readonly createdAt: Date;

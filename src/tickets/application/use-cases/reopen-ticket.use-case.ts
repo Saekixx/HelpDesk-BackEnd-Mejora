@@ -1,15 +1,13 @@
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Ticket } from '../../domain/entities/ticket.entity';
-import {
-  TICKET_REPOSITORY,
   TicketRepositoryPort,
+  TICKET_REPOSITORY,
 } from '../../domain/ports/ticket.repository.port';
-import { ReopenTicketCommand } from '../dtos/reopen-ticket.request';
+import { Ticket } from '@/tickets/domain/entities/ticket.entity';
+
+export class ReabrirTicketDto {
+  motivo_reapertura: string;
+}
 
 @Injectable()
 export class ReopenTicketUseCase {
@@ -18,20 +16,17 @@ export class ReopenTicketUseCase {
     private readonly ticketRepository: TicketRepositoryPort,
   ) {}
 
-  async execute(command: ReopenTicketCommand): Promise<Ticket> {
-    const ticket = await this.ticketRepository.findById(command.id_ticket);
-
+  async execute(idTicket: number, dto: ReabrirTicketDto): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findById(idTicket);
     if (!ticket) {
-      throw new NotFoundException(`El ticket #${command.id_ticket} no existe.`);
+      throw new NotFoundException(`Ticket con ID ${idTicket} no encontrado.`);
     }
 
-    if (!ticket.puedeSerReabiertoPor(command.usuario_id, command.rol_usuario)) {
-      throw new ForbiddenException(
-        'Solo el cliente que creó el ticket o un Administrador pueden reabrirlo.',
-      );
-    }
-
+    // Ejecuta la transición de reapertura en el dominio
     ticket.reabrir();
+
+    // Nota: Aquí posteriormente integraremos el registro en la tabla de 'auditoria_eventos'
+    // guardando el motivo_reapertura en el payload JSON.
 
     return await this.ticketRepository.save(ticket);
   }

@@ -1,30 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
-import { RolUsuario } from '../../domain/entities/ticket.entity';
+import { IsNotEmpty, IsString } from 'class-validator';
 
-export class ReopenTicketCommand {
+export class ReabrirTicketDto {
   @ApiProperty({
-    description: 'ID del ticket que se desea reabrir',
-    example: 104,
+    description:
+      'Motivo o justificación por la cual se reabre el ticket debido a una reincidencia',
+    example:
+      'El error de expiración de licencia volvió a aparecer al reiniciar el equipo.',
   })
-  @IsInt()
-  @IsNotEmpty()
-  id_ticket: number;
-
-  @ApiProperty({
-    description: 'ID del usuario que solicita reabrir el ticket',
-    example: 12,
+  @IsString({
+    message: 'El motivo de reapertura debe ser una cadena de texto.',
   })
-  @IsInt()
-  @IsNotEmpty()
-  usuario_id: number;
-
-  @ApiProperty({
-    description: 'Rol del usuario que ejecuta la reapertura',
-    enum: RolUsuario,
-    example: RolUsuario.CLIENTE_TRABAJADOR,
-  })
-  @IsString()
-  @IsNotEmpty()
-  rol_usuario: string;
+  @IsNotEmpty({ message: 'El motivo de reapertura es obligatorio.' })
+  motivo_reapertura: string;
 }

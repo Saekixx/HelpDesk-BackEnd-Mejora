@@ -1,30 +1,43 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsNotEmpty, IsString } from 'class-validator';
-import { RolUsuario } from '../../domain/entities/ticket.entity';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CloseTicketCommand {
+export class CerrarTicketDto {
   @ApiProperty({
-    description: 'ID del ticket que se va a cerrar',
-    example: 104,
-  })
-  @IsInt()
-  @IsNotEmpty()
-  id_ticket: number;
-
-  @ApiProperty({
-    description: 'ID del usuario que solicita el cierre',
-    example: 12,
-  })
-  @IsInt()
-  @IsNotEmpty()
-  usuario_id: number;
-
-  @ApiProperty({
-    description: 'Rol del usuario que ejecuta la acción',
-    enum: RolUsuario,
-    example: RolUsuario.SOPORTE_TECNICO,
+    description: 'Reporte técnico de la solución aplicada',
+    example: 'Se reinstaló el controlador de red y se verificó conectividad.',
   })
   @IsString()
   @IsNotEmpty()
-  rol_usuario: string;
+  reporte_cierre: string;
+
+  @ApiProperty({
+    description: 'ID del usuario (técnico o soporte) que realiza el cierre',
+    example: 3,
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  id_usuario: number;
+
+  @ApiProperty({
+    description: 'Tipo de intervención realizada: REMOTO o INSITU',
+    example: 'REMOTO',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  tipo_intervencion?: 'REMOTO' | 'INSITU';
+
+  @ApiProperty({
+    description:
+      'Datos opcionales de la cita in-situ si el cierre incluyó visita presencial',
+    required: false,
+  })
+  @IsOptional()
+  cita_insitu?: {
+    id_cita: number;
+    fecha_programada: string;
+    estado_cita: string;
+    observaciones: string;
+    id_tecnico: number;
+  };
 }

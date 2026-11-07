@@ -37,6 +37,7 @@ import { ReopenTicketUseCase } from '@/tickets/application/use-cases/reopen-tick
 import { CloseTicketUseCase } from '@/tickets/application/use-cases/close-ticket.use-case';
 import { RolUsuario } from '@/tickets/domain/entities/ticket.entity';
 import { GetTicketDetalleUseCase } from '@/tickets/application/use-cases/get-ticket-detalle.use-case';
+import { CerrarTicketDto } from '../dtos/close-ticket.request';
 
 @ApiTags('Tickets')
 @ApiBearerAuth('access-token')
@@ -95,17 +96,15 @@ export class TicketsController {
     };
   }
 
-  @Patch('assign-support')
-  @Roles(
-    RolUsuario.ADMINISTRADOR,
-    RolUsuario.SOPORTE_TECNICO,
-    RolUsuario.SOPORTE_INSITU,
-  )
-  @ApiAssignSupportSwagger()
-  async assignSupport(@Body() command: AssignSupportCommand) {
-    const data = await this.assignTicketUseCase.execute(command);
+  @Patch(':id/close')
+  @ApiCloseTicketSwagger()
+  async close(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CerrarTicketDto,
+  ) {
+    const data = await this.closeTicketUseCase.execute(id, dto);
     return {
-      message: 'Soporte asignado al ticket exitosamente',
+      message: 'Ticket cerrado correctamente',
       data,
     };
   }
@@ -116,44 +115,6 @@ export class TicketsController {
     const data = await this.startChatTicketUseCase.execute(id);
     return {
       message: 'Chat iniciado correctamente',
-      data,
-    };
-  }
-
-  @Patch(':id/reopen')
-  @ApiReopenTicketSwagger()
-  async reopen(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser('userId') userId: number,
-    @CurrentUser('role') role: string,
-  ) {
-    const data = await this.reopenTicketUseCase.execute({
-      id_ticket: id,
-      usuario_id: userId,
-      rol_usuario: role,
-    });
-
-    return {
-      message: 'Ticket reabierto exitosamente',
-      data,
-    };
-  }
-
-  @Patch(':id/close')
-  @ApiCloseTicketSwagger()
-  async close(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser('userId') userId: number,
-    @CurrentUser('role') role: string,
-  ) {
-    const data = await this.closeTicketUseCase.execute({
-      id_ticket: id,
-      usuario_id: userId,
-      rol_usuario: role,
-    });
-
-    return {
-      message: 'Ticket cerrado exitosamente',
       data,
     };
   }

@@ -15,12 +15,16 @@ import { ReopenTicketUseCase } from '@/tickets/application/use-cases/reopen-tick
 import { CloseTicketUseCase } from '@/tickets/application/use-cases/close-ticket.use-case';
 import { EquiposModule } from '@/equipos/equipos.module';
 import { GetTicketDetalleUseCase } from './application/use-cases/get-ticket-detalle.use-case';
+import { AuditoriaModule } from '@/auditoria/auditoria.module';
+import { AutoAssignPendingTicketsUseCase } from './application/use-cases/auto-assign-pending-tickets.use-case';
+import { TicketsCronService } from './infrastructure/cron/tickets.cron.service';
 
 @Module({
   imports: [
     ConfigModule,
     CommonModule, // Se encarga de proveer PrismaService
     EquiposModule, // Se encarga de proveer EquipoRepositoryPort
+    AuditoriaModule, // Se encarga de proveer AuditoriaRepositoryPort
     JwtModule.register({}),
     forwardRef(() => AuthModule),
   ],
@@ -34,6 +38,9 @@ import { GetTicketDetalleUseCase } from './application/use-cases/get-ticket-deta
     StartChatTicketUseCase,
     ReopenTicketUseCase,
     CloseTicketUseCase,
+
+    AutoAssignPendingTicketsUseCase,
+    TicketsCronService,
 
     // Mapeo de Puertos a Implementaciones de Prisma
     {
