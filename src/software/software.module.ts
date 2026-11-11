@@ -17,6 +17,7 @@ import { AssignEquipmentUseCase } from './application/use-cases/assign-equipment
 import { ReleaseEquipmentUseCase } from './application/use-cases/release-equipment.usecase';
 
 import { SoftwareController } from './infrastructure/controllers/software.controller';
+import { FindByIdSoftwareEquipoUseCase } from './application/use-cases/get-software-equipos.usecase';
 
 @Module({
   imports: [CommonModule],
@@ -25,6 +26,7 @@ import { SoftwareController } from './infrastructure/controllers/software.contro
     CreateSoftwareUseCase,
     FindAllSoftwareUseCase,
     FindByIdSoftwareUseCase,
+    FindByIdSoftwareEquipoUseCase,
     GetSoftwareUseCase,
     UpdateSoftwareUseCase,
     ToggleSoftwareStatusUseCase,

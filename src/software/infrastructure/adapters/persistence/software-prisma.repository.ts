@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import { SoftwareRepositoryPort } from '@/software/domain/ports/software.repository.port';
 import { Software } from '@/software/domain/entities/software.entity';
@@ -6,6 +6,7 @@ import { SoftwareMapper } from './mappers/software.mapper';
 import { Prisma } from '@prisma/client';
 import { SoftwareOptionDto } from '@/software/domain/dtos/get-software.dto';
 import { FilterSoftwareDto } from '@/software/application/dtos/filter-software.dto';
+import { SoftwareVaultResponseDto } from '../../dtos/get-software-equipos.dto';
 
 @Injectable()
 export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
@@ -37,7 +38,13 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
       totalPages: number;
     };
   }> {
-    const { search, estado, is_active, page = 1, limit = 10 } = filterDto as any;
+    const {
+      search,
+      estado,
+      is_active,
+      page = 1,
+      limit = 10,
+    } = filterDto as any;
     const skip = (page - 1) * limit;
 
     const where: Prisma.softwareWhereInput = {};
@@ -101,5 +108,49 @@ export class SoftwarePrismaRepository implements SoftwareRepositoryPort {
       id: entity.id_software,
       nombre: entity.nombre_software,
     }));
+  }
+
+  async findSoftwareVaultById(
+    id_software: number,
+  ): Promise<SoftwareVaultResponseDto> {
+    const rawSoftware = await this.prisma.software.findUnique({
+      where: { id_software },
+      select: {
+        id_software: true,
+        id_cliente: true,
+        id_sucursal: true,
+        nombre_software: true,
+        limite_equipos: true,
+        licencias_usadas: true,
+        licencia_master_key: true,
+        software_equipos: {
+          where: { is_active: true },
+          select: {
+            id_software_equipos: true,
+            correo_asociado: true,
+            licencia_especifica: true,
+            fecha_instalacion: true,
+            observaciones: true,
+            equipos: {
+              select: {
+                id_equipo: true,
+                nombre_equipo: true,
+                tipo: true,
+                marca_modelo: true,
+                num_serie: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!rawSoftware) {
+      throw new NotFoundException(
+        `Software con ID ${id_software} no encontrado`,
+      );
+    }
+
+    return SoftwareMapper.toVaultResponse(rawSoftware);
   }
 }

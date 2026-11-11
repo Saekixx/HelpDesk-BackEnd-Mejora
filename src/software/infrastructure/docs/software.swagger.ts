@@ -174,3 +174,25 @@ export const ApiReleaseEquipmentSwagger = () =>
       description: 'La asignación de software no fue encontrada.',
     }),
   );
+
+export const ApiFindSoftwareVaultSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary:
+        'Obtener la bóveda de software con sus equipos vinculados, capacidad y llave maestra',
+    }),
+    ApiParam({
+      name: 'id',
+      type: Number,
+      description: 'ID numérico del software',
+      example: 1,
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Bóveda de software obtenida exitosamente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'Software no encontrado.',
+    }),
+  );

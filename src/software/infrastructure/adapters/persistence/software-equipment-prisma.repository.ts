@@ -23,6 +23,7 @@ export class SoftwareEquipmentPrismaRepository implements SoftwareEquipmentRepos
     id_software: number;
     id_equipo: number;
     correo_asociado?: string;
+    observaciones?: string;
     licencia_especifica?: string;
     password_enc?: string;
     fecha_instalacion?: Date;
@@ -33,6 +34,7 @@ export class SoftwareEquipmentPrismaRepository implements SoftwareEquipmentRepos
         id_software: data.id_software,
         id_equipo: data.id_equipo,
         correo_asociado: data.correo_asociado,
+        observaciones: data.observaciones,
         licencia_especifica: data.licencia_especifica,
         password_enc: data.password_enc,
         fecha_instalacion: data.fecha_instalacion ?? new Date(),
@@ -54,7 +56,10 @@ export class SoftwareEquipmentPrismaRepository implements SoftwareEquipmentRepos
     });
   }
 
-  async updateSoftwareUsedLicenses(idSoftware: number, usedCount: number): Promise<void> {
+  async updateSoftwareUsedLicenses(
+    idSoftware: number,
+    usedCount: number,
+  ): Promise<void> {
     await this.prisma.software.update({
       where: { id_software: idSoftware },
       data: { licencias_usadas: usedCount },

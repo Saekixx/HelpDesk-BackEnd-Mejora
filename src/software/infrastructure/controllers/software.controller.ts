@@ -26,11 +26,13 @@ import {
   ApiToggleSoftwareStatusSwagger,
   ApiAssignEquipmentSwagger,
   ApiReleaseEquipmentSwagger,
+  ApiFindSoftwareVaultSwagger,
 } from '../docs/software.swagger';
 import { CreateSoftwareRequestDto } from '../dtos/create-software.request.dto';
 import { UpdateSoftwareRequestDto } from '../dtos/update-software.request.dto';
 import { FindAllSoftwareQueryDto } from '../dtos/find-all-software.query.dto';
 import { AssignSoftwareEquipmentDto } from '../../application/dtos/assign-software-equipment.dto';
+import { FindByIdSoftwareEquipoUseCase } from '@/software/application/use-cases/get-software-equipos.usecase';
 
 @ApiSoftwareTag()
 @Controller('software')
@@ -38,6 +40,7 @@ export class SoftwareController {
   constructor(
     private readonly findAllSoftwareUseCase: FindAllSoftwareUseCase,
     private readonly findByIdSoftwareUseCase: FindByIdSoftwareUseCase,
+    private readonly findByIdSoftwareEquipoUseCase: FindByIdSoftwareEquipoUseCase,
     private readonly getSoftwareUseCase: GetSoftwareUseCase,
     private readonly createSoftwareUseCase: CreateSoftwareUseCase,
     private readonly updateSoftwareUseCase: UpdateSoftwareUseCase,
@@ -127,5 +130,16 @@ export class SoftwareController {
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     const message = await this.toggleSoftwareStatusUseCase.execute(id);
     return { message };
+  }
+
+  @Get(':id/boveda')
+  @ApiFindSoftwareVaultSwagger()
+  async getSoftwareVault(@Param('id') id: string) {
+    const data = await this.findByIdSoftwareEquipoUseCase.execute(Number(id));
+    return {
+      status: 200,
+      message: 'Bóveda de software obtenida exitosamente',
+      data,
+    };
   }
 }
