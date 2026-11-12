@@ -30,6 +30,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly cachePort: ICachePort,
   ) {}
 
+  // Manejadores de conexión (soportes y clientes)
   async handleConnection(client: Socket) {
     const userId = client.handshake.query.userId as string;
     if (userId) {
@@ -38,6 +39,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  // Manejador de desconexión (soportes y clientes)
   async handleDisconnect(client: Socket) {
     const userId = client.handshake.query.userId as string;
     if (userId) {
@@ -46,6 +48,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  // Manejador de unión a sala del chat
   @SubscribeMessage('join_room')
   async handleJoinRoom(
     @MessageBody() data: any,
@@ -65,6 +68,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit('chat_history', history);
   }
 
+  // Manejador de envío de mensajes
   @SubscribeMessage('send_message')
   async handleSendMessage(
     @MessageBody() rawDto: any,

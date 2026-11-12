@@ -6,6 +6,7 @@ import {
   ApiBody,
   ApiExtraModels,
   getSchemaPath,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
@@ -323,12 +324,26 @@ export function ApiReemplazarComponenteEquipoSwagger() {
   );
 }
 
-export function ApiGetEquipoOptionsSwagger() {
-  return applyDecorators(
+export const ApiGetEquipoOptionsSwagger = () =>
+  applyDecorators(
     ApiOperation({
       summary: 'Obtener opciones de equipos para filtros',
       description:
-        'Devuelve un listado de equipos con id y nombre, opcionalmente filtrado por área. Este endpoint se utiliza para alimentar los selectores de búsqueda en el frontend.',
+        'Devuelve un listado de equipos con id y nombre, opcionalmente filtrado por área o por trabajador. Este endpoint se utiliza para alimentar los selectores de búsqueda en el frontend.',
+    }),
+    ApiQuery({
+      name: 'id_area',
+      required: false,
+      type: Number,
+      description: 'Filtrar opciones de equipos por ID del área',
+      example: 1,
+    }),
+    ApiQuery({
+      name: 'id_trabajador',
+      required: false,
+      type: Number,
+      description: 'Filtrar opciones de equipos por ID del trabajador',
+      example: 5,
     }),
     ApiResponse({
       status: HttpStatus.OK,
@@ -344,4 +359,3 @@ export function ApiGetEquipoOptionsSwagger() {
       },
     }),
   );
-}

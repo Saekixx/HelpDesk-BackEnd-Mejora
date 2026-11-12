@@ -13,7 +13,15 @@ export class GetEquipoOptionsUseCase {
 
   async execute(
     id_area?: number,
+    id_trabajador?: number,
   ): Promise<{ id_equipo: number; nombre_equipo: string }[]> {
-    return this.equipoRepository.getEquipoOptions(id_area);
+    const criteriaArea = id_area ? Number(id_area) : undefined;
+    const criteriaTrabajador =
+      !criteriaArea && id_trabajador ? Number(id_trabajador) : undefined;
+
+    return this.equipoRepository.getEquipoOptions(
+      criteriaArea,
+      criteriaTrabajador,
+    );
   }
 }

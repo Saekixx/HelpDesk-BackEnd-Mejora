@@ -66,11 +66,22 @@ export class EquipoController {
     };
   }
 
-  @Get('/options/:id_area')
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
+  @Get('/options')
+  @Roles(
+    RolEnum.ADMINISTRADOR,
+    RolEnum.SOPORTE_INSITU,
+    RolEnum.SOPORTE_TECNICO,
+    RolEnum.CLIENTE_TRABAJADOR,
+  )
   @ApiGetEquipoOptionsSwagger()
-  async getEquipoOptions(@Param('id_area', ParseIntPipe) id_area: number) {
-    const data = await this.getEquipoOptionsUseCase.execute(id_area);
+  async getEquipoOptions(
+    @Query('id_area') id_area?: number | undefined,
+    @Query('id_trabajador') id_trabajador?: number | undefined,
+  ) {
+    const data = await this.getEquipoOptionsUseCase.execute(
+      id_area ? Number(id_area) : undefined,
+      id_trabajador ? Number(id_trabajador) : undefined,
+    );
     return { message: 'Opciones de equipos obtenidas exitosamente', data };
   }
 

@@ -327,10 +327,14 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
   }
 
   async getEquipoOptions(
-    id_area: number,
+    id_area?: number,
+    id_trabajador?: number,
   ): Promise<{ id_equipo: number; nombre_equipo: string }[]> {
+    const where: Prisma.equiposWhereInput = {};
+    if (id_area !== undefined) where.id_area = id_area;
+    if (id_trabajador !== undefined) where.id_trabajador = id_trabajador;
     const equipos = await this.prisma.equipos.findMany({
-      where: { id_area: id_area },
+      where,
       select: { id_equipo: true, nombre_equipo: true },
     });
     return equipos.map((equipo) => ({

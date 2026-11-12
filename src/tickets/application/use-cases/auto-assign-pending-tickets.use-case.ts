@@ -15,6 +15,12 @@ import { UserRole } from '@/usuarios/domain/enum/user-role.enum';
  * y los asigna automáticamente al técnico con menor carga de trabajo.
  */
 
+// Define una interfaz limpia o tipo para el resultado
+export interface TicketAsignadoDto {
+  ticketId: number;
+  assignedSupportId: number;
+}
+
 @Injectable()
 export class AutoAssignPendingTicketsUseCase {
   private readonly logger = new Logger(AutoAssignPendingTicketsUseCase.name);
@@ -25,58 +31,52 @@ export class AutoAssignPendingTicketsUseCase {
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepositoryPort,
   ) {}
+  async execute(): Promise<TicketAsignadoDto[]> {
+    const UMBLAR_MINUTOS = 2;
+    const ticketsAsignados: TicketAsignadoDto[] = [];
 
-  async execute(): Promise<void> {
-    const UMBLAR_MINUTOS = 2; // Umbral de tiempo establecido
-
-    // 1. Buscar tickets pendientes que superen los 2 minutos de creación
     const ticketsPendientes =
       await this.ticketRepository.findPendientesParaAutoAsignacion(
         UMBLAR_MINUTOS,
       );
 
     if (ticketsPendientes.length === 0) {
-      return;
+      return []; // Si no hay nada, retorna un array vacío sin romper nada
     }
 
-    this.logger.log(
-      `Se encontraron ${ticketsPendientes.length} tickets pendientes listos para autoasignación.`,
-    );
-
-    // 2. Obtener los técnicos de soporte remoto junto con su carga laboral actual
     const tecnicosRemotos =
       await this.userRepository.findRemoteTechniciansWithWorkload(
         UserRole.SOPORTE_TECNICO,
       );
 
     if (tecnicosRemotos.length === 0) {
-      this.logger.warn(
-        'No hay técnicos de soporte remoto activos disponibles para la autoasignación.',
-      );
-      return;
+      return [];
     }
 
-    // 3. Iterar cada ticket pendiente y asignarlo al técnico con menor carga
     for (const ticket of ticketsPendientes) {
-      // Ordenar de menor a mayor carga de trabajo (carga_actual ASC)
-      tecnicosRemotos.sort((a, b) => a.carga_actual - b.carga_actual);
+      const ticketId = ticket.id_tickets;
 
-      // El técnico en la primera posición es el que menos carga tiene
+      if (ticketId === undefined) {
+        this.logger.error('No se puede autoasignar un ticket sin ID.');
+        continue;
+      }
+
+      tecnicosRemotos.sort((a, b) => a.carga_actual - b.carga_actual);
       const tecnicoElegido = tecnicosRemotos[0];
 
       try {
-        // Ejecutar la regla de dominio para asignar soporte (Cambia estado a 'Asignado' e inyecta id_soporte)
         ticket.asignarSoporte(tecnicoElegido.id_usuario);
-
-        // Guardar en la base de datos
         await this.ticketRepository.save(ticket);
-
-        // Incrementar localmente la carga del técnico elegido en memoria
-        // para que el siguiente ticket del loop considere este nuevo peso si hay varios pendientes
         tecnicoElegido.carga_actual += 1;
 
+        // Guardamos en la lista el ticket que SÍ se asignó con éxito
+        ticketsAsignados.push({
+          ticketId,
+          assignedSupportId: tecnicoElegido.id_usuario,
+        });
+
         this.logger.log(
-          `Ticket ID ${ticket.id_tickets} (PIN: ${ticket.pin}) autoasignado exitosamente al técnico ID ${tecnicoElegido.id_usuario} (${tecnicoElegido.nombre}). Carga actual: ${tecnicoElegido.carga_actual}`,
+          `Ticket ID ${ticket.id_tickets} autoasignado al técnico ID ${tecnicoElegido.id_usuario}.`,
         );
       } catch (error) {
         this.logger.error(
@@ -85,5 +85,8 @@ export class AutoAssignPendingTicketsUseCase {
         );
       }
     }
+
+    // Retornamos los tickets que cambiaron de estado
+    return ticketsAsignados;
   }
 }

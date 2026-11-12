@@ -35,6 +35,7 @@ export interface EquipoRepositoryPort {
   // Devuelve un objeto con las opciones de búsqueda para el listado de equipos
   getEquipoOptions(
     id_area?: number,
+    id_trabajador?: number,
   ): Promise<{ id_equipo: number; nombre_equipo: string }[]>;
 
   // create y update devuelven el equipo con sus relaciones resumidas (cliente,

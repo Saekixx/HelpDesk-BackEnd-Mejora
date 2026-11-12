@@ -46,5 +46,6 @@ import { PrismaTicketRepository } from './infrastructure/persistence/repositorie
     // Gateway de WebSocket
     ChatGateway,
   ],
+  exports: [ChatGateway],
 })
 export class ChatModule {}

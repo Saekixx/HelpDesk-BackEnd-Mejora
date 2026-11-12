@@ -18,6 +18,8 @@ import { GetTicketDetalleUseCase } from './application/use-cases/get-ticket-deta
 import { AuditoriaModule } from '@/auditoria/auditoria.module';
 import { AutoAssignPendingTicketsUseCase } from './application/use-cases/auto-assign-pending-tickets.use-case';
 import { TicketsCronService } from './infrastructure/cron/tickets.cron.service';
+import { ChatModule } from '@/chat/chat.module';
+import { TicketsGateway } from './infrastructure/websocket/tickets.gateway';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { TicketsCronService } from './infrastructure/cron/tickets.cron.service';
     CommonModule, // Se encarga de proveer PrismaService
     EquiposModule, // Se encarga de proveer EquipoRepositoryPort
     AuditoriaModule, // Se encarga de proveer AuditoriaRepositoryPort
+    ChatModule, // Se encarga de proveer ChatGateway para enviar notificaciones en tiempo real
     JwtModule.register({}),
     forwardRef(() => AuthModule),
   ],
@@ -41,6 +44,7 @@ import { TicketsCronService } from './infrastructure/cron/tickets.cron.service';
 
     AutoAssignPendingTicketsUseCase,
     TicketsCronService,
+    TicketsGateway,
 
     // Mapeo de Puertos a Implementaciones de Prisma
     {
