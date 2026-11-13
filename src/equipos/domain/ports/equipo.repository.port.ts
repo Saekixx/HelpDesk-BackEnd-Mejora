@@ -2,6 +2,7 @@ import {
   ComponenteHardware,
   Equipo,
   EquipoDetail,
+  EquipoListadoItem,
   EquipoListItem,
 } from '../entities/equipo.entity';
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
@@ -14,7 +15,7 @@ export const EQUIPO_REPOSITORY = 'EQUIPO_REPOSITORY';
 
 // Resultado paginado para el listado de equipos
 export interface PaginatedEquiposResult {
-  data: EquipoListItem[];
+  data: EquipoListadoItem[];
   total: number;
   page: number;
   limit: number;

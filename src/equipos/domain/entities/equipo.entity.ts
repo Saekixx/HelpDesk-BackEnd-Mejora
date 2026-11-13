@@ -1,3 +1,5 @@
+import { EstadoEquipo } from '../enums/estado-equipo.enum';
+
 export interface EquipoProps {
   id_equipo?: number;
   tipo: string;
@@ -57,6 +59,23 @@ export class Equipo {
 export interface RelacionSummary {
   id: number;
   nombre: string;
+}
+
+// Item del listado paginado (GET /equipos): las relaciones llegan con sus
+// campos completos para que el frontend no tenga que consultarlas aparte.
+export interface EquipoListadoItem extends Equipo {
+  // Estado operativo del equipo (ej. "Activo", "En_Almacen").
+  estado: EstadoEquipo;
+  cliente: { id_cliente: number; nombre_principal: string } | null;
+  sucursal: { id_sucursal: number; nombre_sucursal: string } | null;
+  area: { id_area: number; nombre_area: string } | null;
+  // null si el equipo no está asignado a ningún trabajador.
+  trabajador: {
+    id_usuario: number;
+    nombre: string;
+    apellido: string;
+    correo: string | null;
+  } | null;
 }
 
 export interface EquipoListItem extends Equipo {

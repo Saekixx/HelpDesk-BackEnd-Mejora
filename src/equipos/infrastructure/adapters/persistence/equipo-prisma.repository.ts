@@ -11,6 +11,7 @@ import {
   EquipoListItem,
 } from '@/equipos/domain/entities/equipo.entity';
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
+import { AsignacionEquipo } from '@/equipos/domain/enums/asignacion-equipo.enum';
 import { CreateEquipoDto } from '@/equipos/domain/dto/create-equipo.dto';
 import { UpdateEquipoDto } from '@/equipos/domain/dto/update-equipo.dto';
 import { AgregarComponenteDto } from '@/equipos/domain/dto/agregar-componente.dto';
@@ -27,7 +28,9 @@ const INCLUDE_RESUMEN = {
   clientes: { select: { id_cliente: true, nombre_principal: true } },
   sucursales: { select: { id_sucursal: true, nombre_sucursal: true } },
   area: { select: { id_area: true, nombre_area: true } },
-  usuarios: { select: { id_usuario: true, nombre: true, apellido: true } },
+  usuarios: {
+    select: { id_usuario: true, nombre: true, apellido: true, correo: true },
+  },
 } satisfies Prisma.equiposInclude;
 
 const INCLUDE_DETALLE = {
@@ -67,27 +70,40 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       page = 1,
       limit = 10,
       search,
-      is_active,
+      estado,
+      asignacion,
       id_cliente,
       id_sucursal,
-      id_trabajador,
+      id_area,
     } = filters;
 
-    const where: Prisma.equiposWhereInput = {};
-
-    if (id_cliente !== undefined) where.id_cliente = id_cliente;
-    if (id_sucursal !== undefined) where.id_sucursal = id_sucursal;
-    if (is_active !== undefined) where.is_active = is_active;
-    if (id_trabajador !== undefined) where.id_trabajador = id_trabajador;
-
-    if (search) {
-      where.OR = [
-        { tipo: { contains: search } },
-        { marca_modelo: { contains: search } },
-        { num_serie: { contains: search } },
-        { nombre_equipo: { contains: search } },
-      ];
-    }
+    // En MySQL `contains` ya ignora mayúsculas según la collation (`mode` no
+    // es soportado).
+    const where: Prisma.equiposWhereInput = {
+      ...(id_cliente !== undefined && { id_cliente }),
+      ...(id_sucursal !== undefined && { id_sucursal }),
+      ...(id_area !== undefined && { id_area }),
+      ...(estado && { estado }),
+      ...(asignacion && {
+        id_trabajador:
+          asignacion === AsignacionEquipo.ASIGNADOS ? { not: null } : null,
+      }),
+      ...(search && {
+        OR: [
+          { nombre_equipo: { contains: search } },
+          { num_serie: { contains: search } },
+          { marca_modelo: { contains: search } },
+          {
+            usuarios: {
+              OR: [
+                { nombre: { contains: search } },
+                { apellido: { contains: search } },
+              ],
+            },
+          },
+        ],
+      }),
+    };
 
     const skip = (page - 1) * limit;
 
@@ -103,7 +119,7 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     ]);
 
     return {
-      data: entities.map(EquipoMapper.toListItem),
+      data: entities.map(EquipoMapper.toListadoItem),
       total,
       page,
       limit,

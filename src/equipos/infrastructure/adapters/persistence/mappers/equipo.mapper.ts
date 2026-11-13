@@ -1,12 +1,14 @@
-import { equipos as PrismaEquipo } from '@prisma/client';
+import { equipos as PrismaEquipo, equipos_estado } from '@prisma/client';
 import {
   ComponenteHardware,
   Equipo,
   EquipoDetail,
+  EquipoListadoItem,
   EquipoListItem,
   RelacionSummary,
   SoftwareInstalado,
 } from '@/equipos/domain/entities/equipo.entity';
+import { EstadoEquipo } from '@/equipos/domain/enums/estado-equipo.enum';
 import type { PrismaEquipoDetalleCompleto } from '../equipo-prisma.repository';
 import {
   TIPO_COMPONENTE_LABEL,
@@ -18,6 +20,28 @@ type PrismaEquipoConDetalle = PrismaEquipo & {
   sucursales: { id_sucursal: number; nombre_sucursal: string } | null;
   area: { id_area: number; nombre_area: string } | null;
   usuarios: { id_usuario: number; nombre: string; apellido: string } | null;
+};
+
+// Enum de Prisma -> enum de dominio (mismos valores; el Record garantiza que
+// no quede ningún estado sin mapear).
+const ESTADO_EQUIPO: Record<equipos_estado, EstadoEquipo> = {
+  Activo: EstadoEquipo.ACTIVO,
+  En_Almacen: EstadoEquipo.EN_ALMACEN,
+  En_Mantenimiento: EstadoEquipo.EN_MANTENIMIENTO,
+  Retirado: EstadoEquipo.RETIRADO,
+};
+
+// Resultado de Prisma con las relaciones del listado (ver INCLUDE_RESUMEN).
+type PrismaEquipoListado = PrismaEquipo & {
+  clientes: { id_cliente: number; nombre_principal: string } | null;
+  sucursales: { id_sucursal: number; nombre_sucursal: string } | null;
+  area: { id_area: number; nombre_area: string } | null;
+  usuarios: {
+    id_usuario: number;
+    nombre: string;
+    apellido: string;
+    correo: string | null;
+  } | null;
 };
 
 export class EquipoMapper {
@@ -38,6 +62,19 @@ export class EquipoMapper {
       createdAt: entity.created_at ?? undefined,
       updatedAt: entity.updated_at ?? undefined,
     });
+  }
+
+  // Listado (GET /equipos): relaciones con sus campos completos.
+  static toListadoItem(entity: PrismaEquipoListado): EquipoListadoItem {
+    return {
+      ...EquipoMapper.toDomain(entity),
+      // La columna es nullable con default "Activo".
+      estado: ESTADO_EQUIPO[entity.estado ?? 'Activo'],
+      cliente: entity.clientes,
+      sucursal: entity.sucursales,
+      area: entity.area,
+      trabajador: entity.usuarios,
+    };
   }
 
   static toListItem(entity: PrismaEquipoConDetalle): EquipoListItem {

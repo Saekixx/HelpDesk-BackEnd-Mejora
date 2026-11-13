@@ -47,12 +47,26 @@ const COMPONENTE_EJEMPLO = {
   is_active: true,
 };
 
+// Relaciones del listado (GET /equipos): campos completos; trabajador es null
+// si el equipo no está asignado.
+const RELACIONES_LISTADO_EJEMPLO = {
+  cliente: { id_cliente: 1, nombre_principal: 'Acme Corp SAC' },
+  sucursal: { id_sucursal: 1, nombre_sucursal: 'Sucursal Central' },
+  area: { id_area: 1, nombre_area: 'Sistemas' },
+  trabajador: {
+    id_usuario: 5,
+    nombre: 'Juan',
+    apellido: 'Pérez',
+    correo: 'juan.perez@acme.com',
+  },
+};
+
 export function ApiFindAllEquiposSwagger() {
   return applyDecorators(
     ApiOperation({
       summary: 'Listar equipos',
       description:
-        'Retorna un listado paginado de equipos, con filtro opcional por cliente, sucursal, id_trabajador, texto de búsqueda y estado activo/inactivo.',
+        'Retorna un listado paginado de equipos. Filtros opcionales: `search` (nombre del equipo, número de serie, marca/modelo o nombre/apellido del trabajador), `id_cliente`, `id_sucursal`, `id_area`, `estado` (Activo | En_Almacen | En_Mantenimiento | Retirado), `asignacion` (Asignados | Sin Asignar), `page` y `limit`. Cada item incluye `estado` y las relaciones `cliente`, `sucursal`, `area` y `trabajador` (null si no está asignado) con sus campos completos.',
     }),
     ApiResponse({
       status: HttpStatus.OK,
@@ -61,7 +75,13 @@ export function ApiFindAllEquiposSwagger() {
         example: {
           message: 'Equipos obtenidos exitosamente',
           data: {
-            data: [{ ...EQUIPO_EJEMPLO, ...RELACIONES_EJEMPLO }],
+            data: [
+              {
+                ...EQUIPO_EJEMPLO,
+                estado: 'Activo',
+                ...RELACIONES_LISTADO_EJEMPLO,
+              },
+            ],
             meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
           },
         },
