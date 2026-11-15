@@ -1,10 +1,10 @@
 export interface UpdateSoftwareDto {
   nombre_software?: string;
-  licencia?: string;
-  correo?: string;
-  password?: string;
-  fecha_instalacion?: Date | string;
-  fecha_caducidad?: Date | string;
+  categoria?: string;
+  id_cliente?: number;
+  tipo_licencia?: string;
+  limite_equipos?: number;
   proveedor?: string;
-  is_active?: boolean;
+  fecha_caducidad?: Date | string;
+  licencia_master_key?: string;
 }

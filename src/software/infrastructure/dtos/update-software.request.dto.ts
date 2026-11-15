@@ -1,10 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEmail, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { UpdateSoftwareDto } from '@/software/application/dtos/update-software.dto';
+import { tipo_licencia_enum, software_estado } from '@prisma/client';
 
 export class UpdateSoftwareRequestDto implements UpdateSoftwareDto {
   @ApiPropertyOptional({
-    description: 'Nombre del software o licencia',
+    description: 'Nombre del software',
     example: 'Microsoft Office 365 Enterprise',
   })
   @IsOptional()
@@ -12,56 +19,65 @@ export class UpdateSoftwareRequestDto implements UpdateSoftwareDto {
   nombre_software?: string;
 
   @ApiPropertyOptional({
-    description: 'Código o clave de licencia',
-    example: 'YYYYY-YYYYY-YYYYY-YYYYY',
+    description: 'Categoría del software',
+    example: 'Ofimática',
   })
   @IsOptional()
-  @IsString({ message: 'La licencia debe ser una cadena de texto' })
-  licencia?: string;
+  @IsString({ message: 'La categoría debe ser una cadena de texto' })
+  categoria?: string;
 
   @ApiPropertyOptional({
-    description: 'Correo asociado a la cuenta o licencia',
-    example: 'admin.soporte@empresa.com',
+    description: 'ID del cliente dueño del software',
+    example: 1,
   })
   @IsOptional()
-  @IsEmail({}, { message: 'Debe ingresar un correo electrónico válido' })
-  correo?: string;
+  @IsNumber({}, { message: 'El ID del cliente debe ser un número' })
+  id_cliente?: number;
 
   @ApiPropertyOptional({
-    description: 'Contraseña o credenciales de acceso',
-    example: 'N3wP@ssword2026!',
+    description: 'Tipo de licencia',
+    enum: tipo_licencia_enum,
+    example: 'Pool Limitado',
   })
   @IsOptional()
-  @IsString({ message: 'La contraseña debe ser una cadena de texto' })
-  password?: string;
+  @IsEnum(tipo_licencia_enum, { message: 'Tipo de licencia inválido' })
+  tipo_licencia?: tipo_licencia_enum;
 
   @ApiPropertyOptional({
-    description: 'Fecha en la que se instaló o adquirió el software',
-    example: '2026-01-15T00:00:00.000Z',
+    description: 'Límite de equipos permitidos',
+    example: 50,
+    required: false,
   })
   @IsOptional()
-  @IsDateString(
-    {},
-    { message: 'La fecha de instalación debe ser una fecha válida (ISO 8601)' },
-  )
-  fecha_instalacion?: Date;
+  @IsNumber({}, { message: 'El límite de equipos debe ser numérico' })
+  limite_equipos?: number;
 
   @ApiPropertyOptional({
-    description: 'Fecha de vencimiento de la licencia',
-    example: '2027-01-15T00:00:00.000Z',
-  })
-  @IsOptional()
-  @IsDateString(
-    {},
-    { message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)' },
-  )
-  fecha_caducidad?: Date;
-
-  @ApiPropertyOptional({
-    description: 'Proveedor o distribuidor del software',
+    description: 'Proveedor o mayorista del software',
     example: 'Microsoft Corporation Inc.',
   })
   @IsOptional()
   @IsString({ message: 'El proveedor debe ser una cadena de texto' })
   proveedor?: string;
+
+  @ApiPropertyOptional({
+    description: 'Fecha de caducidad del software',
+    example: '2027-01-15T00:00:00.000Z',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'La fecha de caducidad debe ser válida (ISO 8601)' },
+  )
+  fecha_caducidad?: string;
+
+  @ApiPropertyOptional({
+    description: 'Clave KMS / master key de la licencia (opcional)',
+    example: 'XXXXX-XXXXX-XXXXX',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'La clave master debe ser una cadena de texto' })
+  licencia_master_key?: string;
 }
