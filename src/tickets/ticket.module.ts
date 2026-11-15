@@ -27,7 +27,7 @@ import { TicketsGateway } from './infrastructure/websocket/tickets.gateway';
     CommonModule, // Se encarga de proveer PrismaService
     EquiposModule, // Se encarga de proveer EquipoRepositoryPort
     AuditoriaModule, // Se encarga de proveer AuditoriaRepositoryPort
-    ChatModule, // Se encarga de proveer ChatGateway para enviar notificaciones en tiempo real
+    forwardRef(() => ChatModule),
     JwtModule.register({}),
     forwardRef(() => AuthModule),
   ],

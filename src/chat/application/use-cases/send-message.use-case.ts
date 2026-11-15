@@ -7,20 +7,22 @@ import {
 import { SendMessageDto } from '../dtos/send-message.dto';
 import { IMessageRepository } from '../../domain/ports/message.repository.port';
 import { ICachePort } from '../../domain/ports/cache.port';
-import { ITicketRepository } from '../../domain/ports/ticket.repository.port';
 import { Message } from '../../domain/entities/message.entity';
+import {
+  TICKET_REPOSITORY,
+  TicketRepositoryPort,
+} from '@/tickets/domain/ports/ticket.repository.port';
+import { EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 
 @Injectable()
 export class SendMessageUseCase {
   constructor(
-    @Inject(IMessageRepository)
-    private readonly messageRepository: IMessageRepository,
-
+    @Inject(TICKET_REPOSITORY)
+    private readonly ticketRepository: TicketRepositoryPort,
     @Inject(ICachePort)
     private readonly cachePort: ICachePort,
-
-    @Inject(ITicketRepository)
-    private readonly ticketRepository: ITicketRepository,
+    @Inject(IMessageRepository)
+    private readonly messageRepository: IMessageRepository,
   ) {}
 
   async execute(dto: SendMessageDto): Promise<Message> {
@@ -46,6 +48,12 @@ export class SendMessageUseCase {
 
     // Persistir en MongoDB
     const savedMessage = await this.messageRepository.save(message);
+
+    // Cambiar el estado del ticket al enviar el primer mensaje
+    if (ticket.estado === EstadoTicket.ASIGNADO) {
+      ticket.iniciarChat();
+      await this.ticketRepository.save(ticket);
+    }
 
     // Publicar evento en Redis
     await this.cachePort.publishMessage(

@@ -251,4 +251,9 @@ export class Ticket {
         return new PendienteState();
     }
   }
+
+  // Regla de negocio: Comprobar si un usuario tiene acceso al chat del ticket
+  public canAccess(userId: number): boolean {
+    return this.id_trabajador === userId || this.id_soporte === userId;
+  }
 }

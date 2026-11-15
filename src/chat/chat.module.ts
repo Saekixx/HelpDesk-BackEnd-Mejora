@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import {
@@ -16,20 +16,16 @@ import { SendMessageUseCase } from './application/use-cases/send-message.use-cas
 import { GetHistoryUseCase } from './application/use-cases/get-history.use-case';
 
 import { ChatGateway } from './infrastructure/websockets/chat.gateway';
-import { ITicketRepository } from './domain/ports/ticket.repository.port';
-import { PrismaTicketRepository } from './infrastructure/persistence/repositories/prisma-ticket.repository';
+import { TicketModule } from '@/tickets/ticket.module';
 
 @Module({
   imports: [
+    forwardRef(() => TicketModule),
     MongooseModule.forFeature([
       { name: MessageSchema.name, schema: MessageSchemaFactory },
     ]),
   ],
   providers: [
-    {
-      provide: ITicketRepository,
-      useClass: PrismaTicketRepository,
-    },
     {
       provide: IMessageRepository,
       useClass: MongoMessageRepository,
