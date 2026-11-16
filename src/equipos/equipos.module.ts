@@ -14,6 +14,7 @@ import { AgregarComponenteEquipoUseCase } from './application/use-cases/agregar-
 import { ReemplazarComponenteEquipoUseCase } from './application/use-cases/reemplazar-componente-equipo.use-case';
 import { EquipoController } from './infrastructure/controllers/equipo.controller';
 import { GetEquipoOptionsUseCase } from './application/use-cases/get-equipo-options.use-case';
+import { GetEquipoEstadisticasUseCase } from './application/use-cases/get-equipo-estadisticas.use-case';
 
 @Module({
   imports: [CommonModule, AuthModule, ClientesModule, UsuariosModule],
@@ -22,6 +23,7 @@ import { GetEquipoOptionsUseCase } from './application/use-cases/get-equipo-opti
     GetEquiposUseCase,
     GetEquipoByIdUseCase,
     GetEquipoOptionsUseCase,
+    GetEquipoEstadisticasUseCase,
     CreateEquipoUseCase,
     UpdateEquipoUseCase,
     ToggleStatusEquipoUseCase,

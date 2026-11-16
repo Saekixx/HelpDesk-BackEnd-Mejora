@@ -37,8 +37,10 @@ import {
   ApiAgregarComponenteEquipoSwagger,
   ApiReemplazarComponenteEquipoSwagger,
   ApiGetEquipoOptionsSwagger,
+  ApiGetEquipoEstadisticasSwagger,
 } from '../docs/equipo.swagger';
 import { GetEquipoOptionsUseCase } from '@/equipos/application/use-cases/get-equipo-options.use-case';
+import { GetEquipoEstadisticasUseCase } from '@/equipos/application/use-cases/get-equipo-estadisticas.use-case';
 
 @ApiTags('Equipos')
 @ApiBearerAuth('access-token')
@@ -49,6 +51,7 @@ export class EquipoController {
     private readonly getEquiposUseCase: GetEquiposUseCase,
     private readonly getEquipoByIdUseCase: GetEquipoByIdUseCase,
     private readonly getEquipoOptionsUseCase: GetEquipoOptionsUseCase,
+    private readonly getEquipoEstadisticasUseCase: GetEquipoEstadisticasUseCase,
     private readonly createEquipoUseCase: CreateEquipoUseCase,
     private readonly updateEquipoUseCase: UpdateEquipoUseCase,
     private readonly toggleStatusEquipoUseCase: ToggleStatusEquipoUseCase,
@@ -75,6 +78,19 @@ export class EquipoController {
   async getEquipoOptions(@Query() query: GetEquipoOptionsQueryDto) {
     const data = await this.getEquipoOptionsUseCase.execute(query);
     return { message: 'Opciones de equipos obtenidas exitosamente', data };
+  }
+
+  // Debe declararse antes de `@Get(':id')`; si no, "estadisticas" se
+  // interpretaría como un id y `ParseIntPipe` respondería 400.
+  @Get('estadisticas')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
+  @ApiGetEquipoEstadisticasSwagger()
+  async getEstadisticas() {
+    const data = await this.getEquipoEstadisticasUseCase.execute();
+    return {
+      message: 'Estadísticas del inventario de equipos obtenidas exitosamente',
+      data,
+    };
   }
 
   @Get(':id')

@@ -151,3 +151,11 @@ export interface EquipoOptionItem {
   marca_modelo: string | null;
   estado: EstadoEquipo;
 }
+
+// KPI del inventario de equipos (GET /equipos/estadisticas). Solo cuenta equipos
+// activos; `asignados` + `sin_asignar` = `total_equipos`.
+export interface EquipoEstadisticas {
+  total_equipos: number; // Equipos activos registrados.
+  asignados: number; // Activos con un trabajador asignado.
+  sin_asignar: number; // Activos sin trabajador asignado.
+}

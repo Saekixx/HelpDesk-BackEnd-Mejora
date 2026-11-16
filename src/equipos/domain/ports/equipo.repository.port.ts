@@ -3,6 +3,7 @@ import {
   Equipo,
   EquipoCreadoItem,
   EquipoDetail,
+  EquipoEstadisticas,
   EquipoListadoItem,
   EquipoListItem,
   EquipoOptionItem,
@@ -42,6 +43,11 @@ export interface EquipoRepositoryPort {
   getEquipoOptions(
     filters?: GetEquipoOptionsFilterDto,
   ): Promise<EquipoOptionItem[]>;
+
+  // Conteos de equipos activos para las tarjetas KPI del inventario
+  // (GET /equipos/estadisticas): total, asignados y sin asignar. No recibe
+  // filtros.
+  getEstadisticas(): Promise<EquipoEstadisticas>;
 
   // create devuelve el equipo registrado con su ubicación y trabajador; update
   // devuelve el equipo con sus relaciones resumidas (cliente, sucursal, área y

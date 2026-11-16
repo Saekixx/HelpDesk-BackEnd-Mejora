@@ -9,6 +9,7 @@ import {
   Equipo,
   EquipoCreadoItem,
   EquipoDetail,
+  EquipoEstadisticas,
   EquipoListItem,
   EquipoOptionItem,
 } from '@/equipos/domain/entities/equipo.entity';
@@ -372,5 +373,21 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     });
 
     return equipos.map(EquipoMapper.toOptionItem);
+  }
+
+  // KPI del inventario: solo equipos activos. Las tres consultas son
+  // independientes y se ejecutan en paralelo.
+  async getEstadisticas(): Promise<EquipoEstadisticas> {
+    const [total_equipos, asignados, sin_asignar] = await Promise.all([
+      this.prisma.equipos.count({ where: { is_active: true } }),
+      this.prisma.equipos.count({
+        where: { is_active: true, id_trabajador: { not: null } },
+      }),
+      this.prisma.equipos.count({
+        where: { is_active: true, id_trabajador: null },
+      }),
+    ]);
+
+    return { total_equipos, asignados, sin_asignar };
   }
 }

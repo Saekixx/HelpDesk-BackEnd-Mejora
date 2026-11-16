@@ -12,6 +12,7 @@ import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
 import { EquipoDetailResponseDto } from '../dtos/equipo-detail-response.dto';
+import { EquipoEstadisticasResponseDto } from '../dtos/equipo-estadisticas-response.dto';
 
 const EQUIPO_EJEMPLO = {
   id_equipo: 1,
@@ -465,6 +466,55 @@ export function ApiGetEquipoOptionsSwagger() {
             'El estado debe ser uno de: Activo, En_Almacen, En_Mantenimiento, Retirado',
           ],
           data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso de lectura.',
+    }),
+  );
+}
+
+// Ejemplo de KPI: asignados + sin_asignar = total_equipos.
+const EQUIPO_ESTADISTICAS_EJEMPLO = {
+  total_equipos: 1294,
+  asignados: 1148,
+  sin_asignar: 146,
+};
+
+export function ApiGetEquipoEstadisticasSwagger() {
+  return applyDecorators(
+    ApiExtraModels(EquipoEstadisticasResponseDto),
+    ApiOperation({
+      summary: 'Obtener estadísticas del inventario de equipos',
+      description:
+        'Retorna el conteo global de equipos activos registrados (`total_equipos`), de los asignados a un trabajador (`asignados`) y de los que no tienen trabajador (`sin_asignar`); `asignados` + `sin_asignar` equivale a `total_equipos`. Los equipos dados de baja no se cuentan. No acepta filtros ni paginación. Alimenta las tarjetas KPI de la cabecera del módulo de Inventario de Equipos.',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description:
+        'Estadísticas del inventario de equipos obtenidas exitosamente.',
+      schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'number', example: HttpStatus.OK },
+          message: {
+            type: 'string',
+            example:
+              'Estadísticas del inventario de equipos obtenidas exitosamente',
+          },
+          data: { $ref: getSchemaPath(EquipoEstadisticasResponseDto) },
+        },
+        example: {
+          status: HttpStatus.OK,
+          message:
+            'Estadísticas del inventario de equipos obtenidas exitosamente',
+          data: EQUIPO_ESTADISTICAS_EJEMPLO,
         },
       },
     }),
