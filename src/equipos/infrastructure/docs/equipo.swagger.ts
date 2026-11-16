@@ -143,27 +143,85 @@ export function ApiFindEquipoByIdSwagger() {
   );
 }
 
+// Bodies de ejemplo de POST /equipos.
+const CREAR_EQUIPO_CON_TRABAJADOR_EJEMPLO = {
+  nombre_equipo: 'PC-DELL-90',
+  num_serie: 'SN-2026-00123',
+  tipo: 'Desktop',
+  marca_modelo: 'Dell Latitude 5540',
+  id_cliente: 1,
+  id_sucursal: 1,
+  id_area: 1,
+  id_trabajador: 5,
+};
+const CREAR_EQUIPO_SIN_TRABAJADOR_EJEMPLO = {
+  nombre_equipo: 'LAP-HP-12',
+  num_serie: 'SN-2026-00456',
+  tipo: 'Laptop',
+  marca_modelo: 'HP ProBook 450 G9',
+  id_cliente: 1,
+  id_sucursal: 1,
+  id_area: 1,
+};
+
+// Equipo recién registrado (POST /equipos). Sin trabajador: `trabajador` es
+// null y `estado` es "En_Almacen".
+const EQUIPO_CREADO_EJEMPLO = {
+  id_equipo: 3,
+  nombre_equipo: 'PC-DELL-90',
+  tipo: 'Desktop',
+  marca_modelo: 'Dell Latitude 5540',
+  num_serie: 'SN-2026-00123',
+  estado: 'Activo',
+  ult_revision: null,
+  rev_programada: null,
+  cliente: { id_cliente: 1, nombre_principal: 'Innovación Global Tech' },
+  sucursal: { id_sucursal: 1, nombre_sucursal: 'Sucursal Centro Civico' },
+  area: { id_area: 1, nombre_area: 'Sistemas y TI' },
+  trabajador: {
+    id_usuario: 5,
+    nombre: 'María',
+    apellido: 'Vargas',
+    correo: 'maria.sucursal2@empresa1.com',
+  },
+  created_at: '2026-11-16T19:30:00.000Z',
+};
+
 export function ApiCreateEquipoSwagger() {
   return applyDecorators(
     ApiOperation({
       summary: 'Registrar un equipo',
       description:
-        'Registra un nuevo equipo, opcionalmente asociado a un cliente, sucursal, área y trabajador.',
+        'Registra un equipo con su ubicación (cliente, sucursal y área) y, opcionalmente, un trabajador asignado. Valida que la sucursal pertenezca al cliente, el área a la sucursal y el trabajador al cliente. El estado se asigna automáticamente: `Activo` si se envía `id_trabajador`, `En_Almacen` si no (en ese caso `trabajador` es null en la respuesta).',
     }),
-    ApiBody({ type: CreateEquipoHttpDto }),
+    ApiBody({
+      type: CreateEquipoHttpDto,
+      examples: {
+        conTrabajador: {
+          summary: 'Con trabajador asignado (estado Activo)',
+          value: CREAR_EQUIPO_CON_TRABAJADOR_EJEMPLO,
+        },
+        sinTrabajador: {
+          summary: 'Sin trabajador (estado En_Almacen)',
+          value: CREAR_EQUIPO_SIN_TRABAJADOR_EJEMPLO,
+        },
+      },
+    }),
     ApiResponse({
       status: HttpStatus.CREATED,
       description: 'Equipo creado exitosamente.',
       schema: {
         example: {
+          status: HttpStatus.CREATED,
           message: 'Equipo creado exitosamente',
-          data: { ...EQUIPO_EJEMPLO, ...RELACIONES_EJEMPLO },
+          data: EQUIPO_CREADO_EJEMPLO,
         },
       },
     }),
     ApiResponse({
       status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
+      description:
+        'Datos inválidos o jerarquía incorrecta: la sucursal no pertenece al cliente, el área no pertenece a la sucursal o el trabajador no pertenece al cliente.',
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,
@@ -174,8 +232,13 @@ export function ApiCreateEquipoSwagger() {
       description: 'El rol del usuario no tiene permiso administrativo.',
     }),
     ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description:
+        'El cliente, la sucursal, el área o el trabajador no existen o están inactivos.',
+    }),
+    ApiResponse({
       status: HttpStatus.CONFLICT,
-      description: 'Ya existe un equipo con ese número de serie.',
+      description: 'El número de serie ya está registrado en otro equipo.',
     }),
   );
 }

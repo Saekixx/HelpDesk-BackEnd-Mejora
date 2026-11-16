@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { CommonModule } from '@/common/common.module';
 import { AuthModule } from '@/auth/auth.module';
+import { ClientesModule } from '@/clientes/clientes.module';
+import { UsuariosModule } from '@/usuarios/users.module';
 import { EQUIPO_REPOSITORY } from './domain/ports/equipo.repository.port';
 import { EquipoPrismaRepository } from './infrastructure/adapters/persistence/equipo-prisma.repository';
 import { GetEquiposUseCase } from './application/use-cases/get-equipos.use-case';
@@ -14,7 +16,7 @@ import { EquipoController } from './infrastructure/controllers/equipo.controller
 import { GetEquipoOptionsUseCase } from './application/use-cases/get-equipo-options.use-case';
 
 @Module({
-  imports: [CommonModule, AuthModule],
+  imports: [CommonModule, AuthModule, ClientesModule, UsuariosModule],
   controllers: [EquipoController],
   providers: [
     GetEquiposUseCase,

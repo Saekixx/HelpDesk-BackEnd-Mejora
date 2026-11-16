@@ -2,6 +2,7 @@ import { equipos as PrismaEquipo, equipos_estado } from '@prisma/client';
 import {
   ComponenteHardware,
   Equipo,
+  EquipoCreadoItem,
   EquipoDetail,
   EquipoListadoItem,
   EquipoListItem,
@@ -62,6 +63,25 @@ export class EquipoMapper {
       createdAt: entity.created_at ?? undefined,
       updatedAt: entity.updated_at ?? undefined,
     });
+  }
+
+  // Registro (POST /equipos): solo los campos del contrato de creación.
+  static toCreadoItem(entity: PrismaEquipoListado): EquipoCreadoItem {
+    return {
+      id_equipo: entity.id_equipo,
+      nombre_equipo: entity.nombre_equipo,
+      tipo: entity.tipo,
+      marca_modelo: entity.marca_modelo,
+      num_serie: entity.num_serie,
+      estado: ESTADO_EQUIPO[entity.estado ?? 'Activo'],
+      ult_revision: entity.ult_revision,
+      rev_programada: entity.rev_programada,
+      cliente: entity.clientes,
+      sucursal: entity.sucursales,
+      area: entity.area,
+      trabajador: entity.usuarios,
+      created_at: entity.created_at,
+    };
   }
 
   // Listado (GET /equipos): relaciones con sus campos completos.

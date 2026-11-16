@@ -78,6 +78,25 @@ export interface EquipoListadoItem extends Equipo {
   } | null;
 }
 
+// Respuesta de POST /equipos: el equipo recién registrado con su ubicación y
+// trabajador asignado, sin campos internos (is_active) ni IDs sueltos.
+export interface EquipoCreadoItem {
+  id_equipo: number;
+  nombre_equipo: string | null;
+  tipo: string;
+  marca_modelo: string | null;
+  num_serie: string | null;
+  estado: EstadoEquipo;
+  ult_revision: Date | null;
+  rev_programada: Date | null;
+  cliente: EquipoListadoItem['cliente'];
+  sucursal: EquipoListadoItem['sucursal'];
+  area: EquipoListadoItem['area'];
+  // null si el equipo se registró sin trabajador (estado En_Almacen).
+  trabajador: EquipoListadoItem['trabajador'];
+  created_at: Date | null;
+}
+
 export interface EquipoListItem extends Equipo {
   cliente: RelacionSummary | null;
   sucursal: RelacionSummary | null;

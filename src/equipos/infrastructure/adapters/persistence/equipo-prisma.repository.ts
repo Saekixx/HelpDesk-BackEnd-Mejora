@@ -7,12 +7,13 @@ import {
 import {
   ComponenteHardware,
   Equipo,
+  EquipoCreadoItem,
   EquipoDetail,
   EquipoListItem,
 } from '@/equipos/domain/entities/equipo.entity';
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
 import { AsignacionEquipo } from '@/equipos/domain/enums/asignacion-equipo.enum';
-import { CreateEquipoDto } from '@/equipos/domain/dto/create-equipo.dto';
+import { CreateEquipoData } from '@/equipos/domain/dto/create-equipo-data.dto';
 import { UpdateEquipoDto } from '@/equipos/domain/dto/update-equipo.dto';
 import { AgregarComponenteDto } from '@/equipos/domain/dto/agregar-componente.dto';
 import { ReemplazarComponenteDto } from '@/equipos/domain/dto/reemplazar-componente.dto';
@@ -53,9 +54,6 @@ const INCLUDE_DETALLE = {
     },
   },
 } satisfies Prisma.equiposInclude;
-
-const isValidId = (id?: number | null): id is number =>
-  typeof id === 'number' && Number.isInteger(id) && id > 0;
 
 export type PrismaEquipoDetalleCompleto = Prisma.equiposGetPayload<{
   include: typeof INCLUDE_DETALLE;
@@ -144,32 +142,23 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     return EquipoMapper.toDetail(entity);
   }
 
-  async create(data: CreateEquipoDto): Promise<EquipoListItem> {
+  async create(data: CreateEquipoData): Promise<EquipoCreadoItem> {
     const created = await this.prisma.equipos.create({
       data: {
-        tipo: data.tipo,
-        marca_modelo: (data as any).marca_modelo ?? (data as any).marca,
         nombre_equipo: data.nombre_equipo,
         num_serie: data.num_serie,
-        ult_revision: data.ult_revision,
-        rev_programada: data.rev_programada,
-        is_active: data.is_active ?? true,
-        ...(isValidId(data.id_trabajador) && {
-          usuarios: { connect: { id_usuario: data.id_trabajador } },
-        }),
-        ...(isValidId(data.id_cliente) && {
-          clientes: { connect: { id_cliente: data.id_cliente } },
-        }),
-        ...(isValidId(data.id_sucursal) && {
-          sucursales: { connect: { id_sucursal: data.id_sucursal } },
-        }),
-        ...(isValidId(data.id_area) && {
-          area: { connect: { id_area: data.id_area } },
-        }),
+        tipo: data.tipo,
+        marca_modelo: data.marca_modelo,
+        estado: data.estado,
+        id_cliente: data.id_cliente,
+        id_sucursal: data.id_sucursal,
+        id_area: data.id_area,
+        id_trabajador: data.id_trabajador ?? null,
+        is_active: data.is_active,
       },
       include: INCLUDE_RESUMEN,
     });
-    return EquipoMapper.toListItem(created as any);
+    return EquipoMapper.toCreadoItem(created);
   }
 
   async update(id: number, data: UpdateEquipoDto): Promise<EquipoListItem> {

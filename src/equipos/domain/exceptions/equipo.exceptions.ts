@@ -9,7 +9,7 @@ export class EquipoNotFoundException extends DomainException {
 
 export class EquipoAlreadyExistsException extends DomainException {
   constructor() {
-    super('Ya existe un equipo registrado con ese número de serie', 409);
+    super('El número de serie ya está registrado en otro equipo', 409);
   }
 }
 
@@ -25,5 +25,47 @@ export class ComponenteNoInstaladoException extends DomainException {
       'El componente saliente no está instalado actualmente en este equipo',
       404,
     );
+  }
+}
+
+export class ClienteEquipoNoDisponibleException extends DomainException {
+  constructor() {
+    super('El cliente seleccionado no existe o está inactivo', 404);
+  }
+}
+
+export class SucursalEquipoNoDisponibleException extends DomainException {
+  constructor() {
+    super('La sucursal seleccionada no existe o está inactiva', 404);
+  }
+}
+
+export class AreaEquipoNoDisponibleException extends DomainException {
+  constructor() {
+    super('El área seleccionada no existe o está inactiva', 404);
+  }
+}
+
+export class TrabajadorEquipoNoDisponibleException extends DomainException {
+  constructor() {
+    super('El trabajador asignado no existe o está inactivo', 404);
+  }
+}
+
+export class SucursalNoPerteneceAClienteException extends DomainException {
+  constructor() {
+    super('La sucursal seleccionada no pertenece al cliente indicado', 400);
+  }
+}
+
+export class AreaNoPerteneceASucursalException extends DomainException {
+  constructor() {
+    super('El área seleccionada no pertenece a la sucursal indicada', 400);
+  }
+}
+
+export class TrabajadorNoPerteneceAClienteException extends DomainException {
+  constructor() {
+    super('El trabajador seleccionado no pertenece al cliente indicado', 400);
   }
 }

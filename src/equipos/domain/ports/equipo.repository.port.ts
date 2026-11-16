@@ -1,12 +1,13 @@
 import {
   ComponenteHardware,
   Equipo,
+  EquipoCreadoItem,
   EquipoDetail,
   EquipoListadoItem,
   EquipoListItem,
 } from '../entities/equipo.entity';
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
-import { CreateEquipoDto } from '../dto/create-equipo.dto';
+import { CreateEquipoData } from '../dto/create-equipo-data.dto';
 import { UpdateEquipoDto } from '../dto/update-equipo.dto';
 import { AgregarComponenteDto } from '../dto/agregar-componente.dto';
 import { ReemplazarComponenteDto } from '../dto/reemplazar-componente.dto';
@@ -38,9 +39,10 @@ export interface EquipoRepositoryPort {
     id_area?: number,
   ): Promise<{ id_equipo: number; nombre_equipo: string }[]>;
 
-  // create y update devuelven el equipo con sus relaciones resumidas (cliente,
-  // sucursal, área y trabajador asignado), igual que el listado.
-  create(data: CreateEquipoDto): Promise<EquipoListItem>;
+  // create devuelve el equipo registrado con su ubicación y trabajador; update
+  // devuelve el equipo con sus relaciones resumidas (cliente, sucursal, área y
+  // trabajador asignado).
+  create(data: CreateEquipoData): Promise<EquipoCreadoItem>;
 
   update(id: number, data: UpdateEquipoDto): Promise<EquipoListItem>;
 
