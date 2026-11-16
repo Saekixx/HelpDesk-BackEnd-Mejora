@@ -140,3 +140,14 @@ export interface EquipoDetail extends EquipoListItem {
   };
   software: SoftwareInstalado[];
 }
+
+// Item ligero de GET /equipos/options: lo mínimo para identificar un equipo en
+// selectores y desplegables.
+export interface EquipoOptionItem {
+  id_equipo: number;
+  nombre_equipo: string | null;
+  num_serie: string | null;
+  tipo: string;
+  marca_modelo: string | null;
+  estado: EstadoEquipo;
+}

@@ -5,8 +5,10 @@ import {
   EquipoDetail,
   EquipoListadoItem,
   EquipoListItem,
+  EquipoOptionItem,
 } from '../entities/equipo.entity';
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
+import { GetEquipoOptionsFilterDto } from '../dto/get-equipo-options-filter.dto';
 import { CreateEquipoData } from '../dto/create-equipo-data.dto';
 import { UpdateEquipoDto } from '../dto/update-equipo.dto';
 import { AgregarComponenteDto } from '../dto/agregar-componente.dto';
@@ -34,10 +36,12 @@ export interface EquipoRepositoryPort {
   // instalado.
   findDetailById(id: number): Promise<EquipoDetail | null>;
 
-  // Devuelve un objeto con las opciones de búsqueda para el listado de equipos
+  // Opciones ligeras para selectores (GET /equipos/options): solo equipos
+  // activos, con filtros opcionales por cliente, sucursal, área, estado y
+  // búsqueda parcial, ordenados por nombre.
   getEquipoOptions(
-    id_area?: number,
-  ): Promise<{ id_equipo: number; nombre_equipo: string }[]>;
+    filters?: GetEquipoOptionsFilterDto,
+  ): Promise<EquipoOptionItem[]>;
 
   // create devuelve el equipo registrado con su ubicación y trabajador; update
   // devuelve el equipo con sus relaciones resumidas (cliente, sucursal, área y

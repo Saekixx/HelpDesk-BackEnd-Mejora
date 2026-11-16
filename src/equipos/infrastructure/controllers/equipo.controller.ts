@@ -19,6 +19,7 @@ import { ToggleStatusEquipoUseCase } from '@/equipos/application/use-cases/toggl
 import { AgregarComponenteEquipoUseCase } from '@/equipos/application/use-cases/agregar-componente-equipo.use-case';
 import { ReemplazarComponenteEquipoUseCase } from '@/equipos/application/use-cases/reemplazar-componente-equipo.use-case';
 import { GetEquiposQueryDto } from '../dtos/get-equipos-query.dto';
+import { GetEquipoOptionsQueryDto } from '../dtos/get-equipo-options-query.dto';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
@@ -66,11 +67,13 @@ export class EquipoController {
     };
   }
 
-  @Get('/options/:id_area')
+  // Debe declararse antes de `@Get(':id')`; si no, "options" se interpretaría
+  // como un id.
+  @Get('options')
   @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiGetEquipoOptionsSwagger()
-  async getEquipoOptions(@Param('id_area', ParseIntPipe) id_area: number) {
-    const data = await this.getEquipoOptionsUseCase.execute(id_area);
+  async getEquipoOptions(@Query() query: GetEquipoOptionsQueryDto) {
+    const data = await this.getEquipoOptionsUseCase.execute(query);
     return { message: 'Opciones de equipos obtenidas exitosamente', data };
   }
 

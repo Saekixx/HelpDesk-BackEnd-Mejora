@@ -10,8 +10,10 @@ import {
   EquipoCreadoItem,
   EquipoDetail,
   EquipoListItem,
+  EquipoOptionItem,
 } from '@/equipos/domain/entities/equipo.entity';
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
+import { GetEquipoOptionsFilterDto } from '@/equipos/domain/dto/get-equipo-options-filter.dto';
 import { AsignacionEquipo } from '@/equipos/domain/enums/asignacion-equipo.enum';
 import { CreateEquipoData } from '@/equipos/domain/dto/create-equipo-data.dto';
 import { UpdateEquipoDto } from '@/equipos/domain/dto/update-equipo.dto';
@@ -331,16 +333,44 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     });
   }
 
+  // Opciones para selectores: solo equipos activos (los dados de baja no se
+  // listan), filtros opcionales combinables y solo las columnas necesarias.
+  // En MySQL `contains` ya ignora mayúsculas según la collation.
   async getEquipoOptions(
-    id_area: number,
-  ): Promise<{ id_equipo: number; nombre_equipo: string }[]> {
+    filters: GetEquipoOptionsFilterDto = {},
+  ): Promise<EquipoOptionItem[]> {
+    const { id_cliente, id_sucursal, id_area, estado, search } = filters;
+
+    const where: Prisma.equiposWhereInput = {
+      is_active: true,
+      ...(id_cliente !== undefined && { id_cliente }),
+      ...(id_sucursal !== undefined && { id_sucursal }),
+      ...(id_area !== undefined && { id_area }),
+      ...(estado && { estado }),
+      ...(search && {
+        OR: [
+          { nombre_equipo: { contains: search } },
+          { num_serie: { contains: search } },
+          { marca_modelo: { contains: search } },
+        ],
+      }),
+    };
+
     const equipos = await this.prisma.equipos.findMany({
-      where: { id_area: id_area },
-      select: { id_equipo: true, nombre_equipo: true },
+      where,
+      select: {
+        id_equipo: true,
+        nombre_equipo: true,
+        num_serie: true,
+        tipo: true,
+        marca_modelo: true,
+        estado: true,
+      },
+      // id_equipo desempata nombres repetidos (o sin nombre) para que el
+      // orden sea estable.
+      orderBy: [{ nombre_equipo: 'asc' }, { id_equipo: 'asc' }],
     });
-    return equipos.map((equipo) => ({
-      id_equipo: equipo.id_equipo,
-      nombre_equipo: equipo.nombre_equipo ?? '',
-    }));
+
+    return equipos.map(EquipoMapper.toOptionItem);
   }
 }

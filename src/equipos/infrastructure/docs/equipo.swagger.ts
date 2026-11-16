@@ -406,25 +406,75 @@ export function ApiReemplazarComponenteEquipoSwagger() {
   );
 }
 
+// Items de ejemplo de GET /equipos/options (EquipoOptionItem). Los campos
+// opcionales pueden venir en null (ej. un equipo sin nombre ni número de serie).
+const EQUIPO_OPTIONS_EJEMPLO = [
+  {
+    id_equipo: 1,
+    nombre_equipo: 'PC-Contabilidad-01',
+    num_serie: 'SN-2026-00123',
+    tipo: 'Laptop',
+    marca_modelo: 'Dell Latitude 5420',
+    estado: 'Activo',
+  },
+  {
+    id_equipo: 2,
+    nombre_equipo: 'Laptop-Soporte-02',
+    num_serie: 'SN-2026-00456',
+    tipo: 'Laptop',
+    marca_modelo: 'Lenovo ThinkPad T14',
+    estado: 'En_Mantenimiento',
+  },
+  {
+    id_equipo: 3,
+    nombre_equipo: null,
+    num_serie: null,
+    tipo: 'Servidor',
+    marca_modelo: null,
+    estado: 'En_Almacen',
+  },
+];
+
 export function ApiGetEquipoOptionsSwagger() {
   return applyDecorators(
     ApiOperation({
-      summary: 'Obtener opciones de equipos para filtros',
+      summary: 'Obtener opciones de equipos para selectores',
       description:
-        'Devuelve un listado de equipos con id y nombre, opcionalmente filtrado por área. Este endpoint se utiliza para alimentar los selectores de búsqueda en el frontend.',
+        'Devuelve un listado ligero (sin paginación) de los equipos activos, ordenado por nombre, para alimentar desplegables y selectores en cascada del frontend. Todos los filtros son opcionales y combinables: `id_cliente`, `id_sucursal`, `id_area`, `estado` (Activo | En_Almacen | En_Mantenimiento | Retirado; acepta también la etiqueta, ej. "En Almacén") y `search` (búsqueda parcial por nombre del equipo, número de serie o marca/modelo). Los filtros vacíos ("", "null" o "undefined") se ignoran. Los equipos dados de baja no se listan.',
     }),
     ApiResponse({
       status: HttpStatus.OK,
-      description: 'Opciones de equipos obtenidas exitosamente.',
+      description:
+        'Opciones de equipos obtenidas exitosamente. Retorna un arreglo vacío si ningún equipo coincide con los filtros.',
       schema: {
         example: {
+          status: HttpStatus.OK,
           message: 'Opciones de equipos obtenidas exitosamente',
-          data: [
-            { id_equipo: 1, nombre_equipo: 'PC-Contabilidad-01' },
-            { id_equipo: 2, nombre_equipo: 'Laptop-Soporte-02' },
-          ],
+          data: EQUIPO_OPTIONS_EJEMPLO,
         },
       },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Algún filtro es inválido (id no entero positivo, estado desconocido o búsqueda demasiado larga).',
+      schema: {
+        example: {
+          status: HttpStatus.BAD_REQUEST,
+          message: [
+            'El estado debe ser uno de: Activo, En_Almacen, En_Mantenimiento, Retirado',
+          ],
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: 'El rol del usuario no tiene permiso de lectura.',
     }),
   );
 }

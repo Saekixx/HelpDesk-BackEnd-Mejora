@@ -6,6 +6,7 @@ import {
   EquipoDetail,
   EquipoListadoItem,
   EquipoListItem,
+  EquipoOptionItem,
   RelacionSummary,
   SoftwareInstalado,
 } from '@/equipos/domain/entities/equipo.entity';
@@ -81,6 +82,29 @@ export class EquipoMapper {
       area: entity.area,
       trabajador: entity.usuarios,
       created_at: entity.created_at,
+    };
+  }
+
+  // Opciones (GET /equipos/options): solo los campos que identifican al equipo.
+  static toOptionItem(
+    entity: Pick<
+      PrismaEquipo,
+      | 'id_equipo'
+      | 'nombre_equipo'
+      | 'num_serie'
+      | 'tipo'
+      | 'marca_modelo'
+      | 'estado'
+    >,
+  ): EquipoOptionItem {
+    return {
+      id_equipo: entity.id_equipo,
+      nombre_equipo: entity.nombre_equipo,
+      num_serie: entity.num_serie,
+      tipo: entity.tipo,
+      marca_modelo: entity.marca_modelo,
+      // La columna es nullable con default "Activo".
+      estado: ESTADO_EQUIPO[entity.estado ?? 'Activo'],
     };
   }
 
