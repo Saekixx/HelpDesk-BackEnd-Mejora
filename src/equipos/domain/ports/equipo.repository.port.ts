@@ -47,13 +47,24 @@ export interface EquipoRepositoryPort {
   // filtros.
   getEstadisticas(): Promise<EquipoEstadisticas>;
 
-  // create devuelve el equipo registrado con su ubicación y trabajador; update
-  // devuelve el equipo con sus relaciones resumidas (cliente, sucursal, área y
-  // trabajador asignado).
+  // Devuelve el equipo registrado con su ubicación y trabajador.
   create(data: CreateEquipoData): Promise<EquipoCreadoItem>;
 
   // Activa/desactiva un equipo (soft toggle sobre is_active)
   toggleStatus(id: number): Promise<Equipo>;
+
+  // Libera el equipo: desvincula al trabajador custodio (id_trabajador = null)
+  // y lo deja "En_Almacen". Lanza EquipoNotFoundException si el equipo no
+  // existe. Solo persiste el cambio: las reglas de negocio (p. ej. qué estados
+  // admiten liberar) se validan en el caso de uso.
+  release(id: number): Promise<void>;
+
+  // Asigna el equipo a un trabajador (id_trabajador) y lo deja "Activo". Lanza
+  // EquipoNotFoundException si el equipo no existe y
+  // TrabajadorEquipoNoDisponibleException si el trabajador no existe. Las
+  // demás reglas (trabajador activo y del mismo cliente, estado del equipo) se
+  // validan en el caso de uso.
+  assign(id: number, idTrabajador: number): Promise<void>;
 
   existsByNumSerie(num_serie: string): Promise<boolean>;
 

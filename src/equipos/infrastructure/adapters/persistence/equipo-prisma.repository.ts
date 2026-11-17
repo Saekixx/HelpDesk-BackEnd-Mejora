@@ -15,6 +15,7 @@ import {
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
 import { GetEquipoOptionsFilterDto } from '@/equipos/domain/dto/get-equipo-options-filter.dto';
 import { AsignacionEquipo } from '@/equipos/domain/enums/asignacion-equipo.enum';
+import { EstadoEquipo } from '@/equipos/domain/enums/estado-equipo.enum';
 import { CreateEquipoData } from '@/equipos/domain/dto/create-equipo-data.dto';
 import { AgregarComponenteDto } from '@/equipos/domain/dto/agregar-componente.dto';
 import { ReemplazarComponenteDto } from '@/equipos/domain/dto/reemplazar-componente.dto';
@@ -22,6 +23,7 @@ import {
   ComponenteHardwareNotFoundException,
   ComponenteNoInstaladoException,
   EquipoNotFoundException,
+  TrabajadorEquipoNoDisponibleException,
 } from '@/equipos/domain/exceptions/equipo.exceptions';
 import { EquipoMapper } from './mappers/equipo.mapper';
 import { Prisma } from '@prisma/client';
@@ -191,6 +193,54 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       data: { is_active: !current.is_active },
     });
     return EquipoMapper.toDomain(updated);
+  }
+
+  // Libera el equipo: sin custodio y en almacén.
+  async release(id: number): Promise<void> {
+    await this.updateAsignacion(id, {
+      id_trabajador: null,
+      estado: EstadoEquipo.EN_ALMACEN,
+    });
+  }
+
+  // Asigna el equipo al trabajador indicado y lo deja activo.
+  async assign(id: number, idTrabajador: number): Promise<void> {
+    await this.updateAsignacion(id, {
+      id_trabajador: idTrabajador,
+      estado: EstadoEquipo.ACTIVO,
+    });
+  }
+
+  // Un único UPDATE (sin lectura previa, así no hay ventana de carrera).
+  // `updated_at` se fija a mano: la columna no se actualiza sola.
+  private async updateAsignacion(
+    id: number,
+    cambios: { id_trabajador: number | null; estado: EstadoEquipo },
+  ): Promise<void> {
+    try {
+      await this.prisma.equipos.update({
+        where: { id_equipo: id },
+        data: { ...cambios, updated_at: new Date() },
+      });
+    } catch (error) {
+      throw this.translateAsignacionError(error);
+    }
+  }
+
+  // - P2025: no existe el equipo a actualizar.
+  // - P2003: viola una clave foránea; aquí solo puede ser el trabajador
+  //   (fk_eqipos_trabajador), que no existe.
+  private translateAsignacionError(error: unknown): unknown {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') return new EquipoNotFoundException();
+      if (
+        error.code === 'P2003' &&
+        String(error.meta?.field_name ?? '').includes('trabajador')
+      ) {
+        return new TrabajadorEquipoNoDisponibleException();
+      }
+    }
+    return error;
   }
 
   async existsByNumSerie(num_serie: string): Promise<boolean> {
