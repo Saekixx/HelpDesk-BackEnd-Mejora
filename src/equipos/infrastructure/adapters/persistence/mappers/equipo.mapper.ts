@@ -7,9 +7,7 @@ import {
   EquipoCreadoItem,
   EquipoDetail,
   EquipoListadoItem,
-  EquipoListItem,
   EquipoOptionItem,
-  RelacionSummary,
   SoftwareAsignado,
 } from '@/equipos/domain/entities/equipo.entity';
 import { EstadoEquipo } from '@/equipos/domain/enums/estado-equipo.enum';
@@ -22,13 +20,6 @@ import {
 // Movimiento de hardware con su componente y técnico (ver INCLUDE_DETALLE).
 type PrismaRegistroHardware =
   PrismaEquipoDetalleCompleto['registro_hardware'][number];
-
-type PrismaEquipoConDetalle = PrismaEquipo & {
-  clientes: { id_cliente: number; nombre_principal: string } | null;
-  sucursales: { id_sucursal: number; nombre_sucursal: string } | null;
-  area: { id_area: number; nombre_area: string } | null;
-  usuarios: { id_usuario: number; nombre: string; apellido: string } | null;
-};
 
 // Enum de Prisma -> enum de dominio (mismos valores; el Record garantiza que
 // no quede ningún estado sin mapear).
@@ -124,38 +115,6 @@ export class EquipoMapper {
       sucursal: entity.sucursales,
       area: entity.area,
       trabajador: entity.usuarios,
-    };
-  }
-
-  static toListItem(entity: PrismaEquipoConDetalle): EquipoListItem {
-    const equipo = EquipoMapper.toDomain(entity);
-
-    const toSummary = (id?: number, nombre?: string): RelacionSummary | null =>
-      id !== undefined && nombre !== undefined ? { id, nombre } : null;
-
-    return {
-      ...equipo,
-      cliente: entity.clientes
-        ? toSummary(
-            entity.clientes.id_cliente,
-            entity.clientes.nombre_principal,
-          )
-        : null,
-      sucursal: entity.sucursales
-        ? toSummary(
-            entity.sucursales.id_sucursal,
-            entity.sucursales.nombre_sucursal,
-          )
-        : null,
-      area: entity.area
-        ? toSummary(entity.area.id_area, entity.area.nombre_area)
-        : null,
-      trabajador: entity.usuarios
-        ? toSummary(
-            entity.usuarios.id_usuario,
-            `${entity.usuarios.nombre} ${entity.usuarios.apellido}`,
-          )
-        : null,
     };
   }
 

@@ -55,13 +55,6 @@ export class Equipo {
   }
 }
 
-// Referencias resumidas de las entidades relacionadas, para uso en listados
-// (findAll) sin tener que cargar el objeto completo.
-export interface RelacionSummary {
-  id: number;
-  nombre: string;
-}
-
 // Item del listado paginado (GET /equipos): las relaciones llegan con sus
 // campos completos para que el frontend no tenga que consultarlas aparte.
 export interface EquipoListadoItem extends Equipo {
@@ -96,13 +89,6 @@ export interface EquipoCreadoItem {
   // null si el equipo se registró sin trabajador (estado En_Almacen).
   trabajador: EquipoListadoItem['trabajador'];
   created_at: Date | null;
-}
-
-export interface EquipoListItem extends Equipo {
-  cliente: RelacionSummary | null;
-  sucursal: RelacionSummary | null;
-  area: RelacionSummary | null;
-  trabajador: RelacionSummary | null;
 }
 
 export interface ComponenteHardware {

@@ -6,7 +6,6 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -14,14 +13,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetEquiposUseCase } from '@/equipos/application/use-cases/get-equipos.use-case';
 import { GetEquipoByIdUseCase } from '@/equipos/application/use-cases/get-equipo-by-id.use-case';
 import { CreateEquipoUseCase } from '@/equipos/application/use-cases/create-equipo.use-case';
-import { UpdateEquipoUseCase } from '@/equipos/application/use-cases/update-equipo.use-case';
 import { ToggleStatusEquipoUseCase } from '@/equipos/application/use-cases/toggle-status-equipo.use-case';
 import { AgregarComponenteEquipoUseCase } from '@/equipos/application/use-cases/agregar-componente-equipo.use-case';
 import { ReemplazarComponenteEquipoUseCase } from '@/equipos/application/use-cases/reemplazar-componente-equipo.use-case';
 import { GetEquiposQueryDto } from '../dtos/get-equipos-query.dto';
 import { GetEquipoOptionsQueryDto } from '../dtos/get-equipo-options-query.dto';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
-import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
 import {
@@ -36,7 +33,6 @@ import {
   ApiFindAllEquiposSwagger,
   ApiFindEquipoByIdSwagger,
   ApiCreateEquipoSwagger,
-  ApiUpdateEquipoSwagger,
   ApiToggleEquipoStatusSwagger,
   ApiAgregarComponenteEquipoSwagger,
   ApiReemplazarComponenteEquipoSwagger,
@@ -57,7 +53,6 @@ export class EquipoController {
     private readonly getEquipoOptionsUseCase: GetEquipoOptionsUseCase,
     private readonly getEquipoEstadisticasUseCase: GetEquipoEstadisticasUseCase,
     private readonly createEquipoUseCase: CreateEquipoUseCase,
-    private readonly updateEquipoUseCase: UpdateEquipoUseCase,
     private readonly toggleStatusEquipoUseCase: ToggleStatusEquipoUseCase,
     private readonly agregarComponenteEquipoUseCase: AgregarComponenteEquipoUseCase,
     private readonly reemplazarComponenteEquipoUseCase: ReemplazarComponenteEquipoUseCase,
@@ -114,17 +109,6 @@ export class EquipoController {
   async create(@Body() dto: CreateEquipoHttpDto) {
     const data = await this.createEquipoUseCase.execute(dto);
     return { message: 'Equipo creado exitosamente', data };
-  }
-
-  @Put(':id')
-  @Roles(RolEnum.ADMINISTRADOR)
-  @ApiUpdateEquipoSwagger()
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateEquipoHttpDto,
-  ) {
-    const data = await this.updateEquipoUseCase.execute(id, dto);
-    return { message: 'Equipo actualizado exitosamente', data };
   }
 
   @Patch(':id/toggle-status')

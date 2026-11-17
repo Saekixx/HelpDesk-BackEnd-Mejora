@@ -10,14 +10,12 @@ import {
   EquipoCreadoItem,
   EquipoDetail,
   EquipoEstadisticas,
-  EquipoListItem,
   EquipoOptionItem,
 } from '@/equipos/domain/entities/equipo.entity';
 import { GetEquiposFilterDto } from '@/equipos/domain/dto/get-equipos-filter.dto';
 import { GetEquipoOptionsFilterDto } from '@/equipos/domain/dto/get-equipo-options-filter.dto';
 import { AsignacionEquipo } from '@/equipos/domain/enums/asignacion-equipo.enum';
 import { CreateEquipoData } from '@/equipos/domain/dto/create-equipo-data.dto';
-import { UpdateEquipoDto } from '@/equipos/domain/dto/update-equipo.dto';
 import { AgregarComponenteDto } from '@/equipos/domain/dto/agregar-componente.dto';
 import { ReemplazarComponenteDto } from '@/equipos/domain/dto/reemplazar-componente.dto';
 import {
@@ -180,56 +178,6 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       include: INCLUDE_RESUMEN,
     });
     return EquipoMapper.toCreadoItem(created);
-  }
-
-  async update(id: number, data: UpdateEquipoDto): Promise<EquipoListItem> {
-    const exists = await this.prisma.equipos.findUnique({
-      where: { id_equipo: id },
-    });
-    if (!exists) throw new EquipoNotFoundException();
-
-    const updated = await this.prisma.equipos.update({
-      where: { id_equipo: id },
-      data: {
-        ...(data.tipo !== undefined && { tipo: data.tipo }),
-        ...(((data as any).marca_modelo !== undefined ||
-          (data as any).marca !== undefined) && {
-          marca_modelo: (data as any).marca_modelo ?? (data as any).marca,
-        }),
-        ...(data.nombre_equipo !== undefined && {
-          nombre_equipo: data.nombre_equipo,
-        }),
-        ...(data.num_serie !== undefined && { num_serie: data.num_serie }),
-        ...(data.ult_revision !== undefined && {
-          ult_revision: data.ult_revision,
-        }),
-        ...(data.rev_programada !== undefined && {
-          rev_programada: data.rev_programada,
-        }),
-        ...(data.id_trabajador !== undefined && {
-          usuarios: data.id_trabajador
-            ? { connect: { id_usuario: data.id_trabajador } }
-            : { disconnect: true },
-        }),
-        ...(data.id_cliente !== undefined && {
-          clientes: data.id_cliente
-            ? { connect: { id_cliente: data.id_cliente } }
-            : { disconnect: true },
-        }),
-        ...(data.id_sucursal !== undefined && {
-          sucursales: data.id_sucursal
-            ? { connect: { id_sucursal: data.id_sucursal } }
-            : { disconnect: true },
-        }),
-        ...(data.id_area !== undefined && {
-          area: data.id_area
-            ? { connect: { id_area: data.id_area } }
-            : { disconnect: true },
-        }),
-      },
-      include: INCLUDE_RESUMEN,
-    });
-    return EquipoMapper.toListItem(updated as any);
   }
 
   async toggleStatus(id: number): Promise<Equipo> {

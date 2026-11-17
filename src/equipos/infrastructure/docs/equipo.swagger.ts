@@ -8,7 +8,6 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
-import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
 import { EquipoDetailResponseDto } from '../dtos/equipo-detail-response.dto';
@@ -26,14 +25,6 @@ const EQUIPO_EJEMPLO = {
   id_sucursal: 1,
   id_area: 1,
   is_active: true,
-};
-
-// Relaciones resumidas que devuelven el listado, la creación y la edición.
-const RELACIONES_EJEMPLO = {
-  cliente: { id: 1, nombre: 'Acme Corp SAC' },
-  sucursal: { id: 1, nombre: 'Sucursal Central' },
-  area: { id: 1, nombre: 'Sistemas' },
-  trabajador: { id: 5, nombre: 'Juan Pérez' },
 };
 
 const COMPONENTE_EJEMPLO = {
@@ -333,48 +324,6 @@ export function ApiCreateEquipoSwagger() {
     ApiResponse({
       status: HttpStatus.CONFLICT,
       description: 'El número de serie ya está registrado en otro equipo.',
-    }),
-  );
-}
-
-export function ApiUpdateEquipoSwagger() {
-  return applyDecorators(
-    ApiOperation({ summary: 'Actualizar un equipo existente' }),
-    ApiParam({
-      name: 'id',
-      description: 'ID numérico del equipo a actualizar',
-      example: 1,
-    }),
-    ApiBody({ type: UpdateEquipoHttpDto }),
-    ApiResponse({
-      status: HttpStatus.OK,
-      description: 'Equipo actualizado exitosamente.',
-      schema: {
-        example: {
-          message: 'Equipo actualizado exitosamente',
-          data: { ...EQUIPO_EJEMPLO, ...RELACIONES_EJEMPLO },
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token inválido, expirado o ausente.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
-    ApiResponse({
-      status: HttpStatus.NOT_FOUND,
-      description: 'El equipo no existe.',
-    }),
-    ApiResponse({
-      status: HttpStatus.CONFLICT,
-      description: 'Ya existe un equipo con ese número de serie.',
     }),
   );
 }

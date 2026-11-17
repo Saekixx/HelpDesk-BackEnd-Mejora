@@ -5,13 +5,11 @@ import {
   EquipoDetail,
   EquipoEstadisticas,
   EquipoListadoItem,
-  EquipoListItem,
   EquipoOptionItem,
 } from '../entities/equipo.entity';
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
 import { GetEquipoOptionsFilterDto } from '../dto/get-equipo-options-filter.dto';
 import { CreateEquipoData } from '../dto/create-equipo-data.dto';
-import { UpdateEquipoDto } from '../dto/update-equipo.dto';
 import { AgregarComponenteDto } from '../dto/agregar-componente.dto';
 import { ReemplazarComponenteDto } from '../dto/reemplazar-componente.dto';
 
@@ -53,8 +51,6 @@ export interface EquipoRepositoryPort {
   // devuelve el equipo con sus relaciones resumidas (cliente, sucursal, área y
   // trabajador asignado).
   create(data: CreateEquipoData): Promise<EquipoCreadoItem>;
-
-  update(id: number, data: UpdateEquipoDto): Promise<EquipoListItem>;
 
   // Activa/desactiva un equipo (soft toggle sobre is_active)
   toggleStatus(id: number): Promise<Equipo>;
