@@ -35,6 +35,14 @@ export class UpdateSoftwareRequestDto implements UpdateSoftwareDto {
   id_cliente?: number;
 
   @ApiPropertyOptional({
+    description: 'ID de la sucursal donde se encuentra el software',
+    example: 1,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'El ID de la sucursal debe ser un número' })
+  id_sucursal?: number;
+
+  @ApiPropertyOptional({
     description: 'Tipo de licencia',
     enum: tipo_licencia_enum,
     example: 'Pool Limitado',
@@ -59,6 +67,18 @@ export class UpdateSoftwareRequestDto implements UpdateSoftwareDto {
   @IsOptional()
   @IsString({ message: 'El proveedor debe ser una cadena de texto' })
   proveedor?: string;
+
+  @ApiPropertyOptional({
+    description: 'Fecha de compra del software',
+    example: '2026-01-15T00:00:00.000Z',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'La fecha de compra debe ser válida (ISO 8601)' },
+  )
+  fecha_compra?: string;
 
   @ApiPropertyOptional({
     description: 'Fecha de caducidad del software',
