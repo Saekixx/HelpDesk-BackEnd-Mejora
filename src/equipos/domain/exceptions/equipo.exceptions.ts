@@ -102,3 +102,14 @@ export class TecnicoResponsableNoDisponibleException extends DomainException {
     super('El técnico responsable seleccionado no existe', 404);
   }
 }
+
+// El equipo existe pero está desactivado o retirado: no admite que se le
+// instalen componentes (409).
+export class EquipoInactivoParaComponentesException extends DomainException {
+  constructor() {
+    super(
+      'El equipo está desactivado o retirado y no admite instalar componentes',
+      409,
+    );
+  }
+}

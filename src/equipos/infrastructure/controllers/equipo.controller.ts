@@ -18,12 +18,16 @@ import { LiberarEquipoUseCase } from '@/equipos/application/use-cases/liberar-eq
 import { AsignarEquipoUseCase } from '@/equipos/application/use-cases/asignar-equipo.use-case';
 import { AgregarComponenteEquipoUseCase } from '@/equipos/application/use-cases/agregar-componente-equipo.use-case';
 import { ReemplazarComponenteEquipoUseCase } from '@/equipos/application/use-cases/reemplazar-componente-equipo.use-case';
+import { MontarComponenteStockUseCase } from '@/equipos/application/use-cases/montar-componente-stock.use-case';
+import { RegistrarEInstalarComponenteUseCase } from '@/equipos/application/use-cases/registrar-e-instalar-componente.use-case';
 import { GetEquiposQueryDto } from '../dtos/get-equipos-query.dto';
 import { GetEquipoOptionsQueryDto } from '../dtos/get-equipo-options-query.dto';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { AsignarEquipoHttpDto } from '../dtos/asignar-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
+import { MontarComponenteStockHttpDto } from '../dtos/montar-componente-stock-http.dto';
+import { RegistrarInstalarComponenteHttpDto } from '../dtos/registrar-instalar-componente-http.dto';
 import {
   JwtAuthGuard,
   JwtPayload,
@@ -41,6 +45,8 @@ import {
   ApiAsignarEquipoSwagger,
   ApiAgregarComponenteEquipoSwagger,
   ApiReemplazarComponenteEquipoSwagger,
+  ApiMontarComponenteStockSwagger,
+  ApiRegistrarEInstalarComponenteSwagger,
   ApiGetEquipoOptionsSwagger,
   ApiGetEquipoEstadisticasSwagger,
 } from '../docs/equipo.swagger';
@@ -63,6 +69,8 @@ export class EquipoController {
     private readonly asignarEquipoUseCase: AsignarEquipoUseCase,
     private readonly agregarComponenteEquipoUseCase: AgregarComponenteEquipoUseCase,
     private readonly reemplazarComponenteEquipoUseCase: ReemplazarComponenteEquipoUseCase,
+    private readonly montarComponenteStockUseCase: MontarComponenteStockUseCase,
+    private readonly registrarEInstalarComponenteUseCase: RegistrarEInstalarComponenteUseCase,
   ) {}
 
   @Get()
@@ -165,5 +173,34 @@ export class EquipoController {
   ) {
     const data = await this.reemplazarComponenteEquipoUseCase.execute(id, dto);
     return { message: 'Componente reemplazado exitosamente', data };
+  }
+
+  // El técnico responsable del movimiento es el usuario autenticado que
+  // realiza la instalación (no se acepta en el body).
+  @Post(':id/componentes/montar-stock')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_TECNICO, RolEnum.SOPORTE_INSITU)
+  @ApiMontarComponenteStockSwagger()
+  async montarComponenteStock(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: MontarComponenteStockHttpDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    await this.montarComponenteStockUseCase.execute(id, dto, user.sub);
+    return { message: 'Componente montado exitosamente', data: null };
+  }
+
+  @Post(':id/componentes/registrar-instalar')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_TECNICO, RolEnum.SOPORTE_INSITU)
+  @ApiRegistrarEInstalarComponenteSwagger()
+  async registrarEInstalarComponente(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RegistrarInstalarComponenteHttpDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    await this.registrarEInstalarComponenteUseCase.execute(id, dto, user.sub);
+    return {
+      message: 'Componente registrado e instalado exitosamente',
+      data: null,
+    };
   }
 }

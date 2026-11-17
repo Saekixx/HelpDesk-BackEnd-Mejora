@@ -11,6 +11,8 @@ import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { AsignarEquipoHttpDto } from '../dtos/asignar-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
+import { MontarComponenteStockHttpDto } from '../dtos/montar-componente-stock-http.dto';
+import { RegistrarInstalarComponenteHttpDto } from '../dtos/registrar-instalar-componente-http.dto';
 import { EquipoDetailResponseDto } from '../dtos/equipo-detail-response.dto';
 import { EquipoEstadisticasResponseDto } from '../dtos/equipo-estadisticas-response.dto';
 
@@ -638,6 +640,144 @@ export function ApiReemplazarComponenteEquipoSwagger() {
       status: HttpStatus.NOT_FOUND,
       description:
         'El equipo o el hardware nuevo no existe, o el componente saliente no está instalado actualmente en el equipo.',
+    }),
+  );
+}
+
+export function ApiMontarComponenteStockSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Montar en un equipo un componente que está en stock',
+      description:
+        'Instala en el equipo un componente de hardware en estado "Disponible" y sin equipo asignado. En una sola transacción el componente pasa a "Instalado" y se crea su movimiento actual en el historial del equipo (fecha de instalación, observaciones como motivo y el usuario autenticado como técnico responsable). El equipo debe estar activo. Si otra operación toma el componente primero, responde 409 y no se escribe nada.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del equipo donde se monta el componente',
+      example: 1,
+    }),
+    ApiBody({
+      type: MontarComponenteStockHttpDto,
+      examples: {
+        completo: {
+          summary: 'Con observaciones',
+          value: {
+            id_hardware: 15,
+            fecha_instalacion: '2026-11-17',
+            observaciones: 'Ampliación de memoria solicitada por el usuario',
+          },
+        },
+        minimo: {
+          summary: 'Solo campos obligatorios',
+          value: { id_hardware: 15, fecha_instalacion: '2026-11-17' },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Componente montado exitosamente.',
+      schema: {
+        example: { message: 'Componente montado exitosamente', data: null },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos de entrada inválidos (ID de hardware o fecha no válidos, propiedades no permitidas) o ID de equipo no numérico.',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description:
+        'El rol del usuario no tiene permiso (solo ADMINISTRADOR, SOPORTE_TECNICO o SOPORTE_INSITU).',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description:
+        'El equipo, el componente de hardware o el técnico responsable no existen.',
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'El equipo está desactivado o retirado, o el componente no está "Disponible" o ya tiene un equipo asignado.',
+    }),
+  );
+}
+
+export function ApiRegistrarEInstalarComponenteSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Registrar un componente nuevo e instalarlo en un equipo',
+      description:
+        'Crea un componente de hardware nuevo y lo deja instalado en el equipo. En una sola transacción se crea el componente (estado "Instalado") y su movimiento actual en el historial del equipo, con el usuario autenticado como técnico responsable; si algo falla no queda ni el componente ni el movimiento. El equipo debe estar activo y el número de serie no puede estar registrado en otro componente.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del equipo donde se instala el componente',
+      example: 1,
+    }),
+    ApiBody({
+      type: RegistrarInstalarComponenteHttpDto,
+      examples: {
+        completo: {
+          summary: 'Con todos los campos',
+          value: {
+            tipo_componente: 'MEMORIA_RAM',
+            marca_modelo: 'Kingston Fury 16GB DDR4',
+            numero_serie: 'SN-RAM-2026-00456',
+            proveedor: 'Tecnoglobal S.A.C.',
+            fecha_compra: '2026-10-05',
+            url_factura: 'facturas/fac-001.pdf',
+            fecha_instalacion: '2026-11-17',
+            observaciones: 'Componente nuevo instalado por ampliación de memoria',
+          },
+        },
+        minimo: {
+          summary: 'Solo campos obligatorios',
+          value: {
+            tipo_componente: 'ALMACENAMIENTO_SSD',
+            marca_modelo: 'Samsung 970 EVO 1TB',
+            numero_serie: 'SN-SSD-2026-00789',
+            fecha_instalacion: '2026-11-17',
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Componente registrado e instalado exitosamente.',
+      schema: {
+        example: {
+          message: 'Componente registrado e instalado exitosamente',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos de entrada inválidos (tipo de componente fuera del enum, campos obligatorios ausentes, fechas no válidas, textos demasiado largos, propiedades no permitidas) o ID de equipo no numérico.',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description:
+        'El rol del usuario no tiene permiso (solo ADMINISTRADOR, SOPORTE_TECNICO o SOPORTE_INSITU).',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El equipo o el técnico responsable no existen.',
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'El equipo está desactivado o retirado, o el número de serie ya está registrado en otro componente.',
     }),
   );
 }
