@@ -203,11 +203,17 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     });
   }
 
-  // Asigna el equipo al trabajador indicado y lo deja activo.
-  async assign(id: number, idTrabajador: number): Promise<void> {
+  // Asigna el equipo al trabajador indicado y lo deja activo. Las
+  // observaciones solo se escriben si vienen informadas.
+  async assign(
+    id: number,
+    idTrabajador: number,
+    observaciones?: string,
+  ): Promise<void> {
     await this.updateAsignacion(id, {
       id_trabajador: idTrabajador,
       estado: EstadoEquipo.ACTIVO,
+      ...(observaciones !== undefined && { observaciones }),
     });
   }
 
@@ -215,7 +221,11 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
   // `updated_at` se fija a mano: la columna no se actualiza sola.
   private async updateAsignacion(
     id: number,
-    cambios: { id_trabajador: number | null; estado: EstadoEquipo },
+    cambios: {
+      id_trabajador: number | null;
+      estado: EstadoEquipo;
+      observaciones?: string;
+    },
   ): Promise<void> {
     try {
       await this.prisma.equipos.update({

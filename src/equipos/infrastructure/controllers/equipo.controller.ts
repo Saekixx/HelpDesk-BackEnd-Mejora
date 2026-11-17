@@ -14,11 +14,14 @@ import { GetEquiposUseCase } from '@/equipos/application/use-cases/get-equipos.u
 import { GetEquipoByIdUseCase } from '@/equipos/application/use-cases/get-equipo-by-id.use-case';
 import { CreateEquipoUseCase } from '@/equipos/application/use-cases/create-equipo.use-case';
 import { ToggleStatusEquipoUseCase } from '@/equipos/application/use-cases/toggle-status-equipo.use-case';
+import { LiberarEquipoUseCase } from '@/equipos/application/use-cases/liberar-equipo.use-case';
+import { AsignarEquipoUseCase } from '@/equipos/application/use-cases/asignar-equipo.use-case';
 import { AgregarComponenteEquipoUseCase } from '@/equipos/application/use-cases/agregar-componente-equipo.use-case';
 import { ReemplazarComponenteEquipoUseCase } from '@/equipos/application/use-cases/reemplazar-componente-equipo.use-case';
 import { GetEquiposQueryDto } from '../dtos/get-equipos-query.dto';
 import { GetEquipoOptionsQueryDto } from '../dtos/get-equipo-options-query.dto';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
+import { AsignarEquipoHttpDto } from '../dtos/asignar-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
 import {
@@ -34,6 +37,8 @@ import {
   ApiFindEquipoByIdSwagger,
   ApiCreateEquipoSwagger,
   ApiToggleEquipoStatusSwagger,
+  ApiLiberarEquipoSwagger,
+  ApiAsignarEquipoSwagger,
   ApiAgregarComponenteEquipoSwagger,
   ApiReemplazarComponenteEquipoSwagger,
   ApiGetEquipoOptionsSwagger,
@@ -54,6 +59,8 @@ export class EquipoController {
     private readonly getEquipoEstadisticasUseCase: GetEquipoEstadisticasUseCase,
     private readonly createEquipoUseCase: CreateEquipoUseCase,
     private readonly toggleStatusEquipoUseCase: ToggleStatusEquipoUseCase,
+    private readonly liberarEquipoUseCase: LiberarEquipoUseCase,
+    private readonly asignarEquipoUseCase: AsignarEquipoUseCase,
     private readonly agregarComponenteEquipoUseCase: AgregarComponenteEquipoUseCase,
     private readonly reemplazarComponenteEquipoUseCase: ReemplazarComponenteEquipoUseCase,
   ) {}
@@ -117,6 +124,25 @@ export class EquipoController {
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     const data = await this.toggleStatusEquipoUseCase.execute(id);
     return { message: 'Estado del equipo actualizado exitosamente', data };
+  }
+
+  @Patch(':id/liberar')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_TECNICO, RolEnum.SOPORTE_INSITU)
+  @ApiLiberarEquipoSwagger()
+  async liberar(@Param('id', ParseIntPipe) id: number) {
+    await this.liberarEquipoUseCase.execute(id);
+    return { message: 'Equipo liberado exitosamente', data: null };
+  }
+
+  @Patch(':id/asignar')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_TECNICO, RolEnum.SOPORTE_INSITU)
+  @ApiAsignarEquipoSwagger()
+  async asignar(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AsignarEquipoHttpDto,
+  ) {
+    await this.asignarEquipoUseCase.execute(id, dto);
+    return { message: 'Equipo asignado exitosamente', data: null };
   }
 
   @Post(':id/componentes')

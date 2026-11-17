@@ -8,6 +8,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
+import { AsignarEquipoHttpDto } from '../dtos/asignar-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
 import { EquipoDetailResponseDto } from '../dtos/equipo-detail-response.dto';
@@ -360,6 +361,182 @@ export function ApiToggleEquipoStatusSwagger() {
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'El equipo no existe.',
+    }),
+  );
+}
+
+const ROLES_ASIGNACION =
+  'El rol del usuario no puede liberar ni asignar equipos (se permite a ADMINISTRADOR, SOPORTE_TECNICO y SOPORTE_INSITU).';
+
+export function ApiLiberarEquipoSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Liberar un equipo',
+      description:
+        'Desvincula al trabajador del equipo (`id_trabajador = null`) y lo deja en estado `En_Almacen`. No recibe body. Liberar un equipo que ya está libre no produce error.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del equipo a liberar',
+      example: 1,
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Equipo liberado exitosamente.',
+      schema: {
+        example: {
+          status: HttpStatus.OK,
+          message: 'Equipo liberado exitosamente',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'El ID del equipo no es un número válido.',
+      schema: {
+        example: {
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Validation failed (numeric string is expected)',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: ROLES_ASIGNACION,
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'El equipo no existe.',
+      schema: {
+        example: {
+          status: HttpStatus.NOT_FOUND,
+          message: 'Equipo no encontrado',
+          data: null,
+        },
+      },
+    }),
+  );
+}
+
+export function ApiAsignarEquipoSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Asignar un equipo a un trabajador',
+      description:
+        'Asigna el equipo al trabajador indicado, lo deja en estado `Activo` y guarda las observaciones si se envían (si se omiten, la observación actual no cambia). El trabajador debe existir, estar activo y pertenecer al mismo cliente del equipo; el equipo debe estar activo.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del equipo a asignar',
+      example: 1,
+    }),
+    ApiBody({
+      type: AsignarEquipoHttpDto,
+      examples: {
+        conObservaciones: {
+          summary: 'Asignación con observaciones',
+          value: {
+            id_trabajador: 5,
+            observaciones: 'Entrega de laptop por ingreso a contabilidad',
+          },
+        },
+        sinObservaciones: {
+          summary: 'Asignación sin observaciones',
+          value: { id_trabajador: 5 },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Equipo asignado exitosamente.',
+      schema: {
+        example: {
+          status: HttpStatus.OK,
+          message: 'Equipo asignado exitosamente',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos inválidos (ID del equipo no numérico, `id_trabajador` ausente o no entero, observaciones que superan 500 caracteres, propiedades no permitidas) o el trabajador pertenece a otro cliente.',
+      content: {
+        'application/json': {
+          examples: {
+            validacion: {
+              summary: 'Falta id_trabajador',
+              value: {
+                status: HttpStatus.BAD_REQUEST,
+                message:
+                  'El ID del trabajador debe ser mayor o igual a 1, El ID del trabajador debe ser un número entero, El ID del trabajador es obligatorio',
+                data: null,
+              },
+            },
+            otroCliente: {
+              summary: 'Trabajador de otro cliente',
+              value: {
+                status: HttpStatus.BAD_REQUEST,
+                message:
+                  'El trabajador seleccionado no pertenece al cliente indicado',
+                data: null,
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description: ROLES_ASIGNACION,
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description:
+        'El equipo no existe, o el trabajador no existe o está inactivo.',
+      content: {
+        'application/json': {
+          examples: {
+            equipo: {
+              summary: 'Equipo no encontrado',
+              value: {
+                status: HttpStatus.NOT_FOUND,
+                message: 'Equipo no encontrado',
+                data: null,
+              },
+            },
+            trabajador: {
+              summary: 'Trabajador no disponible',
+              value: {
+                status: HttpStatus.NOT_FOUND,
+                message: 'El trabajador asignado no existe o está inactivo',
+                data: null,
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description: 'El equipo está desactivado y no se puede asignar.',
+      schema: {
+        example: {
+          status: HttpStatus.CONFLICT,
+          message: 'El equipo está desactivado y no se puede asignar',
+          data: null,
+        },
+      },
     }),
   );
 }

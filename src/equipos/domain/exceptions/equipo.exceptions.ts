@@ -69,3 +69,9 @@ export class TrabajadorNoPerteneceAClienteException extends DomainException {
     super('El trabajador seleccionado no pertenece al cliente indicado', 400);
   }
 }
+
+export class EquipoInactivoException extends DomainException {
+  constructor() {
+    super('El equipo está desactivado y no se puede asignar', 409);
+  }
+}

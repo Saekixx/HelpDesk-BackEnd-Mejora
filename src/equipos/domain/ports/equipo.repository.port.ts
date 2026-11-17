@@ -59,12 +59,18 @@ export interface EquipoRepositoryPort {
   // admiten liberar) se validan en el caso de uso.
   release(id: number): Promise<void>;
 
-  // Asigna el equipo a un trabajador (id_trabajador) y lo deja "Activo". Lanza
+  // Asigna el equipo a un trabajador (id_trabajador) y lo deja "Activo".
+  // `observaciones` solo se guarda si viene informada; si se omite, las
+  // observaciones actuales del equipo no se tocan. Lanza
   // EquipoNotFoundException si el equipo no existe y
   // TrabajadorEquipoNoDisponibleException si el trabajador no existe. Las
-  // demás reglas (trabajador activo y del mismo cliente, estado del equipo) se
+  // demás reglas (trabajador activo y del mismo cliente, equipo activo) se
   // validan en el caso de uso.
-  assign(id: number, idTrabajador: number): Promise<void>;
+  assign(
+    id: number,
+    idTrabajador: number,
+    observaciones?: string,
+  ): Promise<void>;
 
   existsByNumSerie(num_serie: string): Promise<boolean>;
 
