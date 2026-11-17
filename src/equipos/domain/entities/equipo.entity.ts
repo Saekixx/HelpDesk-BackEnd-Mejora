@@ -91,19 +91,6 @@ export interface EquipoCreadoItem {
   created_at: Date | null;
 }
 
-export interface ComponenteHardware {
-  id_RH: number;
-  tipo: string | null;
-  marca: string | null;
-  descripcion: string;
-  serie: string;
-  proveedor: string;
-  fecha_instalacion: Date;
-  url_factura?: string | null;
-
-  is_active: boolean;
-}
-
 // ---- Detalle del equipo (GET /equipos/:id): "Hoja de Vida del Equipo" ----
 
 export interface EquipoDetailCliente {

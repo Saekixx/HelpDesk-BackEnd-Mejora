@@ -10,20 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { MontarComponenteStockDto } from '@/equipos/domain/dto/montar-componente-stock.dto';
-
-// Texto sin espacios al inicio ni al final; si queda vacío se trata como
-// ausente (undefined) para que @IsOptional lo omita. Otros tipos pasan sin
-// cambios para que los rechace el validador correspondiente.
-const recortarOUndefined = ({ value }: { value: unknown }): unknown => {
-  if (typeof value !== 'string') return value;
-  const texto = value.trim();
-  return texto === '' ? undefined : texto;
-};
-
-// Texto requerido sin espacios al inicio ni al final (otros tipos pasan sin
-// cambios).
-const recortar = ({ value }: { value: unknown }): unknown =>
-  typeof value === 'string' ? value.trim() : value;
+import { recortar, recortarOUndefined } from './body-transforms.helpers';
 
 export class MontarComponenteStockHttpDto implements MontarComponenteStockDto {
   @ApiProperty({

@@ -9,10 +9,10 @@ import {
 } from '@nestjs/swagger';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { AsignarEquipoHttpDto } from '../dtos/asignar-equipo-http.dto';
-import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
-import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
 import { MontarComponenteStockHttpDto } from '../dtos/montar-componente-stock-http.dto';
 import { RegistrarInstalarComponenteHttpDto } from '../dtos/registrar-instalar-componente-http.dto';
+import { ReemplazarComponenteStockHttpDto } from '../dtos/reemplazar-componente-stock-http.dto';
+import { RegistrarReemplazarComponenteHttpDto } from '../dtos/registrar-reemplazar-componente-http.dto';
 import { EquipoDetailResponseDto } from '../dtos/equipo-detail-response.dto';
 import { EquipoEstadisticasResponseDto } from '../dtos/equipo-estadisticas-response.dto';
 
@@ -42,18 +42,6 @@ const EQUIPO_DESACTIVADO_EJEMPLO = {
   id_sucursal: 1,
   id_area: 1,
   is_active: false,
-};
-
-const COMPONENTE_EJEMPLO = {
-  id_RH: 12,
-  tipo: 'Memoria RAM',
-  marca: 'Kingston',
-  descripcion: 'Ampliación de memoria RAM solicitada por el usuario',
-  serie: 'SN-RAM-2026-00456',
-  proveedor: 'Tecnoglobal S.A.C.',
-  fecha_instalacion: '2026-09-29T15:30:00.000Z',
-  url_factura: null,
-  is_active: true,
 };
 
 // Relaciones del listado (GET /equipos): campos completos; trabajador es null
@@ -559,91 +547,6 @@ export function ApiAsignarEquipoSwagger() {
   );
 }
 
-export function ApiAgregarComponenteEquipoSwagger() {
-  return applyDecorators(
-    ApiOperation({
-      summary: 'Agregar un componente de hardware a un equipo',
-      description:
-        'Asocia un componente de hardware existente al equipo y lo registra como componente actual en el historial de hardware, con la fecha de instalación en el momento de la solicitud.',
-    }),
-    ApiParam({
-      name: 'id',
-      description: 'ID numérico del equipo al que se agrega el componente',
-      example: 1,
-    }),
-    ApiBody({ type: AgregarComponenteHttpDto }),
-    ApiResponse({
-      status: HttpStatus.CREATED,
-      description: 'Componente agregado exitosamente.',
-      schema: {
-        example: {
-          message: 'Componente agregado exitosamente',
-          data: COMPONENTE_EJEMPLO,
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token inválido, expirado o ausente.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
-    ApiResponse({
-      status: HttpStatus.NOT_FOUND,
-      description: 'El equipo o el componente de hardware no existe.',
-    }),
-  );
-}
-
-export function ApiReemplazarComponenteEquipoSwagger() {
-  return applyDecorators(
-    ApiOperation({
-      summary: 'Reemplazar un componente de hardware de un equipo',
-      description:
-        'Reemplaza de forma transaccional un componente actual del equipo: el registro saliente pasa al historial (is_actual = false) y se crea el nuevo componente como actual, con la fecha de instalación en el momento de la solicitud. Si algo falla, no se aplica ningún cambio.',
-    }),
-    ApiParam({
-      name: 'id',
-      description: 'ID numérico del equipo cuyo componente se reemplaza',
-      example: 1,
-    }),
-    ApiBody({ type: ReemplazarComponenteHttpDto }),
-    ApiResponse({
-      status: HttpStatus.CREATED,
-      description: 'Componente reemplazado exitosamente.',
-      schema: {
-        example: {
-          message: 'Componente reemplazado exitosamente',
-          data: COMPONENTE_EJEMPLO,
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description: 'Datos de entrada inválidos.',
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token inválido, expirado o ausente.',
-    }),
-    ApiResponse({
-      status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
-    }),
-    ApiResponse({
-      status: HttpStatus.NOT_FOUND,
-      description:
-        'El equipo o el hardware nuevo no existe, o el componente saliente no está instalado actualmente en el equipo.',
-    }),
-  );
-}
-
 export function ApiMontarComponenteStockSwagger() {
   return applyDecorators(
     ApiOperation({
@@ -732,7 +635,8 @@ export function ApiRegistrarEInstalarComponenteSwagger() {
             fecha_compra: '2026-10-05',
             url_factura: 'facturas/fac-001.pdf',
             fecha_instalacion: '2026-11-17',
-            observaciones: 'Componente nuevo instalado por ampliación de memoria',
+            observaciones:
+              'Componente nuevo instalado por ampliación de memoria',
           },
         },
         minimo: {
@@ -773,6 +677,158 @@ export function ApiRegistrarEInstalarComponenteSwagger() {
     ApiResponse({
       status: HttpStatus.NOT_FOUND,
       description: 'El equipo o el técnico responsable no existen.',
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'El equipo está desactivado o retirado, o el número de serie ya está registrado en otro componente.',
+    }),
+  );
+}
+
+export function ApiReemplazarComponenteStockSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Reemplazar un componente de un equipo con una pieza de stock',
+      description:
+        'Retira el componente actual del equipo y monta en su lugar un componente en estado "Disponible". En una sola transacción: el componente actual pasa a "Baja / Descarte", queda sin equipo y su movimiento activo se cierra (fecha de retiro = fecha de reemplazo, motivo de retiro = observaciones); el componente nuevo pasa a "Instalado" y se crea su movimiento actual con el usuario autenticado como técnico responsable. El equipo debe estar activo y el componente actual debe estar instalado en él. Si algo falla no se aplica ningún cambio.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del equipo donde se hace el reemplazo',
+      example: 1,
+    }),
+    ApiParam({
+      name: 'idHardwareActual',
+      description:
+        'ID del componente de hardware instalado actualmente en el equipo, que será retirado',
+      example: 12,
+    }),
+    ApiBody({
+      type: ReemplazarComponenteStockHttpDto,
+      examples: {
+        completo: {
+          summary: 'Con observaciones',
+          value: {
+            id_hardware_nuevo: 15,
+            fecha_reemplazo: '2026-11-17',
+            observaciones: 'El disco anterior presentaba sectores dañados',
+          },
+        },
+        minimo: {
+          summary: 'Solo campos obligatorios',
+          value: { id_hardware_nuevo: 15, fecha_reemplazo: '2026-11-17' },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Componente reemplazado exitosamente.',
+      schema: {
+        example: { message: 'Componente reemplazado exitosamente', data: null },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos de entrada inválidos (ID de hardware o fecha no válidos, propiedades no permitidas) o algún ID de la ruta no es numérico.',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description:
+        'El rol del usuario no tiene permiso (solo ADMINISTRADOR, SOPORTE_TECNICO o SOPORTE_INSITU).',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description:
+        'El equipo, el componente nuevo o el técnico responsable no existen, o el componente actual no existe o no está instalado en este equipo.',
+    }),
+    ApiResponse({
+      status: HttpStatus.CONFLICT,
+      description:
+        'El equipo está desactivado o retirado, o el componente nuevo no está "Disponible", ya tiene un equipo asignado o es el mismo componente que se retira.',
+    }),
+  );
+}
+
+export function ApiRegistrarEReemplazarComponenteSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary:
+        'Reemplazar un componente de un equipo registrando una pieza nueva',
+      description:
+        'Retira el componente actual del equipo y registra un componente nuevo ya instalado en su lugar. En una sola transacción: el componente actual pasa a "Baja / Descarte", queda sin equipo y su movimiento activo se cierra (fecha de retiro = fecha de reemplazo, motivo de retiro = observaciones); se crea el componente nuevo (estado "Instalado") con su movimiento actual y el usuario autenticado como técnico responsable. El equipo debe estar activo, el componente actual debe estar instalado en él y el número de serie nuevo no puede estar registrado en otro componente. Si algo falla no queda ni el componente nuevo ni cambios en el actual.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID numérico del equipo donde se hace el reemplazo',
+      example: 1,
+    }),
+    ApiParam({
+      name: 'idHardwareActual',
+      description:
+        'ID del componente de hardware instalado actualmente en el equipo, que será retirado',
+      example: 12,
+    }),
+    ApiBody({
+      type: RegistrarReemplazarComponenteHttpDto,
+      examples: {
+        completo: {
+          summary: 'Con todos los campos',
+          value: {
+            tipo_componente: 'ALMACENAMIENTO_SSD',
+            marca_modelo: 'Samsung 970 EVO 1TB',
+            numero_serie: 'SN-SSD-2026-00789',
+            proveedor: 'Tecnoglobal S.A.C.',
+            fecha_compra: '2026-10-05',
+            url_factura: 'facturas/fac-001.pdf',
+            fecha_reemplazo: '2026-11-17',
+            observaciones: 'El disco anterior presentaba sectores dañados',
+          },
+        },
+        minimo: {
+          summary: 'Solo campos obligatorios',
+          value: {
+            tipo_componente: 'MEMORIA_RAM',
+            marca_modelo: 'Kingston Fury 16GB DDR4',
+            numero_serie: 'SN-RAM-2026-00456',
+            fecha_reemplazo: '2026-11-17',
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Componente registrado y reemplazado exitosamente.',
+      schema: {
+        example: {
+          message: 'Componente registrado y reemplazado exitosamente',
+          data: null,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Datos de entrada inválidos (tipo de componente fuera del enum, campos obligatorios ausentes, fechas no válidas, textos demasiado largos, propiedades no permitidas) o algún ID de la ruta no es numérico.',
+    }),
+    ApiResponse({
+      status: HttpStatus.UNAUTHORIZED,
+      description: 'Token inválido, expirado o ausente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.FORBIDDEN,
+      description:
+        'El rol del usuario no tiene permiso (solo ADMINISTRADOR, SOPORTE_TECNICO o SOPORTE_INSITU).',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description:
+        'El equipo o el técnico responsable no existen, o el componente actual no existe o no está instalado en este equipo.',
     }),
     ApiResponse({
       status: HttpStatus.CONFLICT,

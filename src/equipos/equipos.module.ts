@@ -11,10 +11,10 @@ import { CreateEquipoUseCase } from './application/use-cases/create-equipo.use-c
 import { CambiarEstadoEquipoUseCase } from './application/use-cases/cambiar-estado-equipo.use-case';
 import { LiberarEquipoUseCase } from './application/use-cases/liberar-equipo.use-case';
 import { AsignarEquipoUseCase } from './application/use-cases/asignar-equipo.use-case';
-import { AgregarComponenteEquipoUseCase } from './application/use-cases/agregar-componente-equipo.use-case';
-import { ReemplazarComponenteEquipoUseCase } from './application/use-cases/reemplazar-componente-equipo.use-case';
 import { MontarComponenteStockUseCase } from './application/use-cases/montar-componente-stock.use-case';
 import { RegistrarEInstalarComponenteUseCase } from './application/use-cases/registrar-e-instalar-componente.use-case';
+import { ReemplazarComponenteStockUseCase } from './application/use-cases/reemplazar-componente-stock.use-case';
+import { RegistrarEReemplazarComponenteUseCase } from './application/use-cases/registrar-e-reemplazar-componente.use-case';
 import { EquipoController } from './infrastructure/controllers/equipo.controller';
 import { GetEquipoOptionsUseCase } from './application/use-cases/get-equipo-options.use-case';
 import { GetEquipoEstadisticasUseCase } from './application/use-cases/get-equipo-estadisticas.use-case';
@@ -31,10 +31,10 @@ import { GetEquipoEstadisticasUseCase } from './application/use-cases/get-equipo
     CambiarEstadoEquipoUseCase,
     LiberarEquipoUseCase,
     AsignarEquipoUseCase,
-    AgregarComponenteEquipoUseCase,
-    ReemplazarComponenteEquipoUseCase,
     MontarComponenteStockUseCase,
     RegistrarEInstalarComponenteUseCase,
+    ReemplazarComponenteStockUseCase,
+    RegistrarEReemplazarComponenteUseCase,
     {
       provide: EQUIPO_REPOSITORY,
       useClass: EquipoPrismaRepository,

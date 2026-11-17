@@ -1,7 +1,6 @@
 import { equipos as PrismaEquipo, equipos_estado } from '@prisma/client';
 import {
   ComponenteActual,
-  ComponenteHardware,
   ComponenteRetirado,
   Equipo,
   EquipoCreadoItem,
@@ -12,10 +11,7 @@ import {
 } from '@/equipos/domain/entities/equipo.entity';
 import { EstadoEquipo } from '@/equipos/domain/enums/estado-equipo.enum';
 import type { PrismaEquipoDetalleCompleto } from '../equipo-prisma.repository';
-import {
-  TIPO_COMPONENTE_LABEL,
-  TipoComponente,
-} from '@/hardware/domain/enums/tipo-componente.enum';
+import { TipoComponente } from '@/hardware/domain/enums/tipo-componente.enum';
 
 // Movimiento de hardware con su componente y técnico (ver INCLUDE_DETALLE).
 type PrismaRegistroHardware =
@@ -115,24 +111,6 @@ export class EquipoMapper {
       sucursal: entity.sucursales,
       area: entity.area,
       trabajador: entity.usuarios,
-    };
-  }
-
-  static toComponenteHardware(
-    rh: PrismaEquipoDetalleCompleto['registro_hardware'][number],
-  ): ComponenteHardware {
-    return {
-      id_RH: rh.id_RH,
-      tipo: rh.hardware
-        ? TIPO_COMPONENTE_LABEL[TipoComponente[rh.hardware.tipo_componente]]
-        : '',
-      marca: rh.hardware?.marca_modelo ?? '',
-      url_factura: rh.hardware?.url_factura ?? undefined,
-      descripcion: rh.motivo_instalacion ?? rh.motivo_retiro ?? '',
-      serie: rh.hardware?.numero_serie ?? '',
-      proveedor: rh.hardware?.proveedor ?? '',
-      fecha_instalacion: rh.fecha_instalacion,
-      is_active: rh.is_actual ?? true,
     };
   }
 

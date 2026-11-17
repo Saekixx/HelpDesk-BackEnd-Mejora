@@ -1,5 +1,4 @@
 import {
-  ComponenteHardware,
   Equipo,
   EquipoCreadoItem,
   EquipoDetail,
@@ -10,9 +9,8 @@ import {
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
 import { GetEquipoOptionsFilterDto } from '../dto/get-equipo-options-filter.dto';
 import { CreateEquipoData } from '../dto/create-equipo-data.dto';
-import { AgregarComponenteDto } from '../dto/agregar-componente.dto';
-import { ReemplazarComponenteDto } from '../dto/reemplazar-componente.dto';
 import { RegistrarInstalarComponenteData } from '../dto/registrar-instalar-componente-data.dto';
+import { RegistrarEReemplazarComponenteData } from '../dto/registrar-reemplazar-componente-data.dto';
 
 export const EQUIPO_REPOSITORY = 'EQUIPO_REPOSITORY';
 
@@ -85,23 +83,6 @@ export interface EquipoRepositoryPort {
   // Verifica si un equipo pertenece a un usuario
   isEquipoOwnedByUsuario(idEquipo: number, idUsuario: number): Promise<boolean>;
 
-  // Asocia un componente de hardware existente a un equipo, registrándolo como
-  // componente actual en registro_hardware. Lanza EquipoNotFoundException o
-  // ComponenteHardwareNotFoundException si el equipo o el hardware no existen.
-  agregarComponente(
-    id_equipo: number,
-    dto: AgregarComponenteDto,
-  ): Promise<ComponenteHardware>;
-
-  // Reemplaza de forma transaccional un componente actual del equipo: marca el
-  // registro saliente como histórico (is_actual = false) y crea el nuevo como
-  // actual. Lanza EquipoNotFoundException, ComponenteHardwareNotFoundException
-  // (hardware nuevo) o ComponenteNoInstaladoException (saliente no instalado).
-  reemplazarComponente(
-    id_equipo: number,
-    dto: ReemplazarComponenteDto,
-  ): Promise<ComponenteHardware>;
-
   // Monta en el equipo un componente que está en stock
   // (POST /equipos/:id/componentes/montar-stock). En una sola transacción pasa
   // el hardware de "Disponible" a "Instalado" (id_equipo_actual = idEquipo) y
@@ -140,5 +121,57 @@ export interface EquipoRepositoryPort {
   registrarEInstalarComponente(
     idEquipo: number,
     data: RegistrarInstalarComponenteData,
+  ): Promise<void>;
+
+  // Reemplaza un componente instalado por otro que está en stock
+  // (POST /equipos/:id/componentes/:idHardwareActual/reemplazar-stock). En una
+  // sola transacción:
+  // - El componente actual pasa a "Baja / Descarte", queda sin equipo y su
+  //   movimiento activo en registro_hardware se cierra (is_actual = false,
+  //   fecha_retiro = fechaReemplazo, motivo_retiro = observaciones).
+  // - El componente nuevo pasa de "Disponible" a "Instalado"
+  //   (id_equipo_actual = idEquipo) y se crea su movimiento actual (fecha de
+  //   instalación = fechaReemplazo, observaciones como motivo y, si se informa,
+  //   el técnico responsable).
+  // Si algo falla no se escribe nada: el componente actual sigue instalado.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - ComponenteNoInstaladoException: el componente actual no existe o no está
+  //   instalado en este equipo.
+  // - ComponenteHardwareNotFoundException: el componente nuevo no existe.
+  // - ComponenteNoDisponibleException: el componente nuevo no está
+  //   "Disponible", ya tiene un equipo asignado o es el mismo componente que
+  //   se retira.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  reemplazarComponenteStock(
+    idEquipo: number,
+    idHardwareActual: number,
+    idHardwareNuevo: number,
+    fechaReemplazo: Date,
+    observaciones?: string,
+    idTecnico?: number,
+  ): Promise<void>;
+
+  // Reemplaza un componente instalado por uno nuevo que se registra en el
+  // mismo acto (POST /equipos/:id/componentes/:idHardwareActual/
+  // registrar-reemplazar). En una sola transacción retira el componente actual
+  // (igual que reemplazarComponenteStock) y crea el hardware nuevo (estado
+  // "Instalado", id_equipo_actual = idEquipo) con su movimiento actual.
+  // Si algo falla no queda ni el componente nuevo ni cambios en el actual.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - ComponenteNoInstaladoException: el componente actual no existe o no está
+  //   instalado en este equipo.
+  // - NumeroSerieComponenteDuplicadoException: ya existe un componente con ese
+  //   número de serie.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  registrarEReemplazarComponente(
+    idEquipo: number,
+    idHardwareActual: number,
+    data: RegistrarEReemplazarComponenteData,
   ): Promise<void>;
 }
