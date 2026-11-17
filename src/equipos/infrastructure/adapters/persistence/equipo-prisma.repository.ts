@@ -182,17 +182,37 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     return EquipoMapper.toCreadoItem(created);
   }
 
-  async toggleStatus(id: number): Promise<Equipo> {
+  // Alterna is_active. Prisma no permite `SET is_active = NOT is_active` sin SQL
+  // crudo, así que se lee el valor actual (solo esa columna) y se escribe el
+  // contrario. `is_active` es nullable en el schema y el mapper trata null como
+  // activo, por eso aquí también (null pasa a desactivado).
+  // `updated_at` se fija a mano: la columna no se actualiza sola.
+  async toggleEstado(id: number): Promise<Equipo> {
     const current = await this.prisma.equipos.findUnique({
       where: { id_equipo: id },
+      select: { is_active: true },
     });
     if (!current) throw new EquipoNotFoundException();
 
-    const updated = await this.prisma.equipos.update({
-      where: { id_equipo: id },
-      data: { is_active: !current.is_active },
-    });
-    return EquipoMapper.toDomain(updated);
+    try {
+      const updated = await this.prisma.equipos.update({
+        where: { id_equipo: id },
+        data: {
+          is_active: !(current.is_active ?? true),
+          updated_at: new Date(),
+        },
+      });
+      return EquipoMapper.toDomain(updated);
+    } catch (error) {
+      // P2025: el equipo se eliminó entre la lectura y la escritura.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new EquipoNotFoundException();
+      }
+      throw error;
+    }
   }
 
   // Libera el equipo: sin custodio y en almacén.

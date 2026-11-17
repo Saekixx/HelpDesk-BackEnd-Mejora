@@ -50,8 +50,13 @@ export interface EquipoRepositoryPort {
   // Devuelve el equipo registrado con su ubicación y trabajador.
   create(data: CreateEquipoData): Promise<EquipoCreadoItem>;
 
-  // Activa/desactiva un equipo (soft toggle sobre is_active)
-  toggleStatus(id: number): Promise<Equipo>;
+  // Alterna el estado lógico del equipo (PATCH /equipos/:id/estado): si está
+  // activo lo desactiva (is_active = false) y si está desactivado lo reactiva.
+  // Es un soft toggle: solo cambia is_active (y updated_at); no toca la
+  // asignación ni el estado operativo, esas reglas viven en el caso de uso.
+  // Devuelve el equipo ya actualizado y lanza EquipoNotFoundException si el
+  // equipo no existe.
+  toggleEstado(id: number): Promise<Equipo>;
 
   // Libera el equipo: desvincula al trabajador custodio (id_trabajador = null)
   // y lo deja "En_Almacen". Lanza EquipoNotFoundException si el equipo no

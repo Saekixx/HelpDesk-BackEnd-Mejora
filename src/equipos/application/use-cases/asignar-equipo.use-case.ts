@@ -42,7 +42,7 @@ export class AsignarEquipoUseCase {
 
     if (!equipo) throw new EquipoNotFoundException();
     // Asignar deja el equipo en "Activo": un equipo desactivado no se reactiva
-    // por esta vía (eso es toggle-status).
+    // por esta vía (eso es PATCH /equipos/:id/estado).
     if (!equipo.is_active) throw new EquipoInactivoException();
 
     if (!trabajador?.is_active) {

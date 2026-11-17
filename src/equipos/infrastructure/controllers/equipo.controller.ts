@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetEquiposUseCase } from '@/equipos/application/use-cases/get-equipos.use-case';
 import { GetEquipoByIdUseCase } from '@/equipos/application/use-cases/get-equipo-by-id.use-case';
 import { CreateEquipoUseCase } from '@/equipos/application/use-cases/create-equipo.use-case';
-import { ToggleStatusEquipoUseCase } from '@/equipos/application/use-cases/toggle-status-equipo.use-case';
+import { CambiarEstadoEquipoUseCase } from '@/equipos/application/use-cases/cambiar-estado-equipo.use-case';
 import { LiberarEquipoUseCase } from '@/equipos/application/use-cases/liberar-equipo.use-case';
 import { AsignarEquipoUseCase } from '@/equipos/application/use-cases/asignar-equipo.use-case';
 import { AgregarComponenteEquipoUseCase } from '@/equipos/application/use-cases/agregar-componente-equipo.use-case';
@@ -36,7 +36,7 @@ import {
   ApiFindAllEquiposSwagger,
   ApiFindEquipoByIdSwagger,
   ApiCreateEquipoSwagger,
-  ApiToggleEquipoStatusSwagger,
+  ApiCambiarEstadoEquipoSwagger,
   ApiLiberarEquipoSwagger,
   ApiAsignarEquipoSwagger,
   ApiAgregarComponenteEquipoSwagger,
@@ -58,7 +58,7 @@ export class EquipoController {
     private readonly getEquipoOptionsUseCase: GetEquipoOptionsUseCase,
     private readonly getEquipoEstadisticasUseCase: GetEquipoEstadisticasUseCase,
     private readonly createEquipoUseCase: CreateEquipoUseCase,
-    private readonly toggleStatusEquipoUseCase: ToggleStatusEquipoUseCase,
+    private readonly cambiarEstadoEquipoUseCase: CambiarEstadoEquipoUseCase,
     private readonly liberarEquipoUseCase: LiberarEquipoUseCase,
     private readonly asignarEquipoUseCase: AsignarEquipoUseCase,
     private readonly agregarComponenteEquipoUseCase: AgregarComponenteEquipoUseCase,
@@ -118,11 +118,11 @@ export class EquipoController {
     return { message: 'Equipo creado exitosamente', data };
   }
 
-  @Patch(':id/toggle-status')
-  @Roles(RolEnum.ADMINISTRADOR)
-  @ApiToggleEquipoStatusSwagger()
-  async toggleStatus(@Param('id', ParseIntPipe) id: number) {
-    const data = await this.toggleStatusEquipoUseCase.execute(id);
+  @Patch(':id/estado')
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_TECNICO, RolEnum.SOPORTE_INSITU)
+  @ApiCambiarEstadoEquipoSwagger()
+  async cambiarEstado(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.cambiarEstadoEquipoUseCase.execute(id);
     return { message: 'Estado del equipo actualizado exitosamente', data };
   }
 

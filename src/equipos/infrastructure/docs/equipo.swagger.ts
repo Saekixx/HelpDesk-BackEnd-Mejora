@@ -329,11 +329,12 @@ export function ApiCreateEquipoSwagger() {
   );
 }
 
-export function ApiToggleEquipoStatusSwagger() {
+export function ApiCambiarEstadoEquipoSwagger() {
   return applyDecorators(
     ApiOperation({
       summary: 'Activar/desactivar un equipo',
-      description: 'Alterna el estado is_active del equipo (soft toggle).',
+      description:
+        'Alterna el estado lógico del equipo (`is_active`): si está activo lo desactiva (baja lógica) y si está desactivado lo reactiva. No recibe body. Solo cambia `is_active`: no modifica la asignación ni el estado operativo del equipo. Un equipo desactivado deja de aparecer en las opciones y en las estadísticas del inventario y no se puede asignar.',
     }),
     ApiParam({
       name: 'id',
@@ -356,7 +357,8 @@ export function ApiToggleEquipoStatusSwagger() {
     }),
     ApiResponse({
       status: HttpStatus.FORBIDDEN,
-      description: 'El rol del usuario no tiene permiso administrativo.',
+      description:
+        'El rol del usuario no puede cambiar el estado de equipos (se permite a ADMINISTRADOR, SOPORTE_TECNICO y SOPORTE_INSITU).',
     }),
     ApiResponse({
       status: HttpStatus.NOT_FOUND,

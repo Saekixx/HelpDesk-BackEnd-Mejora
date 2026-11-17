@@ -8,7 +8,7 @@ import { EquipoPrismaRepository } from './infrastructure/adapters/persistence/eq
 import { GetEquiposUseCase } from './application/use-cases/get-equipos.use-case';
 import { GetEquipoByIdUseCase } from './application/use-cases/get-equipo-by-id.use-case';
 import { CreateEquipoUseCase } from './application/use-cases/create-equipo.use-case';
-import { ToggleStatusEquipoUseCase } from './application/use-cases/toggle-status-equipo.use-case';
+import { CambiarEstadoEquipoUseCase } from './application/use-cases/cambiar-estado-equipo.use-case';
 import { LiberarEquipoUseCase } from './application/use-cases/liberar-equipo.use-case';
 import { AsignarEquipoUseCase } from './application/use-cases/asignar-equipo.use-case';
 import { AgregarComponenteEquipoUseCase } from './application/use-cases/agregar-componente-equipo.use-case';
@@ -26,7 +26,7 @@ import { GetEquipoEstadisticasUseCase } from './application/use-cases/get-equipo
     GetEquipoOptionsUseCase,
     GetEquipoEstadisticasUseCase,
     CreateEquipoUseCase,
-    ToggleStatusEquipoUseCase,
+    CambiarEstadoEquipoUseCase,
     LiberarEquipoUseCase,
     AsignarEquipoUseCase,
     AgregarComponenteEquipoUseCase,
