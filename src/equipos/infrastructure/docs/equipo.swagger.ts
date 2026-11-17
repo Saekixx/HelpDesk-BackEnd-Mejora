@@ -28,6 +28,20 @@ const EQUIPO_EJEMPLO = {
   is_active: true,
 };
 
+// Respuesta de PATCH /equipos/:id/estado al desactivar: el trabajador queda
+// desvinculado, por eso no incluye id_trabajador ni nombre_usuario.
+const EQUIPO_DESACTIVADO_EJEMPLO = {
+  id_equipo: 1,
+  tipo: 'Laptop',
+  marca: 'Dell',
+  nombre_equipo: 'PC-Contabilidad-01',
+  num_serie: 'SN-2026-00123',
+  id_cliente: 1,
+  id_sucursal: 1,
+  id_area: 1,
+  is_active: false,
+};
+
 const COMPONENTE_EJEMPLO = {
   id_RH: 12,
   tipo: 'Memoria RAM',
@@ -334,7 +348,7 @@ export function ApiCambiarEstadoEquipoSwagger() {
     ApiOperation({
       summary: 'Activar/desactivar un equipo',
       description:
-        'Alterna el estado lógico del equipo (`is_active`): si está activo lo desactiva (baja lógica) y si está desactivado lo reactiva. No recibe body. Solo cambia `is_active`: no modifica la asignación ni el estado operativo del equipo. Un equipo desactivado deja de aparecer en las opciones y en las estadísticas del inventario y no se puede asignar.',
+        'Alterna el estado lógico del equipo (`is_active`) y mantiene coherentes `estado` y `id_trabajador`. No recibe body. Al desactivar (baja lógica): `is_active = false`, `estado = Retirado` y `id_trabajador = null` (se desvincula al trabajador, ya que un equipo retirado no puede seguir en custodia). Al reactivar: `is_active = true` y `estado = En_Almacen`, quedando disponible en inventario para una nueva asignación con `PATCH /equipos/:id/asignar`. Un equipo desactivado deja de aparecer en las opciones y en las estadísticas del inventario y no se puede asignar.',
     }),
     ApiParam({
       name: 'id',
@@ -347,7 +361,7 @@ export function ApiCambiarEstadoEquipoSwagger() {
       schema: {
         example: {
           message: 'Estado del equipo actualizado exitosamente',
-          data: { ...EQUIPO_EJEMPLO, is_active: false },
+          data: EQUIPO_DESACTIVADO_EJEMPLO,
         },
       },
     }),

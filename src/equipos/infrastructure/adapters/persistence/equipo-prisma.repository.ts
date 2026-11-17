@@ -182,11 +182,16 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     return EquipoMapper.toCreadoItem(created);
   }
 
-  // Alterna is_active. Prisma no permite `SET is_active = NOT is_active` sin SQL
-  // crudo, así que se lee el valor actual (solo esa columna) y se escribe el
-  // contrario. `is_active` es nullable en el schema y el mapper trata null como
-  // activo, por eso aquí también (null pasa a desactivado).
-  // `updated_at` se fija a mano: la columna no se actualiza sola.
+  // Alterna is_active y mantiene coherentes `estado` e `id_trabajador`:
+  // - Desactivar (true -> false): estado "Retirado" y sin trabajador, porque un
+  //   equipo retirado no puede seguir en custodia.
+  // - Reactivar (false -> true): estado "En_Almacen" y sin trabajador (ya
+  //   desvinculado al retirarlo), disponible para PATCH /equipos/:id/asignar.
+  // Prisma no permite `SET is_active = NOT is_active` sin SQL crudo, así que se
+  // lee el valor actual (solo esa columna) y se escribe el contrario junto con
+  // el resto de columnas en un único UPDATE. `is_active` es nullable en el
+  // schema y el mapper trata null como activo, por eso aquí también (null pasa
+  // a desactivado). `updated_at` se fija a mano: la columna no se actualiza sola.
   async toggleEstado(id: number): Promise<Equipo> {
     const current = await this.prisma.equipos.findUnique({
       where: { id_equipo: id },
@@ -194,11 +199,17 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
     });
     if (!current) throw new EquipoNotFoundException();
 
+    const seDesactiva = current.is_active ?? true;
+
     try {
       const updated = await this.prisma.equipos.update({
         where: { id_equipo: id },
         data: {
-          is_active: !(current.is_active ?? true),
+          is_active: !seDesactiva,
+          estado: seDesactiva
+            ? EstadoEquipo.RETIRADO
+            : EstadoEquipo.EN_ALMACEN,
+          id_trabajador: null,
           updated_at: new Date(),
         },
       });
