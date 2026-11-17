@@ -19,10 +19,15 @@ import { EstadoEquipo } from '@/equipos/domain/enums/estado-equipo.enum';
 import { CreateEquipoData } from '@/equipos/domain/dto/create-equipo-data.dto';
 import { AgregarComponenteDto } from '@/equipos/domain/dto/agregar-componente.dto';
 import { ReemplazarComponenteDto } from '@/equipos/domain/dto/reemplazar-componente.dto';
+import { RegistrarInstalarComponenteData } from '@/equipos/domain/dto/registrar-instalar-componente-data.dto';
+import { EstadoHardware } from '@/hardware/domain/enums/estado-hardware.enum';
 import {
   ComponenteHardwareNotFoundException,
+  ComponenteNoDisponibleException,
   ComponenteNoInstaladoException,
   EquipoNotFoundException,
+  NumeroSerieComponenteDuplicadoException,
+  TecnicoResponsableNoDisponibleException,
   TrabajadorEquipoNoDisponibleException,
 } from '@/equipos/domain/exceptions/equipo.exceptions';
 import { EquipoMapper } from './mappers/equipo.mapper';
@@ -389,6 +394,138 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
       });
       return EquipoMapper.toComponenteHardware(nuevo);
     });
+  }
+
+  // Monta un componente de stock. Todo ocurre en una transacción: si falla el
+  // movimiento (p. ej. el técnico no existe) el hardware vuelve a "Disponible".
+  async montarComponenteStock(
+    idEquipo: number,
+    idHardware: number,
+    fechaInstalacion: Date,
+    observaciones?: string,
+    idTecnico?: number,
+  ): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const equipo = await tx.equipos.count({
+          where: { id_equipo: idEquipo },
+        });
+        if (!equipo) throw new EquipoNotFoundException();
+
+        // Reserva atómica: solo se instala si sigue Disponible y sin equipo.
+        // Evita que dos montajes simultáneos tomen la misma pieza.
+        const { count } = await tx.hardware.updateMany({
+          where: {
+            id_hardware: idHardware,
+            estado: EstadoHardware.DISPONIBLE,
+            id_equipo_actual: null,
+          },
+          data: {
+            estado: EstadoHardware.INSTALADO,
+            id_equipo_actual: idEquipo,
+            updated_at: new Date(),
+          },
+        });
+
+        if (count === 0) {
+          // No se reservó: o no existe o no estaba disponible.
+          const existe = await tx.hardware.count({
+            where: { id_hardware: idHardware },
+          });
+          throw existe
+            ? new ComponenteNoDisponibleException()
+            : new ComponenteHardwareNotFoundException();
+        }
+
+        await tx.registro_hardware.create({
+          data: {
+            id_equipo: idEquipo,
+            id_hardware: idHardware,
+            is_actual: true,
+            fecha_instalacion: fechaInstalacion,
+            motivo_instalacion: observaciones ?? null,
+            id_tecnico_resp: idTecnico ?? null,
+          },
+        });
+      });
+    } catch (error) {
+      throw this.translateComponenteError(error);
+    }
+  }
+
+  // Registra un componente nuevo y lo instala. `hardware.numero_serie` no
+  // tiene índice único en el schema, por eso la duplicidad se valida dentro de
+  // la transacción (y P2002 se traduce igual por si el índice se agrega).
+  async registrarEInstalarComponente(
+    idEquipo: number,
+    data: RegistrarInstalarComponenteData,
+  ): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const equipo = await tx.equipos.count({
+          where: { id_equipo: idEquipo },
+        });
+        if (!equipo) throw new EquipoNotFoundException();
+
+        const duplicado = await tx.hardware.count({
+          where: { numero_serie: data.numeroSerie },
+        });
+        if (duplicado > 0) throw new NumeroSerieComponenteDuplicadoException();
+
+        const nuevo = await tx.hardware.create({
+          data: {
+            tipo_componente: data.tipoComponente,
+            marca_modelo: data.marcaModelo,
+            numero_serie: data.numeroSerie,
+            proveedor: data.proveedor ?? null,
+            fecha_compra: data.fechaCompra ?? null,
+            url_factura: data.urlFactura ?? null,
+            estado: EstadoHardware.INSTALADO,
+            id_equipo_actual: idEquipo,
+          },
+          select: { id_hardware: true },
+        });
+
+        await tx.registro_hardware.create({
+          data: {
+            id_equipo: idEquipo,
+            id_hardware: nuevo.id_hardware,
+            is_actual: true,
+            fecha_instalacion: data.fechaInstalacion,
+            motivo_instalacion: data.observaciones ?? null,
+            id_tecnico_resp: data.idTecnico ?? null,
+          },
+        });
+      });
+    } catch (error) {
+      throw this.translateComponenteError(error);
+    }
+  }
+
+  // Traduce los errores de Prisma del montaje de componentes. Las operaciones
+  // usan create/updateMany/count (nunca update por clave única), así que P2025
+  // no se produce; los borrados concurrentes llegan como P2003 y se distinguen
+  // por el nombre de la FK (fk_rh_tecnico, fk_rh_equipo, fk_hw_equipo_actual,
+  // fk_rh_hardware).
+  // - P2002: número de serie duplicado (si existe índice único).
+  // - P2003: el técnico, el equipo o el hardware dejó de existir.
+  private translateComponenteError(error: unknown): unknown {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return new NumeroSerieComponenteDuplicadoException();
+      }
+      if (error.code === 'P2003') {
+        const fk = String(error.meta?.field_name ?? '');
+        if (fk.includes('tecnico')) {
+          return new TecnicoResponsableNoDisponibleException();
+        }
+        if (fk.includes('equipo')) return new EquipoNotFoundException();
+        if (fk.includes('hardware')) {
+          return new ComponenteHardwareNotFoundException();
+        }
+      }
+    }
+    return error;
   }
 
   // Opciones para selectores: solo equipos activos (los dados de baja no se

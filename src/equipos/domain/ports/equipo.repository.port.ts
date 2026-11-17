@@ -12,6 +12,7 @@ import { GetEquipoOptionsFilterDto } from '../dto/get-equipo-options-filter.dto'
 import { CreateEquipoData } from '../dto/create-equipo-data.dto';
 import { AgregarComponenteDto } from '../dto/agregar-componente.dto';
 import { ReemplazarComponenteDto } from '../dto/reemplazar-componente.dto';
+import { RegistrarInstalarComponenteData } from '../dto/registrar-instalar-componente-data.dto';
 
 export const EQUIPO_REPOSITORY = 'EQUIPO_REPOSITORY';
 
@@ -100,4 +101,44 @@ export interface EquipoRepositoryPort {
     id_equipo: number,
     dto: ReemplazarComponenteDto,
   ): Promise<ComponenteHardware>;
+
+  // Monta en el equipo un componente que está en stock
+  // (POST /equipos/:id/componentes/montar-stock). En una sola transacción pasa
+  // el hardware de "Disponible" a "Instalado" (id_equipo_actual = idEquipo) y
+  // crea su movimiento actual en registro_hardware (fecha de instalación,
+  // observaciones como motivo y, si se informa, el técnico responsable). La
+  // reserva del componente es atómica: si otra operación lo toma primero, se
+  // lanza ComponenteNoDisponibleException y no se escribe nada.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - ComponenteHardwareNotFoundException: el componente no existe.
+  // - ComponenteNoDisponibleException: el componente no está "Disponible" o ya
+  //   tiene un equipo asignado.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  montarComponenteStock(
+    idEquipo: number,
+    idHardware: number,
+    fechaInstalacion: Date,
+    observaciones?: string,
+    idTecnico?: number,
+  ): Promise<void>;
+
+  // Registra un componente nuevo y lo deja instalado en el equipo
+  // (POST /equipos/:id/componentes/registrar-instalar). En una sola
+  // transacción crea el hardware (estado "Instalado", id_equipo_actual =
+  // idEquipo) y su movimiento actual en registro_hardware; si algo falla no
+  // queda ni el componente ni el movimiento.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - NumeroSerieComponenteDuplicadoException: ya existe un componente con ese
+  //   número de serie.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  registrarEInstalarComponente(
+    idEquipo: number,
+    data: RegistrarInstalarComponenteData,
+  ): Promise<void>;
 }

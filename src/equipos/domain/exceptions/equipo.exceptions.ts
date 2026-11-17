@@ -75,3 +75,30 @@ export class EquipoInactivoException extends DomainException {
     super('El equipo está desactivado y no se puede asignar', 409);
   }
 }
+
+// El componente existe pero no se puede montar: no está en estado Disponible
+// o ya figura instalado en un equipo (409).
+export class ComponenteNoDisponibleException extends DomainException {
+  constructor() {
+    super(
+      'El componente no está disponible para instalar: debe estar en estado Disponible y sin equipo asignado',
+      409,
+    );
+  }
+}
+
+// Ya existe un componente de hardware con ese número de serie (409).
+export class NumeroSerieComponenteDuplicadoException extends DomainException {
+  constructor() {
+    super(
+      'El número de serie ya está registrado en otro componente de hardware',
+      409,
+    );
+  }
+}
+
+export class TecnicoResponsableNoDisponibleException extends DomainException {
+  constructor() {
+    super('El técnico responsable seleccionado no existe', 404);
+  }
+}
