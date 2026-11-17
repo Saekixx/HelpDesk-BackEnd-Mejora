@@ -38,7 +38,25 @@ const INCLUDE_RESUMEN = {
 } satisfies Prisma.equiposInclude;
 
 const INCLUDE_DETALLE = {
-  ...INCLUDE_RESUMEN,
+  clientes: { select: { id_cliente: true, nombre_principal: true } },
+  sucursales: {
+    select: {
+      id_sucursal: true,
+      nombre_sucursal: true,
+      direccion: true,
+      encargado: true,
+    },
+  },
+  area: { select: { id_area: true, nombre_area: true } },
+  usuarios: {
+    select: {
+      id_usuario: true,
+      nombre: true,
+      apellido: true,
+      correo: true,
+      telefono: true,
+    },
+  },
   registro_hardware: {
     include: {
       hardware: true,
@@ -274,7 +292,7 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
           id_hardware: dto.id_hardware,
           is_actual: true,
           fecha_instalacion: new Date(),
-          motivo_retiro: dto.descripcion,
+          motivo_instalacion: dto.descripcion,
         },
         include: { hardware: true, tecnico_responsable: true },
       });
@@ -326,7 +344,7 @@ export class EquipoPrismaRepository implements EquipoRepositoryPort {
           id_hardware: dto.id_hardware_nuevo,
           is_actual: true,
           fecha_instalacion: new Date(),
-          motivo_retiro: dto.descripcion,
+          motivo_instalacion: dto.descripcion,
         },
         include: { hardware: true, tecnico_responsable: true },
       });

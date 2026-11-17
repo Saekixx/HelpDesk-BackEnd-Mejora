@@ -99,35 +99,128 @@ export function ApiFindAllEquiposSwagger() {
   );
 }
 
+// Body de ejemplo de GET /equipos/:id (Hoja de Vida del Equipo).
+const EQUIPO_DETALLE_EJEMPLO = {
+  id_equipo: 3,
+  nombre_equipo: 'PC-DELL-90',
+  tipo: 'Desktop',
+  marca_modelo: 'Dell Latitude 5540',
+  estado: 'Activo',
+  num_serie: 'SN-2026-00123',
+  ult_revision: '2026-09-01T00:00:00.000Z',
+  rev_programada: '2027-03-01T00:00:00.000Z',
+  is_active: true,
+  created_at: '2026-11-01T15:00:00.000Z',
+  updated_at: '2026-11-10T09:30:00.000Z',
+  cliente: { id_cliente: 1, nombre_principal: 'Innovación Global Tech' },
+  sucursal: {
+    id_sucursal: 1,
+    nombre_sucursal: 'Sucursal Centro Civico',
+    direccion: 'Av. Garcilaso de la Vega 1234, Lima',
+    encargado: 'Ana Torres',
+  },
+  area: { id_area: 1, nombre_area: 'Sistemas y TI' },
+  trabajador: {
+    id_usuario: 5,
+    nombre: 'María',
+    apellido: 'Vargas',
+    correo: 'maria.sucursal2@empresa1.com',
+    telefono: '987654321',
+  },
+  hardware: {
+    componentes_actuales: [
+      {
+        id_RH: 11,
+        id_hardware: 7,
+        tipo_componente: 'MEMORIA_RAM',
+        marca_modelo: 'Kingston Fury 16GB',
+        numero_serie: 'SN-9876543210',
+        proveedor: 'TechSupply Peru S.A.C.',
+        url_factura: 'https://storage.empresa.com/facturas/fac-001.pdf',
+        salud_smart: 'OK',
+        motivo_instalacion: 'Ampliación de memoria por lentitud del equipo',
+        fecha_instalacion: '2026-10-01T10:30:00.000Z',
+        tecnico_responsable: {
+          id_usuario: 9,
+          nombre: 'Luis',
+          apellido: 'Soto',
+        },
+        is_active: true,
+      },
+    ],
+    historial: [
+      {
+        id_RH: 6,
+        id_hardware: 4,
+        tipo_componente: 'MEMORIA_RAM',
+        marca_modelo: 'Generic 8GB',
+        numero_serie: 'SN-1100234988',
+        proveedor: 'TechSupply Peru S.A.C.',
+        fecha_instalacion: '2026-03-15T09:00:00.000Z',
+        fecha_retiro: '2026-10-01T10:30:00.000Z',
+        motivo_retiro: 'Falla detectada en pruebas de memoria',
+        tecnico_responsable: {
+          id_usuario: 9,
+          nombre: 'Luis',
+          apellido: 'Soto',
+        },
+        is_active: false,
+      },
+    ],
+  },
+  software: [
+    {
+      id_software_equipos: 4,
+      id_software: 2,
+      nombre_software: 'Microsoft Office 365',
+      categoria: 'Ofimática',
+      tipo_licencia: 'Pool_Limitado',
+      licencia_asignada: 'XXXXX-XXXXX-XXXXX',
+      correo_asociado: 'licencias@empresa1.com',
+      password_enc: '**********',
+      fecha_instalacion: '2026-10-02T08:00:00.000Z',
+      vencimiento: '2027-01-01T00:00:00.000Z',
+      observaciones: 'Licencia renovada anualmente',
+      is_active: true,
+    },
+  ],
+};
+
 export function ApiFindEquipoByIdSwagger() {
   return applyDecorators(
     ApiExtraModels(EquipoDetailResponseDto),
     ApiOperation({
-      summary: 'Obtener el detalle de un equipo por id',
+      summary: 'Obtener la hoja de vida de un equipo por id',
       description:
-        'Retorna el equipo con sus relaciones (cliente, sucursal, área, trabajador), los componentes de hardware separados en actuales e historial, y el software instalado. Alimenta la vista de detalle del equipo en el frontend.',
+        'Retorna el equipo con su cliente, sucursal (dirección y encargado), área y trabajador asignado; el hardware separado en `componentes_actuales` (con motivo de instalación) e `historial` de componentes retirados; y las licencias de software asignadas. Solo el ADMINISTRADOR recibe `password_enc` de las licencias; para los demás roles viene enmascarada como `**********`.',
     }),
     ApiParam({
       name: 'id',
       description: 'ID numérico del equipo',
-      example: 1,
+      example: 3,
     }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Equipo obtenido exitosamente.',
       schema: {
-        allOf: [
-          {
-            properties: {
-              message: {
-                type: 'string',
-                example: 'Equipo obtenido exitosamente',
-              },
-              data: { $ref: getSchemaPath(EquipoDetailResponseDto) },
-            },
+        properties: {
+          status: { type: 'number', example: HttpStatus.OK },
+          message: {
+            type: 'string',
+            example: 'Equipo obtenido exitosamente',
           },
-        ],
+          data: { $ref: getSchemaPath(EquipoDetailResponseDto) },
+        },
+        example: {
+          status: HttpStatus.OK,
+          message: 'Equipo obtenido exitosamente',
+          data: EQUIPO_DETALLE_EJEMPLO,
+        },
       },
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description: 'El id enviado no es un número válido.',
     }),
     ApiResponse({
       status: HttpStatus.UNAUTHORIZED,

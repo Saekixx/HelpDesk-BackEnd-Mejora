@@ -24,7 +24,11 @@ import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
 import { AgregarComponenteHttpDto } from '../dtos/agregar-componente-http.dto';
 import { ReemplazarComponenteHttpDto } from '../dtos/reemplazar-componente-http.dto';
-import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
+import {
+  JwtAuthGuard,
+  JwtPayload,
+} from '@/auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '@/auth/infrastructure/decorators/current-user.decorator';
 import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
 import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
 import { RolEnum } from '@/auth/domain/enums/rol.enum';
@@ -96,8 +100,11 @@ export class EquipoController {
   @Get(':id')
   @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindEquipoByIdSwagger()
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    const data = await this.getEquipoByIdUseCase.execute(id);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const data = await this.getEquipoByIdUseCase.execute(id, user);
     return { message: 'Equipo obtenido exitosamente', data };
   }
 

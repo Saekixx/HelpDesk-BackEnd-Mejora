@@ -1,3 +1,4 @@
+import { TipoComponente } from '@/hardware/domain/enums/tipo-componente.enum';
 import { EstadoEquipo } from '../enums/estado-equipo.enum';
 
 export interface EquipoProps {
@@ -117,28 +118,113 @@ export interface ComponenteHardware {
   is_active: boolean;
 }
 
-// Software instalado, combinando el catálogo `software` con la asignación
+// ---- Detalle del equipo (GET /equipos/:id): "Hoja de Vida del Equipo" ----
+
+export interface EquipoDetailCliente {
+  id_cliente: number;
+  nombre_principal: string;
+}
+
+export interface EquipoDetailSucursal {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  direccion: string;
+  encargado: string;
+}
+
+export interface EquipoDetailArea {
+  id_area: number;
+  nombre_area: string;
+}
+
+export interface EquipoDetailTrabajador {
+  id_usuario: number;
+  nombre: string;
+  apellido: string;
+  correo: string | null;
+  telefono: string | null;
+}
+
+// Técnico que instaló o retiró el componente.
+export interface TecnicoResponsable {
+  id_usuario: number;
+  nombre: string;
+  apellido: string;
+}
+
+// Componente instalado actualmente en el equipo.
+export interface ComponenteActual {
+  id_RH: number;
+  id_hardware: number;
+  tipo_componente: TipoComponente;
+  marca_modelo: string;
+  numero_serie: string;
+  proveedor: string | null;
+  url_factura: string | null;
+  salud_smart: string | null;
+  motivo_instalacion: string | null;
+  fecha_instalacion: Date;
+  tecnico_responsable: TecnicoResponsable | null;
+  is_active: boolean;
+}
+
+// Componente retirado del equipo (historial).
+export interface ComponenteRetirado {
+  id_RH: number;
+  id_hardware: number;
+  tipo_componente: TipoComponente;
+  marca_modelo: string;
+  numero_serie: string;
+  proveedor: string | null;
+  fecha_instalacion: Date;
+  fecha_retiro: Date | null;
+  motivo_retiro: string | null;
+  tecnico_responsable: TecnicoResponsable | null;
+  is_active: boolean;
+}
+
+// Licencia asignada al equipo: catálogo `software` + asignación
 // `software_equipos`.
-export interface SoftwareInstalado {
+export interface SoftwareAsignado {
   id_software_equipos: number;
   id_software: number;
-  nombre: string;
-  // Corresponde a la columna `fecha_caducidad` del catálogo de software.
-  vencimiento: Date;
+  nombre_software: string;
+  categoria: string | null;
+  // Clave del enum `tipo_licencia_enum` (ej. "Pool_Limitado").
+  tipo_licencia: string;
   licencia_asignada: string | null;
+  correo_asociado: string | null;
+  // Contraseña cifrada; nunca en texto plano.
+  password_enc: string | null;
   fecha_instalacion: Date | null;
+  // Vencimiento de la asignación o, si no tiene, el del catálogo.
+  vencimiento: Date | null;
   observaciones: string | null;
   is_active: boolean;
 }
 
-export interface EquipoDetail extends EquipoListItem {
-  // Valor derivado de id_equipo (ej. "EQ-1042"); no existe en la BD.
-  codigo: string;
+export interface EquipoDetail {
+  id_equipo: number;
+  nombre_equipo: string | null;
+  tipo: string;
+  marca_modelo: string | null;
+  estado: EstadoEquipo;
+  num_serie: string | null;
+  ult_revision: Date | null;
+  rev_programada: Date | null;
+  is_active: boolean;
+  created_at: Date | null;
+  updated_at: Date | null;
+  cliente: EquipoDetailCliente | null;
+  sucursal: EquipoDetailSucursal | null;
+  area: EquipoDetailArea | null;
+  // null si el equipo no está asignado a ningún trabajador.
+  trabajador: EquipoDetailTrabajador | null;
   hardware: {
-    componentes_actuales: ComponenteHardware[];
-    historial: ComponenteHardware[];
+    componentes_actuales: ComponenteActual[];
+    historial: ComponenteRetirado[];
   };
-  software: SoftwareInstalado[];
+  software: SoftwareAsignado[];
 }
 
 // Item ligero de GET /equipos/options: lo mínimo para identificar un equipo en

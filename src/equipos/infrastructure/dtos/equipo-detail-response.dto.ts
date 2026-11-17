@@ -1,247 +1,420 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { EstadoEquipo } from '@/equipos/domain/enums/estado-equipo.enum';
+import { TipoComponente } from '@/hardware/domain/enums/tipo-componente.enum';
 
-// Referencia resumida a una entidad relacionada (cliente, sucursal, área,
-// trabajador). Equivale a RelacionSummary del dominio.
-export class RelacionResumenDto {
-  @ApiProperty({ description: 'ID de la entidad relacionada', example: 1 })
-  id: number;
+export class EquipoDetailClienteDto {
+  @ApiProperty({ description: 'ID del cliente', example: 1 })
+  id_cliente: number;
 
   @ApiProperty({
-    description: 'Nombre legible de la entidad relacionada',
-    example: 'Acme Corp SAC',
+    description: 'Nombre principal del cliente',
+    example: 'Innovación Global Tech',
   })
-  nombre: string;
+  nombre_principal: string;
 }
 
-// Un componente de hardware registrado para el equipo. `tipo`, `marca` y
-// `url_factura` vienen de la tabla `hardware` relacionada (vía
-// id_hardware). `is_active` (clasificación actual/historial) viene en
-// cambio de `registro_hardware.is_actual`, una columna propia del
-// registro. La misma forma se usa tanto para `componentes_actuales`
-// (is_actual !== false) como para `historial` (is_actual === false).
-export class ComponenteHardwareDto {
-  @ApiProperty({ description: 'ID del registro de hardware', example: 12 })
+export class EquipoDetailSucursalDto {
+  @ApiProperty({ description: 'ID de la sucursal', example: 1 })
+  id_sucursal: number;
+
+  @ApiProperty({
+    description: 'Nombre de la sucursal',
+    example: 'Sucursal Centro Civico',
+  })
+  nombre_sucursal: string;
+
+  @ApiProperty({
+    description: 'Dirección de la sucursal',
+    example: 'Av. Garcilaso de la Vega 1234, Lima',
+  })
+  direccion: string;
+
+  @ApiProperty({
+    description: 'Nombre del encargado de la sucursal',
+    example: 'Ana Torres',
+  })
+  encargado: string;
+}
+
+export class EquipoDetailAreaDto {
+  @ApiProperty({ description: 'ID del área', example: 1 })
+  id_area: number;
+
+  @ApiProperty({ description: 'Nombre del área', example: 'Sistemas y TI' })
+  nombre_area: string;
+}
+
+export class EquipoDetailTrabajadorDto {
+  @ApiProperty({ description: 'ID del usuario', example: 5 })
+  id_usuario: number;
+
+  @ApiProperty({ description: 'Nombre del trabajador', example: 'María' })
+  nombre: string;
+
+  @ApiProperty({ description: 'Apellido del trabajador', example: 'Vargas' })
+  apellido: string;
+
+  @ApiProperty({
+    description: 'Correo del trabajador',
+    example: 'maria.sucursal2@empresa1.com',
+    type: String,
+    nullable: true,
+  })
+  correo: string | null;
+
+  @ApiProperty({
+    description: 'Teléfono del trabajador',
+    example: '987654321',
+    type: String,
+    nullable: true,
+  })
+  telefono: string | null;
+}
+
+export class TecnicoResponsableDto {
+  @ApiProperty({ description: 'ID del técnico', example: 9 })
+  id_usuario: number;
+
+  @ApiProperty({ description: 'Nombre del técnico', example: 'Luis' })
+  nombre: string;
+
+  @ApiProperty({ description: 'Apellido del técnico', example: 'Soto' })
+  apellido: string;
+}
+
+export class ComponenteActualDto {
+  @ApiProperty({
+    description: 'ID del movimiento (registro_hardware)',
+    example: 11,
+  })
   id_RH: number;
 
-  @ApiPropertyOptional({
-    description: 'Tipo de componente (columna hardware.tipo_equipo)',
-    example: 'Procesador',
+  @ApiProperty({ description: 'ID del hardware', example: 7 })
+  id_hardware: number;
+
+  @ApiProperty({
+    description: 'Tipo de componente (clave)',
+    enum: TipoComponente,
+    enumName: 'TipoComponente',
+    example: TipoComponente.MEMORIA_RAM,
+  })
+  tipo_componente: TipoComponente;
+
+  @ApiProperty({ description: 'Marca y modelo', example: 'Kingston Fury 16GB' })
+  marca_modelo: string;
+
+  @ApiProperty({ description: 'Número de serie', example: 'SN-9876543210' })
+  numero_serie: string;
+
+  @ApiProperty({
+    description: 'Proveedor',
+    example: 'TechSupply Peru S.A.C.',
+    type: String,
     nullable: true,
   })
-  tipo: string | null;
+  proveedor: string | null;
 
-  @ApiPropertyOptional({
-    description: 'Marca del componente (columna hardware.marca)',
-    example: 'Intel',
+  @ApiProperty({
+    description: 'URL de la factura de compra',
+    example: 'https://storage.empresa.com/facturas/fac-001.pdf',
+    type: String,
     nullable: true,
   })
-  marca: string | null;
+  url_factura: string | null;
 
   @ApiProperty({
-    description: 'Descripción del componente',
-    example: 'Intel Core i7-12700H 2.3GHz',
+    description: 'Estado de salud SMART reportado',
+    example: 'OK',
+    type: String,
+    nullable: true,
   })
-  descripcion: string;
+  salud_smart: string | null;
 
   @ApiProperty({
-    description: 'Número de serie del componente',
-    example: 'CPU-8842-XT',
+    description: 'Motivo de la instalación del componente',
+    example: 'Ampliación de memoria por lentitud del equipo',
+    type: String,
+    nullable: true,
   })
-  serie: string;
+  motivo_instalacion: string | null;
 
   @ApiProperty({
-    description: 'Proveedor que suministró el componente',
-    example: 'Importaciones TechPeru SAC',
-  })
-  proveedor: string;
-
-  @ApiProperty({
-    description: 'Fecha de instalación del componente',
-    example: '2026-03-14T10:30:00.000Z',
+    description: 'Fecha de instalación',
+    example: '2026-10-01T10:30:00.000Z',
   })
   fecha_instalacion: Date;
 
-  @ApiPropertyOptional({
-    description:
-      'URL del PDF de la factura de compra (columna hardware.url_factura)',
-    example: 'https://storage.helpdesk.com/facturas/f-8842.pdf',
+  @ApiProperty({
+    description: 'Técnico que realizó la instalación',
+    type: TecnicoResponsableDto,
     nullable: true,
   })
-  url_factura?: string | null;
+  tecnico_responsable: TecnicoResponsableDto | null;
 
-  @ApiProperty({
-    description:
-      'true = componente actualmente instalado; false = componente retirado (historial). Proviene de registro_hardware.is_actual.',
-    example: true,
-  })
+  @ApiProperty({ description: 'Movimiento vigente', example: true })
   is_active: boolean;
 }
 
-// Agrupa los componentes de hardware del equipo separados en dos pestañas:
-// los que siguen instalados y los ya retirados.
-export class HardwareEquipoDto {
+export class ComponenteRetiradoDto {
   @ApiProperty({
-    description: 'Componentes actualmente instalados (is_active = true)',
-    type: [ComponenteHardwareDto],
+    description: 'ID del movimiento (registro_hardware)',
+    example: 6,
   })
-  componentes_actuales: ComponenteHardwareDto[];
+  id_RH: number;
+
+  @ApiProperty({ description: 'ID del hardware', example: 4 })
+  id_hardware: number;
 
   @ApiProperty({
-    description: 'Componentes retirados / reemplazados (is_active = false)',
-    type: [ComponenteHardwareDto],
+    description: 'Tipo de componente (clave)',
+    enum: TipoComponente,
+    enumName: 'TipoComponente',
+    example: TipoComponente.MEMORIA_RAM,
   })
-  historial: ComponenteHardwareDto[];
+  tipo_componente: TipoComponente;
+
+  @ApiProperty({ description: 'Marca y modelo', example: 'Generic 8GB' })
+  marca_modelo: string;
+
+  @ApiProperty({ description: 'Número de serie', example: 'SN-1100234988' })
+  numero_serie: string;
+
+  @ApiProperty({
+    description: 'Proveedor',
+    example: 'TechSupply Peru S.A.C.',
+    type: String,
+    nullable: true,
+  })
+  proveedor: string | null;
+
+  @ApiProperty({
+    description: 'Fecha de instalación',
+    example: '2026-03-15T09:00:00.000Z',
+  })
+  fecha_instalacion: Date;
+
+  @ApiProperty({
+    description: 'Fecha de retiro',
+    example: '2026-10-01T10:30:00.000Z',
+    type: Date,
+    nullable: true,
+  })
+  fecha_retiro: Date | null;
+
+  @ApiProperty({
+    description: 'Motivo del retiro',
+    example: 'Falla detectada en pruebas de memoria',
+    type: String,
+    nullable: true,
+  })
+  motivo_retiro: string | null;
+
+  @ApiProperty({
+    description: 'Técnico responsable del movimiento',
+    type: TecnicoResponsableDto,
+    nullable: true,
+  })
+  tecnico_responsable: TecnicoResponsableDto | null;
+
+  @ApiProperty({ description: 'Movimiento vigente', example: false })
+  is_active: boolean;
 }
 
-// Software instalado en el equipo. Combina los datos del catálogo
-// (`software`) con los de la asignación al equipo (`software_equipos`).
-export class SoftwareEquipoDto {
+export class HardwareEquipoDto {
   @ApiProperty({
-    description: 'ID de la relación software-equipo',
-    example: 7,
+    description: 'Componentes instalados actualmente',
+    type: [ComponenteActualDto],
   })
+  componentes_actuales: ComponenteActualDto[];
+
+  @ApiProperty({
+    description: 'Componentes retirados del equipo',
+    type: [ComponenteRetiradoDto],
+  })
+  historial: ComponenteRetiradoDto[];
+}
+
+export class SoftwareAsignadoDto {
+  @ApiProperty({ description: 'ID de la asignación', example: 4 })
   id_software_equipos: number;
 
-  @ApiProperty({ description: 'ID del software en el catálogo', example: 3 })
+  @ApiProperty({ description: 'ID del software en el catálogo', example: 2 })
   id_software: number;
 
   @ApiProperty({
     description: 'Nombre del software',
     example: 'Microsoft Office 365',
   })
-  nombre: string;
+  nombre_software: string;
 
   @ApiProperty({
-    description:
-      'Fecha de caducidad de la licencia del software (columna fecha_caducidad)',
-    example: '2027-01-31T00:00:00.000Z',
+    description: 'Categoría del software',
+    example: 'Ofimática',
+    type: String,
+    nullable: true,
   })
-  vencimiento: Date;
+  categoria: string | null;
 
-  @ApiPropertyOptional({
-    description:
-      'Licencia asignada específicamente a este equipo. Si es null, se usa la licencia general del catálogo.',
-    example: 'XXXXX-YYYYY-ZZZZZ-11111',
+  @ApiProperty({
+    description: 'Tipo de licencia (clave del enum)',
+    example: 'Pool_Limitado',
+  })
+  tipo_licencia: string;
+
+  @ApiProperty({
+    description: 'Licencia asignada a este equipo',
+    example: 'XXXXX-XXXXX-XXXXX',
+    type: String,
     nullable: true,
   })
   licencia_asignada: string | null;
 
-  @ApiPropertyOptional({
-    description: 'Fecha en que se instaló el software en este equipo',
-    example: '2026-02-01T09:15:00.000Z',
+  @ApiProperty({
+    description: 'Correo asociado a la licencia',
+    example: 'licencias@empresa1.com',
+    type: String,
+    nullable: true,
+  })
+  correo_asociado: string | null;
+
+  @ApiProperty({
+    description:
+      'Contraseña de la licencia. Solo el ADMINISTRADOR la recibe; para los demás roles viene enmascarada como "**********" (null si no tiene contraseña).',
+    example: '**********',
+    type: String,
+    nullable: true,
+  })
+  password_enc: string | null;
+
+  @ApiProperty({
+    description: 'Fecha de instalación',
+    example: '2026-10-02T08:00:00.000Z',
+    type: Date,
     nullable: true,
   })
   fecha_instalacion: Date | null;
 
-  @ApiPropertyOptional({
-    description: 'Observaciones sobre esta instalación',
-    example: 'Instalado con perfil corporativo del cliente.',
+  @ApiProperty({
+    description:
+      'Vencimiento de la licencia (el de la asignación o, si no tiene, el del catálogo)',
+    example: '2027-01-01T00:00:00.000Z',
+    type: Date,
+    nullable: true,
+  })
+  vencimiento: Date | null;
+
+  @ApiProperty({
+    description: 'Observaciones',
+    example: 'Licencia renovada anualmente',
+    type: String,
     nullable: true,
   })
   observaciones: string | null;
 
-  @ApiProperty({
-    description: 'Indica si la asignación del software sigue vigente',
-    example: true,
-  })
+  @ApiProperty({ description: 'Asignación activa', example: true })
   is_active: boolean;
 }
 
-// Respuesta completa de GET /equipos/:id.
+// Hoja de Vida del Equipo (GET /equipos/:id)
 export class EquipoDetailResponseDto {
-  @ApiProperty({ description: 'ID del equipo', example: 1042 })
+  @ApiProperty({ description: 'ID del equipo', example: 3 })
   id_equipo: number;
 
   @ApiProperty({
-    description:
-      'Código legible del equipo. Es un valor derivado de id_equipo (no existe como columna en la base de datos).',
-    example: 'EQ-1042',
-  })
-  codigo: string;
-
-  @ApiProperty({ description: 'Tipo de equipo', example: 'Laptop' })
-  tipo: string;
-
-  @ApiProperty({ description: 'Marca del equipo', example: 'Dell' })
-  marca: string;
-
-  @ApiPropertyOptional({
-    description: 'Nombre o identificador del equipo',
-    example: 'PC-Contabilidad-01',
+    description: 'TAG del equipo',
+    example: 'PC-DELL-90',
+    type: String,
     nullable: true,
   })
   nombre_equipo: string | null;
 
-  @ApiPropertyOptional({
-    description: 'Número de serie del equipo',
+  @ApiProperty({ description: 'Tipo de equipo', example: 'Desktop' })
+  tipo: string;
+
+  @ApiProperty({
+    description: 'Marca y modelo',
+    example: 'Dell Latitude 5540',
+    type: String,
+    nullable: true,
+  })
+  marca_modelo: string | null;
+
+  @ApiProperty({
+    description: 'Estado operativo del equipo',
+    enum: EstadoEquipo,
+    enumName: 'EstadoEquipo',
+    example: EstadoEquipo.ACTIVO,
+  })
+  estado: EstadoEquipo;
+
+  @ApiProperty({
+    description: 'Número de serie',
     example: 'SN-2026-00123',
+    type: String,
     nullable: true,
   })
   num_serie: string | null;
 
-  @ApiPropertyOptional({
-    description:
-      'Nombre del usuario final del equipo, tal como fue registrado en texto libre. El usuario asignado se obtiene del campo `trabajador`.',
-    example: 'Carlos Ramírez',
-    nullable: true,
-  })
-  nombre_usuario: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Fecha de la última revisión técnica',
-    example: '2026-08-20T00:00:00.000Z',
+  @ApiProperty({
+    description: 'Fecha de la última revisión',
+    example: '2026-09-01T00:00:00.000Z',
+    type: Date,
     nullable: true,
   })
   ult_revision: Date | null;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Fecha de la próxima revisión programada',
-    example: '2026-11-20T00:00:00.000Z',
+    example: '2027-03-01T00:00:00.000Z',
+    type: Date,
     nullable: true,
   })
   rev_programada: Date | null;
 
-  @ApiProperty({ description: 'Estado activo del equipo', example: true })
+  @ApiProperty({
+    description: 'Equipo activo (no dado de baja)',
+    example: true,
+  })
   is_active: boolean;
 
-  @ApiPropertyOptional({
-    description: 'Cliente (empresa) propietario del equipo',
-    type: RelacionResumenDto,
+  @ApiProperty({
+    description: 'Fecha de registro',
+    example: '2026-11-01T15:00:00.000Z',
+    type: Date,
     nullable: true,
   })
-  cliente: RelacionResumenDto | null;
-
-  @ApiPropertyOptional({
-    description: 'Sucursal donde se encuentra el equipo',
-    type: RelacionResumenDto,
-    nullable: true,
-  })
-  sucursal: RelacionResumenDto | null;
-
-  @ApiPropertyOptional({
-    description: 'Área donde se encuentra el equipo',
-    type: RelacionResumenDto,
-    nullable: true,
-  })
-  area: RelacionResumenDto | null;
-
-  @ApiPropertyOptional({
-    description:
-      'Trabajador (usuario) asignado al equipo, obtenido por la relación id_trabajador → usuarios. `nombre` es el nombre completo (nombre y apellido).',
-    type: RelacionResumenDto,
-    nullable: true,
-  })
-  trabajador: RelacionResumenDto | null;
+  created_at: Date | null;
 
   @ApiProperty({
-    description: 'Componentes de hardware, separados en actuales e historial',
-    type: HardwareEquipoDto,
+    description: 'Fecha de última actualización',
+    example: '2026-11-10T09:30:00.000Z',
+    type: Date,
+    nullable: true,
   })
+  updated_at: Date | null;
+
+  @ApiProperty({ type: EquipoDetailClienteDto, nullable: true })
+  cliente: EquipoDetailClienteDto | null;
+
+  @ApiProperty({ type: EquipoDetailSucursalDto, nullable: true })
+  sucursal: EquipoDetailSucursalDto | null;
+
+  @ApiProperty({ type: EquipoDetailAreaDto, nullable: true })
+  area: EquipoDetailAreaDto | null;
+
+  @ApiProperty({
+    description: 'Trabajador asignado. null si el equipo no está asignado.',
+    type: EquipoDetailTrabajadorDto,
+    nullable: true,
+  })
+  trabajador: EquipoDetailTrabajadorDto | null;
+
+  @ApiProperty({ type: HardwareEquipoDto })
   hardware: HardwareEquipoDto;
 
   @ApiProperty({
-    description: 'Software instalado en el equipo',
-    type: [SoftwareEquipoDto],
+    description: 'Licencias de software asignadas al equipo',
+    type: [SoftwareAsignadoDto],
   })
-  software: SoftwareEquipoDto[];
+  software: SoftwareAsignadoDto[];
 }

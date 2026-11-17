@@ -219,6 +219,7 @@ model hardware {
 model registro_hardware {
   id_RH             Int       @id @default(autoincrement())
   fecha_instalacion DateTime  @default(now()) @db.DateTime(0)
+  motivo_instalacion String?  @db.Text
   fecha_retiro      DateTime? @db.DateTime(0)
   motivo_retiro     String?   @db.Text
   salud_smart       String?   @db.VarChar(100)
