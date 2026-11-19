@@ -60,4 +60,15 @@ export class PrismaCitaSoporteRepository implements CitaSoporteRepositoryPort {
 
     return records.map((record) => CitaSoporteMapper.toDomain(record));
   }
+
+  async hasAppointment(idTicket: number): Promise<CitaSoporte | null> {
+    const record = await this.prisma.citas_soporte.findFirst({
+      where: { id_ticket: idTicket },
+      orderBy: { created_at: 'desc' }, // Obtenemos la última cita relacionada si existe
+    });
+
+    if (!record) return null; // Si no hay cita, retornamos null
+
+    return CitaSoporteMapper.toDomain(record); // Si hay cita, retornamos la entidad de dominio correspondiente
+  }
 }

@@ -13,4 +13,7 @@ export interface CitaSoporteRepositoryPort {
     id_tecnico: number,
     fecha: Date,
   ): Promise<CitaSoporte[]>;
+
+  // Método para verificar si un ticket tiene una cita vinculada
+  hasAppointment(idTicket: number): Promise<CitaSoporte | null>;
 }

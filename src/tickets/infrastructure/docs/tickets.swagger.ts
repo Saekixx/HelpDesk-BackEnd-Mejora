@@ -6,7 +6,6 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AssignSupportCommand } from '../dtos/assign-support.request';
 import { CreateTicketDto } from '../dtos/create-ticket.dto';
 import { EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 
@@ -126,7 +125,7 @@ export function ApiAssignSupportSwagger() {
       description:
         'Asigna un usuario de soporte al ticket y transiciona su estado a Asignado.',
     }),
-    ApiBody({ type: AssignSupportCommand }),
+    ApiBody({ type: Number, description: 'ID del soporte a asignar' }),
     ApiResponse({ status: 200, description: 'Soporte asignado exitosamente.' }),
     ApiResponse({ status: 404, description: 'Ticket no encontrado.' }),
     ApiResponse({

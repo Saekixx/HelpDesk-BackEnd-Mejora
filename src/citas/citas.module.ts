@@ -20,10 +20,10 @@ import { AutoAssignInsituUseCase } from './application/use-case/citas/auto-assig
   imports: [
     ConfigModule,
     CommonModule,
-    AuditoriaModule,
+    forwardRef(() => AuditoriaModule),
     JwtModule.register({}),
     forwardRef(() => AuthModule),
-    TicketModule,
+    forwardRef(() => TicketModule),
   ],
   controllers: [CitasSoporteController, SoftLockController],
   providers: [

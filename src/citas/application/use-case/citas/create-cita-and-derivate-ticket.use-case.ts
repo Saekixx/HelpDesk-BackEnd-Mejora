@@ -1,10 +1,10 @@
+// src/modules/citas/application/use-cases/create-cita-and-derivate-ticket.use-case.ts
 import {
   Injectable,
   Inject,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import {
   CITA_SOPORTE_REPOSITORY,
   CitaSoporteRepositoryPort,
@@ -14,6 +14,9 @@ import {
   SoftLockRepositoryPort,
 } from '@/citas/domain/port/soft-lock.repository.port';
 import { CitaSoporte } from '@/citas/domain/entity/cita-soporte.entity';
+import { DerivateTicketToInSituUseCase } from '@/tickets/application/use-cases/derivate-ticket-to-insitu.use-case';
+import { RegisterDerivationAuditUseCase } from '@/auditoria/application/use-case/register-derivation-audit.use-case';
+import { CreateCitaDto } from '../../dtos/citas/create-cita.dto';
 
 @Injectable()
 export class CreateCitaAndDerivateTicketUseCase {
@@ -22,16 +25,12 @@ export class CreateCitaAndDerivateTicketUseCase {
     private readonly citaRepository: CitaSoporteRepositoryPort,
     @Inject(SOFT_LOCK_REPOSITORY)
     private readonly softLockRepository: SoftLockRepositoryPort,
-    private readonly prisma: PrismaService,
+    private readonly derivateTicketUseCase: DerivateTicketToInSituUseCase,
+    private readonly registerDerivationAuditUseCase: RegisterDerivationAuditUseCase,
   ) {}
 
-  async execute(dto: {
-    lock_token: string;
-    id_ticket: number;
-    id_sucursal: number;
-    observaciones?: string;
-  }): Promise<CitaSoporte> {
-    // Buscar el SoftLock por su token
+  async execute(dto: CreateCitaDto): Promise<CitaSoporte> {
+    // 1. Buscar y validar el SoftLock
     const softLock = await this.softLockRepository.findByToken(dto.lock_token);
 
     if (!softLock) {
@@ -40,61 +39,67 @@ export class CreateCitaAndDerivateTicketUseCase {
       );
     }
 
-    // Validar si el SoftLock ha expirado (TTL de 5 minutos)
     if (softLock.isExpired()) {
       throw new BadRequestException(
         'El tiempo de reserva temporal (SoftLock) ha expirado. Debe seleccionar la franja nuevamente.',
       );
     }
 
-    // Mapear la franja de texto (ej. "09:00 - 12:00") a objetos Date de tipo Time para la base de datos
+    // 2. Mapear la franja horaria
     const { horaInicio, horaFin } = this.mapearFranjaAHoras(softLock.franja);
 
-    // Ejecutar la transacción atómica (Crear Cita, Actualizar Ticket y Eliminar SoftLock)
-    const result = await this.prisma.$transaction(async (prismaTx) => {
-      // A. Crear la entidad de dominio de la Cita de Soporte
-      const nuevaCita = CitaSoporte.create({
-        id_ticket: dto.id_ticket,
-        id_tecnico: softLock.id_tecnico,
-        id_sucursal: dto.id_sucursal,
-        fecha_programada: softLock.fecha,
-        hora_inicio: horaInicio,
-        hora_fin: horaFin,
-        estado: 'Pendiente',
-        observaciones: dto.observaciones ?? null,
-      });
-
-      // B. Persistir la cita oficial usando el repositorio de dominio
-      const citaGuardada = await this.citaRepository.save(nuevaCita);
-
-      // C. Actualizar el estado del Ticket a "Derivado InSitu" y asignarle el técnico responsable
-      await prismaTx.tickets.update({
-        where: { id_tickets: dto.id_ticket },
-        data: {
-          estado: 'Derivado_InSitu',
-          id_soporte: softLock.id_tecnico, // Asigna formalmente al técnico in-situ
-        },
-      });
-
-      // D. Consumir y eliminar el SoftLock ya que cumplió su propósito
-      await this.softLockRepository.deleteByToken(dto.lock_token);
-
-      return citaGuardada;
+    // 3. Crear y persistir la Cita de Soporte
+    const nuevaCita = CitaSoporte.create({
+      id_ticket: dto.id_ticket,
+      id_tecnico: softLock.id_tecnico,
+      id_sucursal: dto.id_sucursal,
+      fecha_programada: softLock.fecha,
+      hora_inicio: horaInicio,
+      hora_fin: horaFin,
+      estado: 'Pendiente',
+      observaciones: dto.observaciones ?? null,
     });
 
-    return result;
+    const citaGuardada = await this.citaRepository.save(nuevaCita);
+
+    // 4. Derivar el Ticket a In-Situ y obtener su estado previo y técnico remoto
+    const { ticket: ticketActualizado, estadoAnterior } =
+      await this.derivateTicketUseCase.execute(dto.id_ticket);
+
+    // 5. Registrar la auditoría con datos completos del Ticket (remoto) y la Cita (in-situ)
+    await this.registerDerivationAuditUseCase.execute({
+      id_ticket: ticketActualizado.id_tickets!,
+      id_usuario: dto.id_usuario,
+      id_tecnico_remoto: ticketActualizado.id_soporte ?? null,
+      estado_anterior: estadoAnterior,
+      estado_nuevo: String(ticketActualizado.estado),
+      motivo_derivacion: dto.observaciones,
+      cita_insitu: {
+        id_cita: citaGuardada.id_cita!,
+        fecha_programada: citaGuardada.fecha_programada
+          .toISOString()
+          .split('T')[0],
+        estado_cita: String(citaGuardada.estado),
+        observaciones:
+          citaGuardada.observaciones || 'Sin observaciones registradas.',
+        id_tecnico: citaGuardada.id_tecnico,
+      },
+    });
+
+    // 6. Eliminar el SoftLock utilizado
+    await this.softLockRepository.deleteByToken(dto.lock_token);
+
+    return citaGuardada;
   }
 
   private mapearFranjaAHoras(franja: string): {
     horaInicio: Date;
     horaFin: Date;
   } {
-    // Ejemplo de franja: "09:00 - 12:00"
     const partes = franja.split('-').map((p) => p.trim());
     const [hInicio, mInicio] = partes[0].split(':');
     const [hFin, mFin] = partes[1].split(':');
 
-    // Creamos fechas base (1970-01-01) para almacenar únicamente el formato Time en la BD
     const horaInicio = new Date(`1970-01-01T${hInicio}:${mInicio}:00Z`);
     const horaFin = new Date(`1970-01-01T${hFin}:${mFin}:00Z`);
 
