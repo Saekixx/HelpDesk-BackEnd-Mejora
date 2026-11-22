@@ -1,4 +1,10 @@
-import { Sucursal, SucursalListItem } from '../entities/sucursal.entity';
+import {
+  CreateSucursalResult,
+  Sucursal,
+  SucursalDetail,
+  SucursalListItem,
+  SucursalStats,
+} from '../entities/sucursal.entity';
 import { OptionDto } from '../dto/user-options.dto';
 import { GetSucursalesFilterDto } from '../dto/get-sucursales-filter.dto';
 import { CreateSucursalDto } from '../dto/create-sucursal.dto';
@@ -17,13 +23,18 @@ export interface PaginatedSucursalesResult {
 
 export interface SucursalRepositoryPort {
   // Listado con búsqueda, filtro por cliente/estado y paginación
-  findAll(
-    filters: GetSucursalesFilterDto,
-  ): Promise<PaginatedSucursalesResult>;
+  findAll(filters: GetSucursalesFilterDto): Promise<PaginatedSucursalesResult>;
 
   findById(id: number): Promise<Sucursal | null>;
 
-  create(data: CreateSucursalDto): Promise<Sucursal>;
+  // Detalle con áreas vinculadas, cliente y encargado (GET /sucursales/:id)
+  findDetailById(id: number): Promise<SucursalDetail | null>;
+
+  // KPIs del dashboard de gestión de sucursales (GET /sucursales/estadisticas)
+  getStats(): Promise<SucursalStats>;
+
+  // Crea de forma atómica la sucursal y la cuenta de usuario de su encargado
+  create(data: CreateSucursalDto): Promise<CreateSucursalResult>;
 
   update(id: number, data: UpdateSucursalDto): Promise<Sucursal>;
 

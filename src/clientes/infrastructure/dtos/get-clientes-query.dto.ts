@@ -1,15 +1,25 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsInt, IsEnum, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsBoolean,
+  IsEnum,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { GetClientesFilterDto } from '@/clientes/domain/dto/get-clientes-filter.dto';
 import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
 
 export class GetClientesQueryDto implements GetClientesFilterDto {
   @ApiPropertyOptional({
-    description: 'Término de búsqueda (nombre, documento o correo)',
+    description:
+      'Búsqueda parcial por nombre/razón social, documento (RUC/DNI) o correo',
     example: 'Acme',
   })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   search?: string;
 
@@ -26,17 +36,19 @@ export class GetClientesQueryDto implements GetClientesFilterDto {
 
   @ApiPropertyOptional({
     description:
-      'Filtrar por estado activo/inactivo. Si se omite, retorna ambos.',
-    example: true,
+      'Filtrar por estado: true (activos) o false (inactivos). Si se omite, retorna ambos.',
+    type: Boolean,
+    required: false,
   })
   @IsOptional()
+  // Se lee el valor crudo (obj) porque enableImplicitConversion ya convirtió "false" en true.
   @Transform(({ obj, key }) => {
-    const rawValue = obj[key];
-    if (rawValue === 'true' || rawValue === true) return true;
-    if (rawValue === 'false' || rawValue === false) return false;
-    return undefined;
+    const raw: unknown = obj[key];
+    if (raw === 'true' || raw === true) return true;
+    if (raw === 'false' || raw === false) return false;
+    return raw === '' ? undefined : raw;
   })
-  @IsBoolean()
+  @IsBoolean({ message: 'is_active debe ser true o false' })
   is_active?: boolean;
 
   @ApiPropertyOptional({
@@ -52,14 +64,16 @@ export class GetClientesQueryDto implements GetClientesFilterDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Cantidad de registros por página',
+    description: 'Cantidad de registros por página (máximo 100)',
     default: 10,
     example: 10,
     minimum: 1,
+    maximum: 100,
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number = 10;
 }

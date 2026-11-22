@@ -21,44 +21,52 @@ import {
 export class LoginUseCase {
   constructor(
     @Inject(USER_REPOSITORY)
-    private readonly userRepository: UserRepositoryPort, // Inyecta el puerto del repositorio de usuarios
+    private readonly userRepository: UserRepositoryPort,
     @Inject(ROL_REPOSITORY)
-    private readonly rolRepository: RolRepositoryPort, // Inyecta el puerto del repositorio de roles
-    @Inject(HASH_SERVICE) private readonly hashService: HashServicePort, // Inyecta el puerto del servicio de hash
-    @Inject(TOKEN_SERVICE) private readonly tokenService: TokenServicePort, // Inyecta el puerto del servicio de token
+    private readonly rolRepository: RolRepositoryPort,
+    @Inject(HASH_SERVICE)
+    private readonly hashService: HashServicePort,
+    @Inject(TOKEN_SERVICE)
+    private readonly tokenService: TokenServicePort,
   ) {}
 
   async execute(email: string, passwordPlain: string): Promise<LoginResponse> {
     // Buscar al usuario por correo electrónico
     const user = await this.userRepository.findByCorreo(email);
-    // Si no se encuentra el usuario, lanzar una excepción de credenciales inválidas
-    if (!user) throw new UnauthorizedException('Credenciales inválidas');
 
-    // Validar la contraseña usando el servicio de hash
+    // Validar que el usuario exista y tenga una contraseña
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    // Validar la contraseña
     const isPasswordValid = await this.hashService.compare(
       passwordPlain,
       user.password,
     );
 
-    // Si la contraseña no es válida, lanzar una excepción de credenciales inválidas
-    if (!isPasswordValid)
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Credenciales inválidas');
+    }
 
-    // Si la cuenta está desactivada, rechaza el login
-    if (!user.is_active) throw new UnauthorizedException('Usuario inactivo');
+    // Verificar que la cuenta esté activa
+    if (!user.is_active) {
+      throw new UnauthorizedException('Usuario inactivo');
+    }
 
-    // Validar que el ID no sea null antes de firmar el token
-    if (user.id_usuario === null)
+    // Validar el ID del usuario
+    if (user.id_usuario == null) {
       throw new UnauthorizedException('El usuario no posee un ID válido');
+    }
 
-    // Obtener el rol del usuario para incluirlo en el token y en la respuesta
+    // Obtener el rol del usuario
     const rol = await this.rolRepository.findById(user.id_rol);
-    if (!rol) throw new UnauthorizedException('Rol no encontrado');
 
-    // IMPORTANTE: el rol y el contexto (cliente/sucursal/área) deben viajar
-    // dentro del propio JWT, porque JwtStrategy arma req.user leyendo estos
-    // mismos campos del payload decodificado, y RoleGuard depende de
-    // req.user.role para autorizar por @Roles(...).
+    if (!rol) {
+      throw new UnauthorizedException('Rol no encontrado');
+    }
+
+    // Generar el token con el rol y el contexto del usuario
     const token = await this.tokenService.generateToken({
       sub: String(user.id_usuario),
       email: user.correo,
@@ -68,7 +76,7 @@ export class LoginUseCase {
       nombre: user.nombre,
     });
 
-    // Retornar el token de acceso
+    // Retornar el token y los datos del usuario
     return {
       token,
       user: {

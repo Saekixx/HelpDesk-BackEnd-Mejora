@@ -3,7 +3,7 @@ import {
   CLIENTE_REPOSITORY,
   ClienteRepositoryPort,
 } from '@/clientes/domain/ports/cliente.repository.port';
-import { ClienteDetail } from '@/clientes/domain/entities/cliente.entity';
+import { ClienteDetailView } from '@/clientes/domain/entities/cliente.entity';
 import { ClienteNotFoundException } from '@/clientes/domain/exceptions/cliente.exceptions';
 
 @Injectable()
@@ -13,8 +13,8 @@ export class GetClienteByIdUseCase {
     private readonly clienteRepository: ClienteRepositoryPort,
   ) {}
 
-  async execute(id: number): Promise<ClienteDetail> {
-    const cliente = await this.clienteRepository.findById(id);
+  async execute(id: number): Promise<ClienteDetailView> {
+    const cliente = await this.clienteRepository.findDetailById(id);
     if (!cliente) throw new ClienteNotFoundException();
     return cliente;
   }

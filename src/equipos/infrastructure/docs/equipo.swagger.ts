@@ -6,6 +6,7 @@ import {
   ApiBody,
   ApiExtraModels,
   getSchemaPath,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CreateEquipoHttpDto } from '../dtos/create-equipo-http.dto';
 import { UpdateEquipoHttpDto } from '../dtos/update-equipo-http.dto';
@@ -52,7 +53,7 @@ export function ApiFindAllEquiposSwagger() {
     ApiOperation({
       summary: 'Listar equipos',
       description:
-        'Retorna un listado paginado de equipos, con filtro opcional por cliente, sucursal, texto de búsqueda y estado activo/inactivo.',
+        'Retorna un listado paginado de equipos, con filtro opcional por cliente, sucursal, id_trabajador, texto de búsqueda y estado activo/inactivo.',
     }),
     ApiResponse({
       status: HttpStatus.OK,
@@ -322,3 +323,39 @@ export function ApiReemplazarComponenteEquipoSwagger() {
     }),
   );
 }
+
+export const ApiGetEquipoOptionsSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Obtener opciones de equipos para filtros',
+      description:
+        'Devuelve un listado de equipos con id y nombre, opcionalmente filtrado por área o por trabajador. Este endpoint se utiliza para alimentar los selectores de búsqueda en el frontend.',
+    }),
+    ApiQuery({
+      name: 'id_area',
+      required: false,
+      type: Number,
+      description: 'Filtrar opciones de equipos por ID del área',
+      example: 1,
+    }),
+    ApiQuery({
+      name: 'id_trabajador',
+      required: false,
+      type: Number,
+      description: 'Filtrar opciones de equipos por ID del trabajador',
+      example: 5,
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Opciones de equipos obtenidas exitosamente.',
+      schema: {
+        example: {
+          message: 'Opciones de equipos obtenidas exitosamente',
+          data: [
+            { id_equipo: 1, nombre_equipo: 'PC-Contabilidad-01' },
+            { id_equipo: 2, nombre_equipo: 'Laptop-Soporte-02' },
+          ],
+        },
+      },
+    }),
+  );

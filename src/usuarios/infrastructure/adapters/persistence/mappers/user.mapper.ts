@@ -5,10 +5,16 @@ import { UserOptions } from '@/usuarios/domain/criteria/user-options.dto';
 
 // Tipo para consultas de Prisma que incluyen relaciones con otras tablas
 export type PrismaUserWithRelations = PrismaUsuario & {
-  rol?: { nombre: string } | null;
+  rol?: { id_rol: number; nombre: string } | null;
   clientes?: { nombre_principal: string } | null;
   sucursales?: { nombre_sucursal: string } | null;
   area?: { nombre_area: string } | null;
+  tecnicos_zonas?: Array<{
+    zonas: {
+      id_zona: number;
+      nombre_zona: string;
+    };
+  }>;
 };
 
 // Tipo para consultas de Prisma que solo devuelven opciones de usuario
@@ -53,7 +59,9 @@ export class UserMapper {
     };
   }
 
-  static toResponseDto(entity: PrismaUserWithRelations): UserResponseDto {
+  static toResponseDto(entity: PrismaUserWithRelations): UserResponseDto & {
+    zonas: Array<{ id_zona: number; nombre_zona: string }>;
+  } {
     return {
       id_usuario: entity.id_usuario,
       nombre: entity.nombre,
@@ -69,10 +77,20 @@ export class UserMapper {
       id_sucursal: entity.id_sucursal ?? null,
       id_area: entity.id_area ?? null,
 
+      rol: entity.rol
+        ? { id: entity.rol.id_rol, nombre: entity.rol.nombre }
+        : null,
       nombre_rol: entity.rol?.nombre || 'Sin Rol',
       nombre_cliente: entity.clientes?.nombre_principal || null,
       nombre_sucursal: entity.sucursales?.nombre_sucursal || null,
       nombre_area: entity.area?.nombre_area || null,
+
+      // Mapeo seguro de las zonas
+      zonas:
+        entity.tecnicos_zonas?.map((tz) => ({
+          id_zona: tz.zonas.id_zona,
+          nombre_zona: tz.zonas.nombre_zona,
+        })) || [],
     };
   }
 

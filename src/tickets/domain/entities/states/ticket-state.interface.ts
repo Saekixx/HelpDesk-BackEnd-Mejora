@@ -8,4 +8,5 @@ export interface TicketState {
   cerrar(ticket: Ticket): void;
   reabrir(ticket: Ticket): void;
   derivarInsitu(ticket: Ticket): void;
+  enEsperaRepuesto(ticket: Ticket): void;
 }

@@ -66,7 +66,6 @@ export interface EquipoListItem extends Equipo {
   trabajador: RelacionSummary | null;
 }
 
-
 export interface ComponenteHardware {
   id_RH: number;
   tipo: string | null;
@@ -93,7 +92,6 @@ export interface SoftwareInstalado {
   observaciones: string | null;
   is_active: boolean;
 }
-
 
 export interface EquipoDetail extends EquipoListItem {
   // Valor derivado de id_equipo (ej. "EQ-1042"); no existe en la BD.

@@ -11,7 +11,6 @@ import { Server, Socket } from 'socket.io';
 import { Inject } from '@nestjs/common';
 import { SendMessageUseCase } from '../../application/use-cases/send-message.use-case';
 import { GetHistoryUseCase } from '../../application/use-cases/get-history.use-case';
-import { SendMessageDto } from '../../application/dtos/send-message.dto';
 import { ICachePort } from '../../domain/ports/cache.port';
 
 @WebSocketGateway({
@@ -31,6 +30,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly cachePort: ICachePort,
   ) {}
 
+  // Manejadores de conexión (soportes y clientes)
   async handleConnection(client: Socket) {
     const userId = client.handshake.query.userId as string;
     if (userId) {
@@ -39,6 +39,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  // Manejador de desconexión (soportes y clientes)
   async handleDisconnect(client: Socket) {
     const userId = client.handshake.query.userId as string;
     if (userId) {
@@ -47,6 +48,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  // Manejador de unión a sala del chat
   @SubscribeMessage('join_room')
   async handleJoinRoom(
     @MessageBody() data: any,
@@ -66,6 +68,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit('chat_history', history);
   }
 
+  // Manejador de envío de mensajes
   @SubscribeMessage('send_message')
   async handleSendMessage(
     @MessageBody() rawDto: any,

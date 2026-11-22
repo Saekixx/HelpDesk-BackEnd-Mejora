@@ -6,6 +6,7 @@
 export interface GetEquiposFilterDto {
   id_cliente?: number;
   id_sucursal?: number;
+  id_trabajador?: number; // Este campo se utiliza para filtrar equipos asignados a un trabajador específico.
   search?: string;
   is_active?: boolean;
   page?: number;

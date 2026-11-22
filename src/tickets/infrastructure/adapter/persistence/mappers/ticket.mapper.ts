@@ -5,15 +5,33 @@ import {
 } from '@prisma/client';
 import { Ticket, EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 import { TicketResponseCriteria } from '@/tickets/domain/criteria/ticket-response.criteria';
+import { TicketDetalleCriteria } from '@/tickets/domain/criteria/ticket-detalle.criteria';
 
 export class TicketMapper {
   static toDomain(prismaTicket: PrismaTicket): Ticket {
+    // Forzamos la lectura exacta del estado desde Prisma
+    let estadoDominio = prismaTicket.estado as unknown as string;
+
+    // Normalizamos las variantes que puedan venir de la base de datos o Prisma
+    if (
+      estadoDominio === 'En_Progreso' ||
+      estadoDominio === 'EN_PROGRESO' ||
+      estadoDominio === 'En Progreso'
+    ) {
+      estadoDominio = 'En Progreso'; // O el valor que use tu entidad de dominio para este estado
+    } else if (estadoDominio === 'Pendiente' || estadoDominio === 'PENDIENTE') {
+      estadoDominio = 'Pendiente';
+    } else if (estadoDominio === 'Asignado' || estadoDominio === 'ASIGNADO') {
+      estadoDominio = 'Asignado';
+    }
+
     return new Ticket({
       id_tickets: prismaTicket.id_tickets,
       pin: prismaTicket.pin,
       asunto: prismaTicket.asunto,
       detalle: prismaTicket.detalle,
-      estado: (prismaTicket.estado as unknown as EstadoTicket) ?? undefined,
+      reporte_cierre: prismaTicket.reporte_cierre ?? undefined,
+      estado: estadoDominio as EstadoTicket,
       id_equipo: prismaTicket.id_equipo,
       id_trabajador: prismaTicket.id_trabajador,
       id_soporte: prismaTicket.id_soporte ?? undefined,
@@ -24,6 +42,41 @@ export class TicketMapper {
   }
 
   static toPersistence(domain: Ticket): Prisma.ticketsUncheckedCreateInput {
+    let estadoPersistencia: PrismaEstadoTicket = PrismaEstadoTicket.Pendiente;
+
+    const estadoStr = String(domain.estado).trim().toLowerCase();
+
+    switch (estadoStr) {
+      case 'pendiente':
+        estadoPersistencia = PrismaEstadoTicket.Pendiente;
+        break;
+      case 'asignado':
+        estadoPersistencia = PrismaEstadoTicket.Asignado;
+        break;
+      case 'en progreso':
+      case 'en_progreso':
+        estadoPersistencia = PrismaEstadoTicket.En_Progreso;
+        break;
+      case 'derivado insitu':
+      case 'derivado_insitu':
+      case 'derivado in situ':
+        estadoPersistencia = PrismaEstadoTicket.Derivado_InSitu;
+        break;
+      case 'en espera repuesto':
+      case 'en_espera_repuesto':
+        estadoPersistencia = PrismaEstadoTicket.En_Espera_Repuesto;
+        break;
+      case 'reabierto':
+        estadoPersistencia = PrismaEstadoTicket.Reabierto;
+        break;
+      case 'cerrado':
+        estadoPersistencia = PrismaEstadoTicket.Cerrado;
+        break;
+      default:
+        estadoPersistencia = domain.estado as unknown as PrismaEstadoTicket;
+        break;
+    }
+
     return {
       ...(domain.id_tickets !== undefined && {
         id_tickets: Number(domain.id_tickets),
@@ -31,7 +84,8 @@ export class TicketMapper {
       pin: domain.pin,
       asunto: domain.asunto,
       detalle: domain.detalle,
-      estado: domain.estado as unknown as PrismaEstadoTicket,
+      reporte_cierre: domain.reporte_cierre ?? null,
+      estado: estadoPersistencia,
       id_equipo: Number(domain.id_equipo),
       id_trabajador: Number(domain.id_trabajador),
       id_soporte: domain.id_soporte ? Number(domain.id_soporte) : null,
@@ -41,48 +95,116 @@ export class TicketMapper {
     };
   }
 
-  static toCriteriaResponse(raw: any): TicketResponseCriteria {
+  static toDetailResponse(raw: any): TicketDetalleCriteria {
     const trabajador = raw.usuarios_tickets_id_trabajadorTousuarios;
-    const soporte = raw.usuarios_tickets_id_soporteTousuarios;
     const equipo = raw.equipos;
+    const soporte = raw.usuarios_tickets_id_soporteTousuarios;
+
     const cliente = equipo?.clientes;
+    const sucursal = equipo?.sucursales;
+    const area = equipo?.area;
 
     return {
-      id_tickets: raw.id_tickets,
+      id_ticket: raw.id_tickets,
       pin: raw.pin,
       asunto: raw.asunto,
-      fecha_creacion: raw.created_at,
+      detalle: raw.detalle,
+      es_software: raw.es_software ?? false,
+      createdAt: raw.created_at,
+      updatedAt: raw.updated_at,
       estado: raw.estado,
-      usuario: {
-        id: trabajador.id_usuario,
-        nombre: `${trabajador.nombre} ${trabajador.apellido}`.trim(),
-      },
-      equipo: {
-        id: equipo.id_equipo,
-        tipo_equipo: equipo.tipo,
-      },
-      cliente: cliente
+
+      trabajador: trabajador
         ? {
-            id: cliente.id_cliente,
-            nombre: cliente.nombre_principal,
-          }
-        : { id: 0, nombre: 'Sin cliente asignado' },
-      sucursal: equipo?.sucursales
-        ? {
-            id: equipo.sucursales.id_sucursal,
-            nombre: equipo.sucursales.nombre_sucursal,
+            id_trabajador: trabajador.id_usuario,
+            nombre: trabajador.nombre,
+            apellido: trabajador.apellido,
+            telefono: trabajador.telefono ?? '',
+            correo: trabajador.correo ?? '',
+            id_cliente: cliente?.id_cliente ?? 0,
+            nombre_cliente: cliente?.nombre_principal ?? '',
+            id_sucursal: sucursal?.id_sucursal ?? 0,
+            nombre_sucursal: sucursal?.nombre_sucursal ?? '',
+            id_area: area?.id_area ?? 0,
+            nombre_area: area?.nombre_area ?? '',
           }
         : null,
-      area: equipo?.area
+
+      equipo: equipo
         ? {
-            id: equipo.area.id_area,
-            nombre: equipo.area.nombre_area,
+            id_equipo: equipo.id_equipo,
+            nombre_equipo: equipo.nombre_equipo ?? '',
+            tipo: equipo.tipo,
+            numero_serie: equipo.num_serie ?? '',
+            marca_modelo: equipo.marca_modelo ?? '',
           }
         : null,
+
       soporte: soporte
         ? {
-            id: soporte.id_usuario,
-            nombre: `${soporte.nombre} ${soporte.apellido}`.trim(),
+            id_soporte: soporte.id_usuario,
+            nombre: soporte.nombre,
+            apellido: soporte.apellido,
+            telefono: soporte.telefono ?? '',
+            correo: soporte.correo ?? '',
+            area: soporte.area?.nombre_area ?? 'Soporte Técnico',
+            rol: soporte.rol ?? 'SOPORTE_TECNICO',
+          }
+        : null,
+    };
+  }
+
+  static toCriteriaResponse(raw: any): TicketResponseCriteria {
+    const equipo = raw.equipos;
+    const cliente = equipo?.clientes;
+    const sucursal = equipo?.sucursales;
+    const area = equipo?.area;
+    const soporte = raw.usuarios_tickets_id_soporteTousuarios;
+
+    return {
+      id_ticket: raw.id_tickets,
+      pin: raw.pin,
+      asunto: raw.asunto,
+      detalle: raw.detalle,
+      es_software: raw.es_software,
+      estado: raw.estado,
+
+      equipo: equipo
+        ? {
+            id_equipo: equipo.id_equipo,
+            nombre: equipo.nombre_equipo,
+            marca_modelo: equipo.marca_modelo,
+            tipo: equipo.tipo,
+            numero_serie: equipo.num_serie,
+          }
+        : null,
+
+      cliente: cliente
+        ? {
+            id_cliente: cliente.id_cliente,
+            nombre: cliente.nombre_principal,
+          }
+        : null,
+
+      sucursal: sucursal
+        ? {
+            id_sucursal: sucursal.id_sucursal,
+            nombre: sucursal.nombre_sucursal,
+          }
+        : null,
+
+      area: area
+        ? {
+            id_area: area.id_area,
+            nombre: area.nombre_area,
+          }
+        : null,
+
+      soporte: soporte
+        ? {
+            id_soporte: soporte.id_usuario,
+            nombre: soporte.nombre,
+            apellido: soporte.apellido,
           }
         : null,
     };

@@ -1,10 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Ticket } from '../../domain/entities/ticket.entity';
 import {
-  TICKET_REPOSITORY,
   TicketRepositoryPort,
+  TICKET_REPOSITORY,
 } from '../../domain/ports/ticket.repository.port';
-import { AssignSupportCommand } from '../dtos/assign-support.request';
+import { Ticket } from '@/tickets/domain/entities/ticket.entity';
 
 @Injectable()
 export class AssignSupportTicketUseCase {
@@ -13,15 +12,16 @@ export class AssignSupportTicketUseCase {
     private readonly ticketRepository: TicketRepositoryPort,
   ) {}
 
-  async execute(command: AssignSupportCommand): Promise<Ticket> {
-    const ticket = await this.ticketRepository.findById(command.id_ticket);
-
+  async execute(idTicket: number, idSoporte: number): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findById(idTicket);
     if (!ticket) {
-      throw new NotFoundException(`El ticket #${command.id_ticket} no existe.`);
+      throw new NotFoundException(`Ticket con ID ${idTicket} no encontrado.`);
     }
 
-    ticket.asignarSoporte(command.id_soporte);
+    // Asigna el soporte al ticket
+    ticket.asignarSoporte(idSoporte);
 
+    // Persiste los cambios usando el método save genérico del puerto
     return await this.ticketRepository.save(ticket);
   }
 }

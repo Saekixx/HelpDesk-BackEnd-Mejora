@@ -8,6 +8,7 @@ import { TicketFilterCriteria } from '@/tickets/domain/criteria/ticket-filter.cr
 import { Prisma, tickets_estado } from '@prisma/client';
 import { PrismaService } from '@/common/infrastructure/prisma/prisma.service';
 import { TicketMapper } from './mappers/ticket.mapper';
+import { TicketDetalleCriteria } from '@/tickets/domain/criteria/ticket-detalle.criteria';
 
 @Injectable()
 export class TicketPrismaRepository implements TicketRepositoryPort {
@@ -44,45 +45,166 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
     return raw ? TicketMapper.toDomain(raw) : null;
   }
 
-  // Mapeador de ayuda para tolerar textos con espacio como "En Progreso"
-  private parseEstadoEnum(estado: string): tickets_estado | undefined {
-    if (!estado) return undefined;
+  async findDetailById(id: number): Promise<TicketDetalleCriteria | null> {
+    const raw = await this.prisma.tickets.findUnique({
+      where: { id_tickets: id },
+      include: {
+        // 1. Trabajador que reporta y sus datos organizacionales
+        usuarios_tickets_id_trabajadorTousuarios: {
+          select: {
+            id_usuario: true,
+            nombre: true,
+            apellido: true,
+            telefono: true,
+            correo: true,
+          },
+        },
+        // 2. Equipo afectado y sus relaciones (Cliente, Sucursal, Área)
+        equipos: {
+          select: {
+            id_equipo: true,
+            nombre_equipo: true,
+            tipo: true,
+            num_serie: true,
+            marca_modelo: true,
+            clientes: {
+              select: { id_cliente: true, nombre_principal: true },
+            },
+            sucursales: {
+              select: { id_sucursal: true, nombre_sucursal: true },
+            },
+            area: {
+              select: { id_area: true, nombre_area: true },
+            },
+          },
+        },
+        // 3. Técnico de soporte asignado
+        usuarios_tickets_id_soporteTousuarios: {
+          select: {
+            id_usuario: true,
+            nombre: true,
+            apellido: true,
+            telefono: true,
+            correo: true,
+            rol: {
+              select: {
+                nombre: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    // Normaliza "En Progreso" a "En_Progreso" para coincidir con la clave del Enum
-    const normalizedKey = estado.replace(/\s+/g, '_');
-
-    return tickets_estado[normalizedKey as keyof typeof tickets_estado];
+    return raw ? TicketMapper.toDetailResponse(raw) : null;
   }
 
-  // Implementación del método findAllWhitFilters con soporte para filtros de cliente, sucursal y área
-  async findAllWhitFilters(
+  async findAllWithFilters(
     filters: TicketFilterCriteria,
   ): Promise<PaginatedTicketsResult> {
-    const page = Number(filters.page) || 1;
-    const limit = Number(filters.limit) || 10;
-
-    const { search, estado, id_cliente, id_sucursal, id_area } = filters;
+    const page = Number(filters?.page) || 1;
+    const limit = Number(filters?.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const parsedEstado = estado ? this.parseEstadoEnum(estado) : undefined;
+    let estadoEnum: tickets_estado | undefined = undefined;
+    const rawEstado = filters?.estado;
 
+    if (
+      rawEstado &&
+      typeof rawEstado === 'string' &&
+      rawEstado.trim() !== '' &&
+      String(rawEstado).trim() !== '--'
+    ) {
+      const trimmed = rawEstado.trim().toLowerCase();
+      switch (trimmed) {
+        case 'pendiente':
+          estadoEnum = tickets_estado.Pendiente;
+          break;
+        case 'asignado':
+          estadoEnum = tickets_estado.Asignado;
+          break;
+        case 'en progreso':
+        case 'en_progreso':
+          estadoEnum = tickets_estado.En_Progreso;
+          break;
+        case 'derivado insitu':
+        case 'derivado_insitu':
+        case 'derivado in situ':
+          estadoEnum = tickets_estado.Derivado_InSitu;
+          break;
+        case 'en espera repuesto':
+        case 'en_espera_repuesto':
+          estadoEnum = tickets_estado.En_Espera_Repuesto;
+          break;
+        case 'reabierto':
+          estadoEnum = tickets_estado.Reabierto;
+          break;
+        case 'cerrado':
+          estadoEnum = tickets_estado.Cerrado;
+          break;
+        default:
+          estadoEnum = undefined;
+          break;
+      }
+    }
+
+    // 2. Resolvemos el search (ignorando valores vacíos o placeholders de Swagger)
+    let searchCondition: any = undefined;
+    if (
+      filters?.search &&
+      typeof filters.search === 'string' &&
+      filters.search.trim() !== '' &&
+      filters.search.toLowerCase() !== 'search'
+    ) {
+      const searchTerm = filters.search.trim();
+      searchCondition = [
+        { pin: { contains: searchTerm } },
+        { asunto: { contains: searchTerm } },
+        { detalle: { contains: searchTerm } },
+        { es_software: { equals: searchTerm === 'true' } },
+      ];
+    }
+
+    // 3. Resolvemos los filtros numéricos de equipos
+    const parseNum = (val: any): number | undefined => {
+      if (
+        val === undefined ||
+        val === null ||
+        val === '' ||
+        isNaN(Number(val))
+      ) {
+        return undefined;
+      }
+      return Number(val);
+    };
+
+    const clienteId = parseNum(filters?.id_cliente);
+    const sucursalId = parseNum(filters?.id_sucursal);
+    const areaId = parseNum(filters?.id_area);
+    const trabajadorId = parseNum(filters?.id_trabajador);
+    const soporteId = parseNum(filters?.id_soporte);
+
+    // Filtros que pertenecen a la relación de equipos
+    let equiposCondition: any = undefined;
+    if (
+      clienteId !== undefined ||
+      sucursalId !== undefined ||
+      areaId !== undefined
+    ) {
+      equiposCondition = {
+        ...(clienteId !== undefined && { id_cliente: clienteId }),
+        ...(sucursalId !== undefined && { id_sucursal: sucursalId }),
+        ...(areaId !== undefined && { id_area: areaId }),
+      };
+    }
+
+    // 4. Construcción declarativa del where:
     const where: Prisma.ticketsWhereInput = {
-      ...(parsedEstado && { estado: parsedEstado }),
-      ...(search && {
-        OR: [
-          { pin: { contains: search } },
-          { asunto: { contains: search } },
-          { detalle: { contains: search } },
-        ],
-      }),
-      // Filtrar cliente, sucursal y área a través de la relación equipos
-      ...((id_cliente || id_sucursal || id_area) && {
-        equipos: {
-          ...(id_cliente && { id_cliente: Number(id_cliente) }),
-          ...(id_sucursal && { id_sucursal: Number(id_sucursal) }),
-          ...(id_area && { id_area: Number(id_area) }),
-        },
-      }),
+      ...(estadoEnum !== undefined && { estado: estadoEnum }),
+      ...(searchCondition && { OR: searchCondition }),
+      ...(equiposCondition && { equipos: equiposCondition }),
+      ...(trabajadorId !== undefined && { id_trabajador: trabajadorId }),
+      ...(soporteId !== undefined && { id_soporte: soporteId }),
     };
 
     const [rawTickets, total] = await Promise.all([
@@ -98,7 +220,10 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
           equipos: {
             select: {
               id_equipo: true,
+              nombre_equipo: true,
               tipo: true,
+              marca_modelo: true,
+              num_serie: true,
               clientes: {
                 select: { id_cliente: true, nombre_principal: true },
               },
@@ -125,5 +250,24 @@ export class TicketPrismaRepository implements TicketRepositoryPort {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async findPendientesParaAutoAsignacion(
+    minutosAntiguedad: number,
+  ): Promise<Ticket[]> {
+    // Calculamos la fecha límite (Fecha Actual - X minutos)
+    const fechaLimite = new Date(Date.now() - minutosAntiguedad * 60 * 1000);
+
+    const records = await this.prisma.tickets.findMany({
+      where: {
+        estado: 'Pendiente',
+        created_at: {
+          lte: fechaLimite, // Creados hace más de X minutos
+        },
+        id_soporte: null, // Que aún no tengan soporte asignado
+      },
+    });
+
+    return records.map((record) => TicketMapper.toDomain(record));
   }
 }

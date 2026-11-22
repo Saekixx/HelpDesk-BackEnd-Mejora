@@ -1,72 +1,52 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
+  IsInt,
   IsOptional,
   IsString,
-  IsNumber,
-  IsBoolean,
+  Max,
   Min,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { GetUsersFilterDto } from '../../application/dtos/get-users-filter.dto';
 
 export class GetUsersQueryDto implements GetUsersFilterDto {
   @ApiPropertyOptional({
-    description: 'Término de búsqueda (filtra por nombre, apellido o correo)',
+    description: 'Búsqueda parcial por nombre, apellido o correo del usuario',
     example: 'Juan',
   })
   @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() || undefined : value,
+  )
   @IsString()
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por ID de rol',
-    example: 2,
+    description: 'Filtrar por ID de rol. Si se omite, retorna todos los roles.',
+    example: 1,
+    minimum: 1,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt({ message: 'id_rol debe ser un número entero' })
+  @Min(1)
   id_rol?: number;
 
   @ApiPropertyOptional({
-    description: 'Filtrar por ID de cliente',
-    example: 1,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  id_cliente?: number;
-
-  @ApiPropertyOptional({
-    description: 'Filtrar por ID de sucursal',
-    example: 1,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  id_sucursal?: number;
-
-  @ApiPropertyOptional({
-    description: 'Filtrar por ID de área',
-    example: 3,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  id_area?: number;
-
-  @ApiPropertyOptional({
     description:
-      'Filtrar por estado activo/inactivo. Si se omite, retorna ambos.',
+      'Filtrar por estado: true (activos) o false (inactivos). Si se omite, retorna ambos.',
     example: true,
   })
   @IsOptional()
+  // Se lee el valor crudo (obj) porque enableImplicitConversion ya convirtió "false" en true.
   @Transform(({ obj, key }) => {
-    const rawValue = obj[key];
-    if (rawValue === 'true' || rawValue === true) return true;
-    if (rawValue === 'false' || rawValue === false) return false;
-    return undefined;
+    const raw: unknown = obj[key];
+    if (raw === 'true' || raw === true) return true;
+    if (raw === 'false' || raw === false) return false;
+    return raw === '' ? undefined : raw;
   })
-  @IsBoolean()
+  @IsBoolean({ message: 'is_active debe ser true o false' })
   is_active?: boolean;
 
   @ApiPropertyOptional({
@@ -77,19 +57,21 @@ export class GetUsersQueryDto implements GetUsersFilterDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Cantidad de registros por página',
+    description: 'Cantidad de registros por página (máximo 100)',
     default: 10,
     example: 10,
     minimum: 1,
+    maximum: 100,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number = 10;
 }

@@ -50,7 +50,7 @@ export class AssignRolUseCase {
     switch (rolNombre) {
       case 'ADMINISTRADOR':
       case 'SOPORTE_INSITU':
-      case 'SOPORTE_REMOTO':
+      case 'SOPORTE_TECNICO':
         // Se limpian las relaciones externas si pasa a un rol administrativo
         break;
 

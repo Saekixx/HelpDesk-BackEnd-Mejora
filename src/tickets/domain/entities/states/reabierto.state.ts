@@ -1,12 +1,11 @@
-import { TicketState } from './ticket-state.interface';
+import { BaseTicketState } from './base-ticket.state';
 import { Ticket } from '../ticket.entity';
 import { AsignadoState } from './asignado.state';
 import { EnProgresoState } from './en-progreso.state';
 import { CerradoState } from './cerrado.state';
-import { InvalidStateTransitionException } from '../../exceptions/invalid-state-transition.exception';
 import { DerivadoInsituState } from './derivado-insitu.state';
 
-export class ReabiertoState implements TicketState {
+export class ReabiertoState extends BaseTicketState {
   readonly name = 'Reabierto';
 
   asignarSoporte(ticket: Ticket, idSoporte: number): void {
@@ -20,10 +19,6 @@ export class ReabiertoState implements TicketState {
 
   cerrar(ticket: Ticket): void {
     ticket.changeState(new CerradoState());
-  }
-
-  reabrir(): void {
-    throw new InvalidStateTransitionException(this.name, 'reabrir');
   }
 
   derivarInsitu(ticket: Ticket): void {

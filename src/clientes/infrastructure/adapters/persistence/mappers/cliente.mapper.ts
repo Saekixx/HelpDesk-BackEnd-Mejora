@@ -9,15 +9,76 @@ import {
   Cliente,
   ClienteListItem,
   ClienteDetail,
+  ClienteDetailView,
+  ContactoEnlaceView,
   TipoCliente,
 } from '@/clientes/domain/entities/cliente.entity';
+import { RolEnum } from '@/auth/domain/enums/rol.enum';
 
-// Forma del resultado de Prisma cuando el findAll incluye el conteo de
-// sucursales y los datos del plan (ver ClientePrismaRepository.findAll).
-type PrismaClienteConDetalle = PrismaCliente & {
-  _count: { sucursales: number };
-  planes: { id_plan: number; tipo: string } | null;
-};
+// Selección mínima que usa el listado paginado (GET /clientes): solo las
+// columnas que necesita ClienteListItem, el plan (planes.id_plan/tipo/servicios) y el
+// conteo de sucursales. Se reutiliza en ClientePrismaRepository.findAll.
+export const CLIENTE_LIST_SELECT = {
+  id_cliente: true,
+  nombre_principal: true,
+  rubro: true,
+  tipo_cliente: true,
+  numero_documento: true,
+  is_active: true,
+  planes: { select: { id_plan: true, tipo: true, servicios: true } },
+  _count: { select: { sucursales: true } },
+} satisfies Prisma.clientesSelect;
+
+// Forma del resultado de Prisma al consultar con CLIENTE_LIST_SELECT.
+export type PrismaClienteListRow = Prisma.clientesGetPayload<{
+  select: typeof CLIENTE_LIST_SELECT;
+}>;
+
+// El contacto de enlace es el usuario
+// representante de la empresa (rol CLIENTE_EMPRESA) y su cargo se deriva del rol.
+const CARGO_CONTACTO_ENLACE = 'Representante de la empresa';
+
+// Selección que usa el detalle (GET /clientes/:id). Se reutiliza en
+// ClientePrismaRepository.findDetailById.
+export const CLIENTE_DETAIL_SELECT = {
+  id_cliente: true,
+  nombre_principal: true,
+  numero_documento: true,
+  tipo_cliente: true,
+  rubro: true,
+  direccion: true,
+  planes: {
+    select: { id_plan: true, tipo: true, limite_equipos: true },
+  },
+  // Usuario representante: el activo con rol CLIENTE_EMPRESA más antiguo
+  usuarios: {
+    where: { is_active: true, rol: { nombre: RolEnum.CLIENTE_EMPRESA } },
+    orderBy: [{ created_at: 'asc' }, { id_usuario: 'asc' }],
+    take: 1,
+    select: { nombre: true, apellido: true, correo: true, telefono: true },
+  },
+  sucursales: {
+    where: { is_active: true },
+    // La principal siempre primero; created_at/id_sucursal dan un orden estable
+    orderBy: [
+      { is_principal: 'desc' },
+      { created_at: 'asc' },
+      { id_sucursal: 'asc' },
+    ],
+    select: {
+      id_sucursal: true,
+      is_principal: true,
+      nombre_sucursal: true,
+      direccion: true,
+      _count: { select: { equipos: true } },
+    },
+  },
+} satisfies Prisma.clientesSelect;
+
+// Forma del resultado de Prisma al consultar con CLIENTE_DETAIL_SELECT.
+export type PrismaClienteDetailRow = Prisma.clientesGetPayload<{
+  select: typeof CLIENTE_DETAIL_SELECT;
+}>;
 
 // Forma del resultado de Prisma cuando el findById incluye el plan completo
 // y el listado de sucursales (ver ClientePrismaRepository.findById).
@@ -49,16 +110,23 @@ export class ClienteMapper {
     });
   }
 
-  // Usado únicamente por el listado paginado (GET /clientes), donde el
-  // repositorio incluye _count.sucursales y la relación `planes`.
-  static toListItem(entity: PrismaClienteConDetalle): ClienteListItem {
-    const cliente = ClienteMapper.toDomain(entity);
+  // Usado únicamente por el listado paginado (GET /clientes).
+  static toListItem(entity: PrismaClienteListRow): ClienteListItem {
     return {
-      ...cliente,
-      total_sucursales: entity._count.sucursales,
-      plan: entity.planes
-        ? { id_plan: entity.planes.id_plan, nombre: entity.planes.tipo }
+      id_cliente: entity.id_cliente,
+      nombre_principal: entity.nombre_principal,
+      rubro: entity.rubro ?? '',
+      tipo_cliente: entity.tipo_cliente as unknown as TipoCliente,
+      numero_documento: entity.numero_documento ?? '',
+      totalSucursales: entity._count.sucursales,
+      planSoporte: entity.planes
+        ? {
+            id_plan: entity.planes.id_plan,
+            tipo: entity.planes.tipo,
+            servicios: entity.planes.servicios,
+          }
         : null,
+      is_active: entity.is_active ?? true,
     };
   }
 
@@ -88,6 +156,45 @@ export class ClienteMapper {
         correo: s.correo,
         direccion: s.direccion,
         is_active: s.is_active ?? true,
+      })),
+    };
+  }
+
+  // Usado por GET /clientes/:id. El orden de `sucursales_activas` lo define la
+  // consulta (CLIENTE_DETAIL_SELECT): aquí solo se proyecta.
+  static toDetailView(entity: PrismaClienteDetailRow): ClienteDetailView {
+    const representante = entity.usuarios[0];
+    const contacto: ContactoEnlaceView | null = representante
+      ? {
+          nombre_responsable:
+            `${representante.nombre} ${representante.apellido}`.trim(),
+          cargo: CARGO_CONTACTO_ENLACE,
+          correo: representante.correo ?? '',
+          telefono: representante.telefono ?? '',
+        }
+      : null;
+
+    return {
+      id_cliente: entity.id_cliente,
+      nombre_principal: entity.nombre_principal,
+      numero_documento: entity.numero_documento ?? '',
+      tipo_cliente: entity.tipo_cliente as unknown as TipoCliente,
+      rubro: entity.rubro,
+      direccion: entity.direccion,
+      plan: entity.planes
+        ? {
+            id_plan: entity.planes.id_plan,
+            tipo: entity.planes.tipo,
+            limite_equipos: entity.planes.limite_equipos ?? 0,
+          }
+        : null,
+      contacto_enlace: contacto,
+      sucursales_activas: entity.sucursales.map((s) => ({
+        id_sucursal: s.id_sucursal,
+        is_principal: s.is_principal ?? false,
+        nombre: s.nombre_sucursal,
+        direccion: s.direccion,
+        total_equipos: s._count.equipos,
       })),
     };
   }

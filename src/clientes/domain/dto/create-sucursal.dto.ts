@@ -1,13 +1,21 @@
 // src/clientes/domain/dto/create-sucursal.dto.ts
 
-// Contrato de dominio para la creación de una sucursal.
+// Datos del encargado local de la sucursal. Con ellos se registra también la
+// cuenta de usuario del encargado en la misma operación de creación.
+export interface CreateSucursalEncargadoCommand {
+  nombre: string;
+  apellido: string;
+  telefono_contacto?: string;
+  correo_corporativo: string;
+}
+
+// Contrato de dominio para la creación de una sucursal junto con su encargado.
 export interface CreateSucursalDto {
-  nombre_sucursal: string;
-  encargado: string;
-  telefono: string;
-  direccion: string;
-  correo: string;
   id_cliente: number;
-  id_zona: number;
+  nombre_sucursal: string;
+  direccion: string;
+  // Opcional: una sucursal puede crearse sin zona asignada
+  id_zona?: number | null;
   is_active?: boolean;
+  encargado: CreateSucursalEncargadoCommand;
 }

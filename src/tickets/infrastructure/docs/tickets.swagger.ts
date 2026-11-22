@@ -6,15 +6,15 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AssignSupportCommand } from '../dtos/assign-support.request';
 import { CreateTicketDto } from '../dtos/create-ticket.dto';
+import { EstadoTicket } from '@/tickets/domain/entities/ticket.entity';
 
 export function ApiFindAllTicketsSwagger() {
   return applyDecorators(
     ApiOperation({
       summary: 'Obtener lista de tickets con filtros y paginación',
       description:
-        'Retorna los tickets registrados permitiendo filtrar por término de búsqueda, estado, cliente, sucursal, área y soporte.',
+        'Retorna los tickets registrados permitiendo filtrar por término de búsqueda, estado, cliente, sucursal, área, trabajador y soporte.',
     }),
     ApiQuery({
       name: 'page',
@@ -39,7 +39,7 @@ export function ApiFindAllTicketsSwagger() {
     ApiQuery({
       name: 'estado',
       required: false,
-      enum: ['Pendiente', 'Asignado', 'En Progreso', 'Reabierto', 'Cerrado'],
+      enum: EstadoTicket,
       description: 'Filtrar por estado del ticket',
     }),
     ApiQuery({
@@ -60,15 +60,47 @@ export function ApiFindAllTicketsSwagger() {
       type: Number,
       description: 'Filtrar por ID del área',
     }),
+    // NUEVO EN SWAGGER
+    ApiQuery({
+      name: 'id_trabajador',
+      required: false,
+      type: Number,
+      description: 'Filtrar por ID del trabajador',
+    }),
+    // NUEVO EN SWAGGER
     ApiQuery({
       name: 'id_soporte',
       required: false,
       type: Number,
-      description: 'Filtrar por ID del usuario de soporte asignado',
+      description: 'Filtrar por ID del técnico de soporte',
     }),
     ApiResponse({
       status: 200,
       description: 'Tickets obtenidos exitosamente',
+    }),
+  );
+}
+
+export function ApiFindOneTicketSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Obtener detalle completo de un ticket por ID',
+      description:
+        'Retorna toda la información detallada de un ticket específico incluyendo datos del trabajador, equipo, cliente, sucursal, área y soporte asignado.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID único del ticket',
+      type: Number,
+      example: 1,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Detalle del ticket obtenido exitosamente.',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Ticket no encontrado.',
     }),
   );
 }
@@ -93,7 +125,7 @@ export function ApiAssignSupportSwagger() {
       description:
         'Asigna un usuario de soporte al ticket y transiciona su estado a Asignado.',
     }),
-    ApiBody({ type: AssignSupportCommand }),
+    ApiBody({ type: Number, description: 'ID del soporte a asignar' }),
     ApiResponse({ status: 200, description: 'Soporte asignado exitosamente.' }),
     ApiResponse({ status: 404, description: 'Ticket no encontrado.' }),
     ApiResponse({

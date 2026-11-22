@@ -1,137 +1,72 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsEnum,
-  IsString,
-  IsEmail,
-  IsNumber,
   IsInt,
-  IsBoolean,
+  IsNotEmpty,
   IsOptional,
-  IsDate,
-  ValidateNested,
+  IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { UpdateClienteDto } from '@/clientes/application/dto/update-cliente.dto';
-import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
-import {
-  SucursalAnidadaHttpDto,
-  UpdateSucursalAnidadaHttpDto,
-} from './sucursal-anidada.dto';
+import { Transform } from 'class-transformer';
+import { UpdateClienteCommand } from '@/clientes/domain/entities/cliente.entity';
 
-// Todos los campos son opcionales (PATCH semántico).
-export class UpdateClienteRequestDto implements UpdateClienteDto {
-  @ApiPropertyOptional({ enum: TipoCliente, example: TipoCliente.JURIDICA })
-  @IsOptional()
-  @IsEnum(TipoCliente, {
-    message: 'El tipo de cliente debe ser JURIDICA o NATURAL',
+// Elimina espacios al inicio y al final antes de validar; así un valor
+// compuesto solo por espacios se rechaza como vacío.
+const trimString = ({ value }: { value: unknown }): unknown =>
+  typeof value === 'string' ? value.trim() : value;
+
+// Body de PATCH /clientes/:id (modal de edición de cliente).
+// Todos los campos son opcionales (PATCH semántico): solo se actualizan los
+// campos enviados. Las longitudes máximas reflejan las columnas de la tabla
+// `clientes`.
+export class UpdateClienteRequestDto implements UpdateClienteCommand {
+  @ApiPropertyOptional({
+    description: 'Razón Social (persona jurídica) o nombre del cliente',
+    example: 'Acme Corp SAC',
+    maxLength: 150,
   })
-  readonly tipo_cliente?: TipoCliente;
-
-  @ApiPropertyOptional({ example: '20123456789' })
   @IsOptional()
-  @IsString({ message: 'El número de documento debe ser una cadena de texto' })
-  readonly numero_documento?: string;
-
-  @ApiPropertyOptional({ example: 'Acme Corp SAC' })
-  @IsOptional()
-  @IsString({ message: 'El nombre principal debe ser una cadena de texto' })
+  @Transform(trimString)
+  @IsString({ message: 'La razón social debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'La razón social no puede estar vacía' })
+  @MaxLength(150, {
+    message: 'La razón social no puede exceder los 150 caracteres',
+  })
   readonly nombre_principal?: string;
 
-  @ApiPropertyOptional({ example: 'Av. Siempre Viva 123' })
+  @ApiPropertyOptional({
+    description: 'Número de documento (RUC/DNI)',
+    example: '20123456789',
+    maxLength: 20,
+  })
   @IsOptional()
-  @IsString({ message: 'La dirección debe ser una cadena de texto' })
-  readonly direccion?: string;
+  @Transform(trimString)
+  @IsString({ message: 'El número de documento debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'El número de documento no puede estar vacío' })
+  @MaxLength(20, {
+    message: 'El número de documento no puede exceder los 20 caracteres',
+  })
+  readonly numero_documento?: string;
 
-  @ApiPropertyOptional({ example: '+51987654321' })
+  @ApiPropertyOptional({
+    description: 'Rubro o sector económico',
+    example: 'Retail',
+    maxLength: 100,
+  })
   @IsOptional()
-  @IsString({ message: 'El teléfono debe ser una cadena de texto' })
-  readonly telefono?: string;
-
-  @ApiPropertyOptional({ example: 'contacto@acme.com' })
-  @IsOptional()
-  @IsEmail({}, { message: 'El correo electrónico debe ser válido' })
-  readonly correo?: string;
-
-  @ApiPropertyOptional({ example: 'Retail' })
-  @IsOptional()
+  @Transform(trimString)
   @IsString({ message: 'El rubro debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'El rubro no puede estar vacío' })
+  @MaxLength(100, { message: 'El rubro no puede exceder los 100 caracteres' })
   readonly rubro?: string;
 
   @ApiPropertyOptional({
-    example: '2026-01-01',
-    type: String,
-    format: 'date',
+    description: 'ID del plan de soporte contratado',
+    example: 1,
+    minimum: 1,
   })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate({ message: 'La fecha de inicio de plan debe ser una fecha válida' })
-  readonly fecha_inicio_plan?: Date;
-
-  @ApiPropertyOptional({
-    example: '2026-12-31',
-    type: String,
-    format: 'date',
-  })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate({
-    message: 'La fecha de finalización de plan debe ser una fecha válida',
-  })
-  readonly fecha_finalizacion_plan?: Date;
-
-  @ApiPropertyOptional({ example: 1500.5 })
-  @IsOptional()
-  @IsNumber({}, { message: 'El costo negociado debe ser un número' })
-  @Min(0, { message: 'El costo negociado no puede ser negativo' })
-  readonly costo_negociado?: number;
-
-  @ApiPropertyOptional({ example: 20 })
-  @IsOptional()
-  @IsInt({ message: 'El límite de equipos debe ser un número entero' })
-  @Min(0, { message: 'El límite de equipos no puede ser negativo' })
-  readonly limite_equipos_contratado?: number;
-
-  @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @IsInt({ message: 'El ID de plan debe ser un número entero' })
+  @Min(1, { message: 'El ID de plan debe ser un número positivo' })
   readonly id_plan?: number;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean({ message: 'is_active debe ser un valor booleano' })
-  readonly is_active?: boolean;
-
-  @ApiPropertyOptional({
-    description:
-      'Datos a actualizar de la sucursal principal del cliente (solo se aplican los campos enviados)',
-    type: UpdateSucursalAnidadaHttpDto,
-    example: {
-      nombre: 'Sucursal Central Renovada',
-      telefono: '+51999888777',
-    },
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UpdateSucursalAnidadaHttpDto)
-  readonly sucursal_principal?: UpdateSucursalAnidadaHttpDto;
-
-  @ApiPropertyOptional({
-    description:
-      'Sucursales adicionales nuevas a crear para el cliente (no reemplazan a las existentes)',
-    type: [SucursalAnidadaHttpDto],
-    example: [
-      {
-        nombre: 'Sucursal Sur',
-        encargado: 'Ana Torres',
-        telefono: '+51955443322',
-        correo: 'sur@acme.com',
-        direccion: 'Av. Sur 456',
-      },
-    ],
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => SucursalAnidadaHttpDto)
-  readonly sucursales_adicionales?: SucursalAnidadaHttpDto[];
 }

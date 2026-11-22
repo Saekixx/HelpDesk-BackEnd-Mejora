@@ -26,6 +26,7 @@ import { MailModule } from '@/mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { GetUserOptionUseCase } from './application/use-cases/get-user-option.use-case';
+import { GetUserStatsUseCase } from './application/use-cases/get-user-stats.use-case';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { GetUserOptionUseCase } from './application/use-cases/get-user-option.us
     ToggleUserStatusUseCase,
     GetRolesUseCase,
     GetUserOptionUseCase,
+    GetUserStatsUseCase,
 
     // Mapeo de Puertos a Implementaciones de Prisma
     {

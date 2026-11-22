@@ -1,61 +1,92 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class PlanResponseDto {
+// Respuesta de GET /clientes/:id: alimenta el modal "Detalle de Cliente / Empresa".
+
+export class PlanDetailResponseDto {
   @ApiProperty({ description: 'Identificador del plan contratado', example: 1 })
   id_plan: number;
 
-  @ApiProperty({ description: 'Nombre/tipo del plan', example: 'Plan Premium' })
-  nombre: string;
-
   @ApiProperty({
     description: 'Tipo de plan tal como está registrado en el sistema',
-    example: 'Plan Premium',
+    example: 'Tech Enterprise',
   })
   tipo: string;
-
-  @ApiProperty({ description: 'Precio del plan', example: 250.0, required: false })
-  precio?: number;
 
   @ApiProperty({
     description: 'Límite de equipos incluidos en el plan',
     example: 30,
-    required: false,
   })
-  limite_equipos?: number;
-
-  @ApiProperty({ description: 'Si el plan está activo', example: true, required: false })
-  is_active?: boolean;
+  limite_equipos: number;
 }
 
-export class SucursalDetailResponseDto {
-  @ApiProperty({ description: 'Identificador de la sucursal', example: 1 })
-  id_sucursal: number;
-
-  @ApiProperty({ description: 'Nombre de la sucursal', example: 'Sucursal Central' })
-  nombre: string;
-
-  @ApiProperty({ description: 'Nombre del encargado de la sucursal', example: 'Juan Pérez' })
-  encargado: string;
-
-  @ApiProperty({ description: 'Teléfono de contacto de la sucursal', example: '+51987654321' })
-  telefono: string;
+export class ContactoEnlaceResponseDto {
+  @ApiProperty({
+    description: 'Nombre completo de la persona responsable del enlace',
+    example: 'Carlos Mendoza',
+  })
+  nombre_responsable: string;
 
   @ApiProperty({
-    description: 'Correo de contacto de la sucursal',
-    example: 'sucursal.central@acme.com',
+    description: 'Cargo de la persona de enlace dentro de la empresa',
+    example: 'Representante de la empresa',
+  })
+  cargo: string;
+
+  @ApiProperty({
+    description: 'Correo de contacto',
+    example: 'carlos.mendoza@acme.com',
   })
   correo: string;
 
-  @ApiProperty({ description: 'Dirección de la sucursal', example: 'Jr. Los Pinos 456' })
+  @ApiProperty({ description: 'Teléfono de contacto', example: '987654321' })
+  telefono: string;
+}
+
+export class SucursalActivaResponseDto {
+  @ApiProperty({ description: 'Identificador de la sucursal', example: 1 })
+  id_sucursal: number;
+
+  @ApiProperty({
+    description:
+      'Indica si es la sucursal principal (siempre se lista primero)',
+    example: true,
+  })
+  is_principal: boolean;
+
+  @ApiProperty({
+    description: 'Nombre de la sucursal',
+    example: 'Sede Central',
+  })
+  nombre: string;
+
+  @ApiProperty({
+    description: 'Dirección de la sucursal',
+    example: 'Jr. Los Pinos 456',
+  })
   direccion: string;
 
-  @ApiProperty({ description: 'Si la sucursal está activa', example: true })
-  is_active: boolean;
+  @ApiProperty({
+    description: 'Cantidad de equipos vinculados a la sucursal',
+    example: 12,
+  })
+  total_equipos: number;
 }
 
 export class ClienteDetailResponseDto {
-  @ApiProperty({ description: 'Identificador único del cliente', example: 1, required: false })
-  id_cliente?: number;
+  @ApiProperty({ description: 'Identificador único del cliente', example: 1 })
+  id_cliente: number;
+
+  @ApiProperty({
+    description: 'Nombre (persona natural) o razón social (persona jurídica)',
+    example: 'Acme Corp SAC',
+  })
+  nombre_principal: string;
+
+  @ApiProperty({
+    description: 'Número de documento (RUC/DNI)',
+    example: '20123456789',
+  })
+  numero_documento: string;
 
   @ApiProperty({
     description: 'Tipo de cliente',
@@ -64,76 +95,41 @@ export class ClienteDetailResponseDto {
   })
   tipo_cliente: string;
 
-  @ApiProperty({ description: 'Número de documento (RUC/DNI)', example: '20123456789' })
-  numero_documento: string;
-
-  @ApiProperty({ description: 'Nombre o razón social principal', example: 'Acme Corp SAC' })
-  nombre_principal: string;
-
-  @ApiProperty({ description: 'Dirección principal del cliente', example: 'Av. Siempre Viva 123' })
-  direccion: string;
-
-  @ApiProperty({ description: 'Teléfono de contacto', example: '+51987654321' })
-  telefono: string;
-
-  @ApiProperty({ description: 'Correo de contacto', example: 'contacto@acme.com' })
-  correo: string;
-
-  @ApiProperty({ description: 'Rubro o giro del negocio', example: 'Retail' })
-  rubro: string;
-
   @ApiProperty({
-    description: 'Fecha de inicio del plan contratado',
-    example: '2026-01-01',
+    description: 'Rubro o sector económico',
+    example: 'Retail',
+    nullable: true,
+    type: String,
   })
-  fecha_inicio_plan: Date;
+  rubro: string | null;
 
   @ApiProperty({
-    description: 'Fecha de finalización del plan contratado',
-    example: '2026-12-31',
+    description: 'Dirección principal del cliente',
+    example: 'Av. Siempre Viva 123',
+    nullable: true,
+    type: String,
   })
-  fecha_finalizacion_plan: Date;
-
-  @ApiProperty({ description: 'Costo negociado con el cliente', example: 1500.5 })
-  costo_negociado: number;
-
-  @ApiProperty({ description: 'Límite de equipos contratado', example: 20 })
-  limite_equipos_contratado: number;
-
-  @ApiProperty({ description: 'Si el cliente está activo', example: true })
-  is_active: boolean;
-
-  @ApiProperty({ description: 'Identificador del plan contratado', example: 1 })
-  id_plan: number;
+  direccion: string | null;
 
   @ApiProperty({
-    description: 'Fecha de registro del cliente',
-    example: '2026-01-01T00:00:00.000Z',
-  })
-  fecha_registro: Date;
-
-  @ApiProperty({
-    description: 'Fecha de creación del registro',
-    example: '2026-01-01T00:00:00.000Z',
-  })
-  createdAt: Date;
-
-  @ApiProperty({
-    description: 'Fecha de última actualización del registro',
-    example: '2026-01-01T00:00:00.000Z',
-  })
-  updatedAt: Date;
-
-  @ApiProperty({
-    description: 'Plan contratado por el cliente (null si no tiene plan asignado)',
-    type: PlanResponseDto,
+    description: 'Plan contratado (null si el cliente no tiene plan asignado)',
+    type: PlanDetailResponseDto,
     nullable: true,
   })
-  plan: PlanResponseDto | null;
+  plan: PlanDetailResponseDto | null;
 
   @ApiProperty({
-    description: 'Listado de sucursales registradas para el cliente',
-    type: [SucursalDetailResponseDto],
+    description:
+      'Contacto de enlace de la empresa (null si no hay un usuario representante activo)',
+    type: ContactoEnlaceResponseDto,
+    nullable: true,
   })
-  sucursales: SucursalDetailResponseDto[];
+  contacto_enlace: ContactoEnlaceResponseDto | null;
+
+  @ApiProperty({
+    description:
+      'Sucursales activas del cliente. La sucursal principal (is_principal: true) siempre aparece primero',
+    type: [SucursalActivaResponseDto],
+  })
+  sucursales_activas: SucursalActivaResponseDto[];
 }

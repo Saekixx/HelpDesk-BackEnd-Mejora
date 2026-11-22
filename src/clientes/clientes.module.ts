@@ -17,6 +17,7 @@ import { ToggleAreaStatusUseCase } from './application/use-cases/area/toggle-are
 import { GetSucursalesOptionsUseCase } from './application/use-cases/sucursal/get-sucursales-options.use-case';
 import { GetSucursalesUseCase } from './application/use-cases/sucursal/get-sucursales.use-case';
 import { GetSucursalByIdUseCase } from './application/use-cases/sucursal/get-sucursal-by-id.use-case';
+import { GetSucursalStatsUseCase } from './application/use-cases/sucursal/get-sucursal-stats.use-case';
 import { CreateSucursalUseCase } from './application/use-cases/sucursal/create-sucursal.use-case';
 import { UpdateSucursalUseCase } from './application/use-cases/sucursal/update-sucursal.use-case';
 import { ToggleSucursalStatusUseCase } from './application/use-cases/sucursal/toggle-sucursal-status.use-case';
@@ -26,6 +27,7 @@ import { GetClienteByIdUseCase } from './application/use-cases/cliente/get-clien
 import { CreateClienteUseCase } from './application/use-cases/cliente/create-cliente.use-case';
 import { UpdateClienteUseCase } from './application/use-cases/cliente/update-cliente.use-case';
 import { ToggleClienteStatusUseCase } from './application/use-cases/cliente/toggle-cliente-status.use-case';
+import { GetClienteStatsUseCase } from './application/use-cases/cliente/get-cliente-stats.use-case';
 import { ClienteController } from './infrastructure/controllers/cliente.controller';
 import { SucursalController } from './infrastructure/controllers/sucursal.controller';
 import { AreaController } from './infrastructure/controllers/area.controller';
@@ -44,10 +46,12 @@ import { AreaController } from './infrastructure/controllers/area.controller';
     CreateClienteUseCase,
     UpdateClienteUseCase,
     ToggleClienteStatusUseCase,
+    GetClienteStatsUseCase,
     // Casos de Uso - Sucursales
     GetSucursalesOptionsUseCase,
     GetSucursalesUseCase,
     GetSucursalByIdUseCase,
+    GetSucursalStatsUseCase,
     CreateSucursalUseCase,
     UpdateSucursalUseCase,
     ToggleSucursalStatusUseCase,

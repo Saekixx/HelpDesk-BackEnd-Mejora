@@ -23,6 +23,15 @@ export class GetEquiposQueryDto implements GetEquiposFilterDto {
   id_sucursal?: number;
 
   @ApiPropertyOptional({
+    description: 'Filtrar por trabajador asignado al equipo',
+    example: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  id_trabajador?: number; // Este campo se utiliza para filtrar equipos asignados a un trabajador específico.
+
+  @ApiPropertyOptional({
     description: 'Término de búsqueda (tipo, marca o número de serie)',
     example: 'Laptop Dell',
   })

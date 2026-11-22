@@ -35,7 +35,9 @@ import {
   ApiToggleEquipoStatusSwagger,
   ApiAgregarComponenteEquipoSwagger,
   ApiReemplazarComponenteEquipoSwagger,
+  ApiGetEquipoOptionsSwagger,
 } from '../docs/equipo.swagger';
+import { GetEquipoOptionsUseCase } from '@/equipos/application/use-cases/get-equipo-options.use-case';
 
 @ApiTags('Equipos')
 @ApiBearerAuth('access-token')
@@ -45,6 +47,7 @@ export class EquipoController {
   constructor(
     private readonly getEquiposUseCase: GetEquiposUseCase,
     private readonly getEquipoByIdUseCase: GetEquipoByIdUseCase,
+    private readonly getEquipoOptionsUseCase: GetEquipoOptionsUseCase,
     private readonly createEquipoUseCase: CreateEquipoUseCase,
     private readonly updateEquipoUseCase: UpdateEquipoUseCase,
     private readonly toggleStatusEquipoUseCase: ToggleStatusEquipoUseCase,
@@ -53,7 +56,7 @@ export class EquipoController {
   ) {}
 
   @Get()
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindAllEquiposSwagger()
   async findAll(@Query() query: GetEquiposQueryDto) {
     const { data, ...meta } = await this.getEquiposUseCase.execute(query);
@@ -63,8 +66,27 @@ export class EquipoController {
     };
   }
 
+  @Get('/options')
+  @Roles(
+    RolEnum.ADMINISTRADOR,
+    RolEnum.SOPORTE_INSITU,
+    RolEnum.SOPORTE_TECNICO,
+    RolEnum.CLIENTE_TRABAJADOR,
+  )
+  @ApiGetEquipoOptionsSwagger()
+  async getEquipoOptions(
+    @Query('id_area') id_area?: number | undefined,
+    @Query('id_trabajador') id_trabajador?: number | undefined,
+  ) {
+    const data = await this.getEquipoOptionsUseCase.execute(
+      id_area ? Number(id_area) : undefined,
+      id_trabajador ? Number(id_trabajador) : undefined,
+    );
+    return { message: 'Opciones de equipos obtenidas exitosamente', data };
+  }
+
   @Get(':id')
-  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_REMOTO)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindEquipoByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const data = await this.getEquipoByIdUseCase.execute(id);

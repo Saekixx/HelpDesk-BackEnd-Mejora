@@ -1,38 +1,48 @@
+// src/modules/tickets/application/use-cases/reopen-ticket.use-case.ts
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Ticket } from '../../domain/entities/ticket.entity';
-import {
-  TICKET_REPOSITORY,
   TicketRepositoryPort,
+  TICKET_REPOSITORY,
 } from '../../domain/ports/ticket.repository.port';
-import { ReopenTicketCommand } from '../dtos/reopen-ticket.request';
+import { Ticket } from '@/tickets/domain/entities/ticket.entity';
+import { RegisterReopeningAuditUseCase } from '@/auditoria/application/use-case/register-reopening-audit.use-case';
 
 @Injectable()
 export class ReopenTicketUseCase {
   constructor(
     @Inject(TICKET_REPOSITORY)
     private readonly ticketRepository: TicketRepositoryPort,
+    private readonly registerReopeningAuditUseCase: RegisterReopeningAuditUseCase,
   ) {}
 
-  async execute(command: ReopenTicketCommand): Promise<Ticket> {
-    const ticket = await this.ticketRepository.findById(command.id_ticket);
-
+  async execute(
+    idTicket: number,
+    idUsuario: number,
+    motivo: string,
+  ): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findById(idTicket);
     if (!ticket) {
-      throw new NotFoundException(`El ticket #${command.id_ticket} no existe.`);
+      throw new NotFoundException(`Ticket con ID ${idTicket} no encontrado.`);
     }
 
-    if (!ticket.puedeSerReabiertoPor(command.usuario_id, command.rol_usuario)) {
-      throw new ForbiddenException(
-        'Solo el cliente que creó el ticket o un Administrador pueden reabrirlo.',
-      );
-    }
+    // Capturamos el estado y el reporte previo ANTES de mutar la entidad
+    const estadoAnterior = String(ticket.estado);
+    const ultimoReporteCierre = ticket.reporte_cierre || undefined;
 
+    // Ejecuta la transición de reapertura en el dominio
     ticket.reabrir();
+    const updatedTicket = await this.ticketRepository.save(ticket);
 
-    return await this.ticketRepository.save(ticket);
+    // Registra el evento de auditoría (la cita previa se resuelve internamente)
+    await this.registerReopeningAuditUseCase.execute({
+      id_ticket: updatedTicket.id_tickets!,
+      id_usuario: idUsuario,
+      estado_anterior: estadoAnterior,
+      estado_nuevo: 'Reabierto',
+      motivo_reapertura: motivo,
+      ultimo_reporte_cierre: ultimoReporteCierre,
+    });
+
+    return updatedTicket;
   }
 }

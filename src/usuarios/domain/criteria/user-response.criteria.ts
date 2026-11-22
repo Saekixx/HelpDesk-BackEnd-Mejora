@@ -10,13 +10,16 @@ export class UserResponseCriteria {
   createdAt: Date;
   updatedAt: Date;
 
-  // IDs para lógica de formularios/modales
+  // IDs
   id_rol: number;
   id_cliente?: number | null;
   id_sucursal?: number | null;
   id_area?: number | null;
 
-  // Nombres/Textos descriptivos para mostrar en la UI / Tablas
+  // Rol como objeto { id, nombre } para la UI
+  rol: { id: number; nombre: string } | null;
+
+  // Nombres/Textos descriptivos
   nombre_rol?: string;
   nombre_cliente?: string | null;
   nombre_sucursal?: string | null;

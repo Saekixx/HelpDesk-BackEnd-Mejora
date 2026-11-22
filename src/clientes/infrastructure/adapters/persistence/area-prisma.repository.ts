@@ -4,7 +4,7 @@ import {
   AreaRepositoryPort,
   PaginatedAreasResult,
 } from '@/clientes/domain/ports/area.repository.port';
-import { Area } from '@/clientes/domain/entities/area.entity';
+import { Area, AreaDetailView } from '@/clientes/domain/entities/area.entity';
 import { GetAreasFilterDto } from '@/clientes/domain/dto/get-areas-filter.dto';
 import { CreateAreaDto } from '@/clientes/domain/dto/create-area.dto';
 import { UpdateAreaDto } from '@/clientes/domain/dto/update-area.dto';
@@ -81,12 +81,27 @@ export class AreaPrismaRepository implements AreaRepositoryPort {
     };
   }
 
-  async findById(id: number): Promise<Area | null> {
+  async findById(id: number): Promise<AreaDetailView | null> {
     const entity = await this.prisma.area.findUnique({
       where: { id_area: id },
+      include: {
+        sucursales: {
+          select: {
+            id_sucursal: true, // <-- Incluido para calzar con el tipo PrismaAreaConFicha y el Mapper
+            nombre_sucursal: true,
+            clientes: {
+              select: { nombre_principal: true },
+            },
+          },
+        },
+        _count: {
+          select: { equipos: true },
+        },
+      },
     });
+
     if (!entity) return null;
-    return AreaMapper.toDomain(entity);
+    return AreaMapper.toDetailView(entity);
   }
 
   async create(data: CreateAreaDto): Promise<Area> {

@@ -1,29 +1,32 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsEnum,
-  IsString,
-  IsNotEmpty,
-  IsEmail,
-  IsNumber,
-  IsInt,
   IsBoolean,
-  IsOptional,
-  IsDate,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
   IsNotEmptyObject,
+  IsOptional,
+  IsString,
   ValidateNested,
-  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateClienteDto } from '@/clientes/application/dto/create-cliente.dto';
-import { TipoCliente } from '@/clientes/domain/entities/cliente.entity';
-import { SucursalAnidadaHttpDto } from './sucursal-anidada.dto';
+import {
+  CreateClienteCommand,
+  DatosEmpresaCommand,
+  ResponsableCommand,
+  SucursalPrincipalCommand,
+  TipoCliente,
+} from '@/clientes/domain/entities/cliente.entity';
 
-export class CreateClienteRequestDto implements CreateClienteDto {
+// Paso 1 del modal: datos de la empresa
+export class DatosEmpresaDto implements DatosEmpresaCommand {
   @ApiProperty({
     enum: TipoCliente,
     description: 'Tipo de cliente',
     example: TipoCliente.JURIDICA,
   })
+  @IsNotEmpty({ message: 'El tipo de cliente es obligatorio' })
   @IsEnum(TipoCliente, {
     message: 'El tipo de cliente debe ser JURIDICA o NATURAL',
   })
@@ -33,127 +36,147 @@ export class CreateClienteRequestDto implements CreateClienteDto {
     description: 'Número de documento (RUC/DNI)',
     example: '20123456789',
   })
-  @IsString({ message: 'El número de documento debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El número de documento es obligatorio' })
+  @IsString({ message: 'El número de documento debe ser una cadena de texto' })
   readonly numero_documento: string;
 
   @ApiProperty({
     description: 'Nombre o razón social del cliente',
     example: 'Acme Corp SAC',
   })
-  @IsString({ message: 'El nombre principal debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El nombre principal es obligatorio' })
+  @IsString({ message: 'El nombre principal debe ser una cadena de texto' })
   readonly nombre_principal: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Dirección fiscal',
     example: 'Av. Siempre Viva 123',
   })
+  @IsOptional()
   @IsString({ message: 'La dirección debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'La dirección es obligatoria' })
-  readonly direccion: string;
+  readonly direccion?: string;
+
+  @ApiPropertyOptional({
+    description: 'Rubro o sector económico',
+    example: 'Retail',
+  })
+  @IsOptional()
+  @IsString({ message: 'El rubro debe ser una cadena de texto' })
+  readonly rubro?: string;
+
+  @ApiProperty({ description: 'ID del plan contratado', example: 1 })
+  @IsNotEmpty({ message: 'El ID de plan es obligatorio' })
+  @IsInt({ message: 'El ID de plan debe ser un número entero' })
+  readonly id_plan: number;
+}
+
+// Paso 2 del modal: persona responsable de la empresa
+export class ResponsableDto implements ResponsableCommand {
+  @ApiProperty({ description: 'Nombre del responsable', example: 'Carlos' })
+  @IsNotEmpty({ message: 'El nombre del responsable es obligatorio' })
+  @IsString({
+    message: 'El nombre del responsable debe ser una cadena de texto',
+  })
+  readonly nombre: string;
+
+  @ApiProperty({ description: 'Apellido del responsable', example: 'Mendoza' })
+  @IsNotEmpty({ message: 'El apellido del responsable es obligatorio' })
+  @IsString({
+    message: 'El apellido del responsable debe ser una cadena de texto',
+  })
+  readonly apellido: string;
+
+  @ApiPropertyOptional({
+    description: 'Cargo del responsable dentro de la empresa',
+    example: 'Gerente de TI',
+  })
+  @IsOptional()
+  @IsString({ message: 'El cargo debe ser una cadena de texto' })
+  readonly cargo?: string;
 
   @ApiProperty({
-    description: 'Teléfono de contacto',
-    example: '+51987654321',
+    description: 'Teléfono de contacto del responsable',
+    example: '987654321',
   })
-  @IsString({ message: 'El teléfono debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El teléfono es obligatorio' })
+  @IsNotEmpty({ message: 'El teléfono del responsable es obligatorio' })
+  @IsString({
+    message: 'El teléfono del responsable debe ser una cadena de texto',
+  })
   readonly telefono: string;
 
   @ApiProperty({
-    description: 'Correo de contacto',
-    example: 'contacto@acme.com',
+    description: 'Correo del responsable (será su usuario de acceso)',
+    example: 'carlos.mendoza@acme.com',
   })
+  @IsNotEmpty({ message: 'El correo del responsable es obligatorio' })
   @IsEmail({}, { message: 'El correo electrónico debe ser válido' })
   readonly correo: string;
+}
 
-  @ApiProperty({ description: 'Rubro o giro de negocio', example: 'Retail' })
-  @IsString({ message: 'El rubro debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El rubro es obligatorio' })
-  readonly rubro: string;
-
+// Paso 3 del modal: sucursal principal
+export class SucursalPrincipalDto implements SucursalPrincipalCommand {
   @ApiProperty({
-    description: 'Fecha de inicio del plan contratado (YYYY-MM-DD)',
-    example: '2026-01-01',
-    type: String,
-    format: 'date',
+    description: 'Nombre de la sucursal principal',
+    example: 'Sede Central',
   })
-  @Type(() => Date)
-  @IsDate({ message: 'La fecha de inicio de plan debe ser una fecha válida' })
-  readonly fecha_inicio_plan: Date;
-
-  @ApiProperty({
-    description: 'Fecha de finalización del plan contratado (YYYY-MM-DD)',
-    example: '2026-12-31',
-    type: String,
-    format: 'date',
+  @IsNotEmpty({ message: 'El nombre de la sucursal es obligatorio' })
+  @IsString({
+    message: 'El nombre de la sucursal debe ser una cadena de texto',
   })
-  @Type(() => Date)
-  @IsDate({
-    message: 'La fecha de finalización de plan debe ser una fecha válida',
-  })
-  readonly fecha_finalizacion_plan: Date;
-
-  @ApiProperty({
-    description: 'Costo negociado con el cliente',
-    example: 1500.5,
-  })
-  @IsNumber({}, { message: 'El costo negociado debe ser un número' })
-  @Min(0, { message: 'El costo negociado no puede ser negativo' })
-  readonly costo_negociado: number;
-
-  @ApiProperty({ description: 'Límite de equipos contratado', example: 20 })
-  @IsInt({ message: 'El límite de equipos debe ser un número entero' })
-  @Min(0, { message: 'El límite de equipos no puede ser negativo' })
-  readonly limite_equipos_contratado: number;
-
-  @ApiProperty({ description: 'ID del plan contratado', example: 1 })
-  @IsInt({ message: 'El ID de plan debe ser un número entero' })
-  readonly id_plan: number;
+  readonly nombre_sucursal: string;
 
   @ApiPropertyOptional({
-    description: 'Estado activo del cliente',
+    description: 'Nombre del encargado de la sucursal',
+    example: 'Juan Pérez',
+  })
+  @IsOptional()
+  @IsString({ message: 'El encargado debe ser una cadena de texto' })
+  readonly encargado?: string;
+
+  @ApiPropertyOptional({
+    description: 'Dirección de la sucursal',
+    example: 'Jr. Los Pinos 456',
+  })
+  @IsOptional()
+  @IsString({ message: 'La dirección debe ser una cadena de texto' })
+  readonly direccion?: string;
+
+  @ApiPropertyOptional({
+    description: 'Indica si es la sucursal principal',
     default: true,
     example: true,
   })
   @IsOptional()
-  @IsBoolean({ message: 'is_active debe ser un valor booleano' })
-  readonly is_active?: boolean;
+  @IsBoolean({ message: 'is_principal debe ser un valor booleano' })
+  readonly is_principal?: boolean = true;
+}
+
+// Body de POST /clientes
+export class CreateClienteRequestDto implements CreateClienteCommand {
+  @ApiProperty({
+    description: 'Paso 1: datos de la empresa',
+    type: DatosEmpresaDto,
+  })
+  @IsNotEmptyObject({}, { message: 'Los datos de la empresa son obligatorios' })
+  @ValidateNested()
+  @Type(() => DatosEmpresaDto)
+  readonly datos_empresa: DatosEmpresaDto;
 
   @ApiProperty({
-    description:
-      'Sucursal principal del cliente, creada de forma simultánea al registrar el cliente',
-    type: SucursalAnidadaHttpDto,
-    example: {
-      nombre: 'Sucursal Central',
-      encargado: 'Juan Pérez',
-      telefono: '+51987654321',
-      correo: 'sucursal.central@acme.com',
-      direccion: 'Jr. Los Pinos 456',
-    },
+    description: 'Paso 2: persona responsable de la empresa',
+    type: ResponsableDto,
+  })
+  @IsNotEmptyObject({}, { message: 'El responsable es obligatorio' })
+  @ValidateNested()
+  @Type(() => ResponsableDto)
+  readonly responsable: ResponsableDto;
+
+  @ApiProperty({
+    description: 'Paso 3: sucursal principal de la empresa',
+    type: SucursalPrincipalDto,
   })
   @IsNotEmptyObject({}, { message: 'La sucursal principal es obligatoria' })
   @ValidateNested()
-  @Type(() => SucursalAnidadaHttpDto)
-  readonly sucursal_principal: SucursalAnidadaHttpDto;
-
-  @ApiPropertyOptional({
-    description:
-      'Sucursales adicionales del cliente, creadas de forma simultánea al registrar el cliente',
-    type: [SucursalAnidadaHttpDto],
-    example: [
-      {
-        nombre: 'Sucursal Norte',
-        encargado: 'Carlos Mendoza',
-        telefono: '+51912345678',
-        correo: 'norte@acme.com',
-        direccion: 'Av. Los Olivos 789',
-      },
-    ],
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => SucursalAnidadaHttpDto)
-  readonly sucursales_adicionales?: SucursalAnidadaHttpDto[];
+  @Type(() => SucursalPrincipalDto)
+  readonly sucursal_principal: SucursalPrincipalDto;
 }

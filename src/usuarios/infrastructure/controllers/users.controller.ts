@@ -16,6 +16,9 @@ import { AssignRolRequestDto } from '../dtos/assign-rol.request.dto';
 import { CreateUserUseCase } from '@/usuarios/application/use-cases/create-user.use-case';
 import { UpdateProfileUseCase } from '@/usuarios/application/use-cases/update-profile.use-case';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
+import { RoleGuard } from '@/auth/infrastructure/guards/role.guard';
+import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
+import { RolEnum } from '@/auth/domain/enums/rol.enum';
 import { CurrentUser } from '@/auth/infrastructure/decorators/current-user.decorator';
 import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
 import { GetUsersUseCase } from '@/usuarios/application/use-cases/get-users.use-case';
@@ -26,6 +29,7 @@ import {
   ApiFindAllUsersSwagger,
   ApiFindUserByIdSwagger,
   ApiFindUserOptionsSwagger,
+  ApiFindUserStatsSwagger,
   ApiToggleUserStatusSwagger,
   ApiUpdateProfileSwagger,
   ApiUpdateUserSwagger,
@@ -36,6 +40,7 @@ import { UpdateUserDto } from '../dtos/update-user.request.dto';
 import { UpdateUserUseCase } from '@/usuarios/application/use-cases/update-user.use-case';
 import { GetUserOptionUseCase } from '@/usuarios/application/use-cases/get-user-option.use-case';
 import { UserSelectFilterDto } from '../dtos/user-select-filter-dto';
+import { GetUserStatsUseCase } from '@/usuarios/application/use-cases/get-user-stats.use-case';
 
 @ApiTags('Usuarios')
 @Controller('usuario')
@@ -49,6 +54,7 @@ export class UsersController {
     private readonly assignRolUseCase: AssignRolUseCase,
     private readonly toggleUserStatusUseCase: ToggleUserStatusUseCase,
     private readonly getUserOptionUseCase: GetUserOptionUseCase,
+    private readonly getUserStatsUseCase: GetUserStatsUseCase,
   ) {}
 
   @Get('options')
@@ -58,17 +64,48 @@ export class UsersController {
     return await this.getUserOptionUseCase.execute(filters);
   }
 
-  @Get()
-  @ApiFindAllUsersSwagger()
-  async findAll(@Query() query: GetUsersQueryDto) {
-    const data = await this.getUsersUseCase.execute(query);
+  @Get('estadisticas')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
+  @ApiFindUserStatsSwagger()
+  async getEstadisticas() {
+    const data = await this.getUserStatsUseCase.execute();
     return {
-      message: 'Usuarios obtenidos exitosamente',
+      message: 'Estadísticas de usuarios obtenidas exitosamente',
       data,
     };
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
+  @ApiFindAllUsersSwagger()
+  async findAll(@Query() query: GetUsersQueryDto) {
+    const { search, id_rol, is_active, page, limit } = query;
+    const result = await this.getUsersUseCase.execute({
+      search,
+      id_rol,
+      is_active,
+      page,
+      limit,
+    });
+    return {
+      message: 'Usuarios obtenidos exitosamente',
+      data: {
+        data: result.data,
+        meta: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      },
+    };
+  }
+
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR, RolEnum.SOPORTE_INSITU, RolEnum.SOPORTE_TECNICO)
   @ApiFindUserByIdSwagger()
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const data = await this.getUserByIdUseCase.execute(id);
@@ -79,24 +116,13 @@ export class UsersController {
   }
 
   @Post('create')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
   @ApiCreateUserSwagger()
   async create(@Body() dto: CreateUserRequestDto) {
     const data = await this.createUserUseCase.execute(dto);
     return {
       message: 'Usuario creado exitosamente',
-      data,
-    };
-  }
-
-  @Patch(':id')
-  @ApiUpdateUserSwagger()
-  async updateUser(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateUserDto,
-  ) {
-    const data = await this.updateUserUseCase.execute(id, dto);
-    return {
-      message: 'Usuario actualizado exitosamente',
       data,
     };
   }
@@ -111,8 +137,24 @@ export class UsersController {
     return await this.updateProfileUseCase.execute(userId, dto);
   }
 
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
+  @ApiUpdateUserSwagger()
+  async updateUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateUserDto,
+  ) {
+    const data = await this.updateUserUseCase.execute(id, dto);
+    return {
+      message: 'Usuario actualizado exitosamente',
+      data,
+    };
+  }
+
   @Patch(':id/rol')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
   @ApiAssignRolSwagger()
   async updateRole(
     @Param('id', ParseIntPipe) id: number,
@@ -122,7 +164,8 @@ export class UsersController {
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(RolEnum.ADMINISTRADOR)
   @ApiToggleUserStatusSwagger()
   async toggleStatus(
     @Param('id', ParseIntPipe) id: number,

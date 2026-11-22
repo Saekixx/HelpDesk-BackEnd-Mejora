@@ -21,6 +21,10 @@ export class UpdateSucursalUseCase {
     private readonly clienteRepository: ClienteRepositoryPort,
   ) {}
 
+  // Actualiza la sucursal (PATCH /sucursales/:id). Si el dto trae `encargado`,
+  // el repositorio sincroniza en la misma transacción las columnas de la
+  // sucursal y la cuenta del usuario vinculado, y responde 409 si el correo ya
+  // pertenece a otro usuario. Aquí solo se validan las reglas previas.
   async execute(id: number, dto: UpdateSucursalDto): Promise<Sucursal> {
     const existing = await this.sucursalRepository.findById(id);
     if (!existing) throw new SucursalNotFoundException();

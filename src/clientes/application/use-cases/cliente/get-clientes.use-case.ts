@@ -16,6 +16,11 @@ export class GetClientesUseCase {
   async execute(
     filter: GetClientesFilterDto,
   ): Promise<PaginatedClientesResult> {
-    return await this.clienteRepository.findAll(filter);
+    const normalizedFilter: GetClientesFilterDto = {
+      ...filter,
+      page: filter.page ?? 1,
+      limit: filter.limit ?? 10,
+    };
+    return await this.clienteRepository.findAll(normalizedFilter);
   }
 }

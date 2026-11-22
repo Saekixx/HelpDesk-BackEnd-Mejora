@@ -63,14 +63,32 @@ export class Cliente {
   }
 }
 
-export interface ClienteListItem extends Cliente {
-  // Cantidad total de sucursales del cliente (Prisma: _count.sucursales)
-  total_sucursales: number;
-  plan: { id_plan: number; nombre: string } | null;
+// Plan de soporte del cliente en el listado (relación con la tabla planes)
+export interface PlanSoporteListItem {
+  id_plan: number;
+  tipo: string;
+  servicios: string;
 }
 
+// Vista de lista usada por GET /clientes (Listado Avanzado de Clientes).
+export interface ClienteListItem {
+  id_cliente: number;
+  // Nombre (persona natural) o Razón Social (persona jurídica)
+  nombre_principal: string;
+  // Rubro o sector económico (ej. "Sector Financiero & Banca")
+  rubro: string;
+  tipo_cliente: TipoCliente;
+  // RUC o DNI
+  numero_documento: string;
+  // Cantidad de sucursales asociadas
+  totalSucursales: number;
+  // Plan de soporte asignado (id, tipo y servicios).
+  // null si el cliente no tiene un plan asignado.
+  planSoporte: PlanSoporteListItem | null;
+  is_active: boolean;
+}
 
-// Resumen del plan contratado por el cliente (Prisma: relación `planes`)
+// Resumen del plan contratado por el cliente
 export interface PlanSummary {
   id_plan: number;
   nombre: string;
@@ -80,7 +98,7 @@ export interface PlanSummary {
   is_active?: boolean;
 }
 
-// Resumen de cada sucursal asociada al cliente (Prisma: relación `sucursales`)
+// Resumen de cada sucursal asociada al cliente
 export interface SucursalSummary {
   id_sucursal: number;
   nombre: string;
@@ -96,4 +114,124 @@ export interface SucursalSummary {
 export interface ClienteDetail extends Cliente {
   plan: PlanSummary | null;
   sucursales: SucursalSummary[];
+}
+
+// ---------------------------------------------------------------------------
+// Vista de detalle (GET /clientes/:id).
+// Es una proyección de solo lectura: no reutiliza
+// `ClienteDetail` porque ese tipo extiende la entidad completa y lo consume
+// el flujo de actualización.
+// ---------------------------------------------------------------------------
+
+// Plan contratado
+export interface ClientePlanView {
+  id_plan: number;
+  tipo: string;
+  limite_equipos: number;
+}
+
+// Persona de contacto (enlace) de la empresa
+export interface ContactoEnlaceView {
+  nombre_responsable: string;
+  cargo: string;
+  correo: string;
+  telefono: string;
+}
+
+// Sucursal activa del cliente con su cantidad de equipos vinculados
+export interface SucursalActivaView {
+  id_sucursal: number;
+  is_principal: boolean;
+  nombre: string;
+  direccion: string;
+  total_equipos: number;
+}
+
+export interface ClienteDetailView {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string;
+  tipo_cliente: TipoCliente;
+  rubro: string | null;
+  direccion: string | null;
+  plan: ClientePlanView | null;
+  contacto_enlace: ContactoEnlaceView | null;
+  // La sucursal principal (is_principal: true) siempre va primero
+  sucursales_activas: SucursalActivaView[];
+}
+
+// ---------------------------------------------------------------------------
+// Comando de creación (POST /clientes) para el modal de registro de empresa
+// de 3 pasos: datos de la empresa, responsable y sucursal principal.
+// Es un tipo de dominio puro: lo implementa el DTO HTTP y lo consumirá el
+// caso de uso de registro.
+// ---------------------------------------------------------------------------
+
+// Paso 1: datos de la empresa
+export interface DatosEmpresaCommand {
+  tipo_cliente: TipoCliente;
+  numero_documento: string;
+  nombre_principal: string;
+  direccion?: string;
+  rubro?: string;
+  id_plan: number;
+}
+
+// Paso 2: persona responsable (se registra como usuario representante)
+export interface ResponsableCommand {
+  nombre: string;
+  apellido: string;
+  cargo?: string;
+  telefono: string;
+  correo: string;
+}
+
+// Paso 3: sucursal principal (is_principal es true cuando se omite)
+export interface SucursalPrincipalCommand {
+  nombre_sucursal: string;
+  encargado?: string;
+  direccion?: string;
+  is_principal?: boolean;
+}
+
+export interface CreateClienteCommand {
+  datos_empresa: DatosEmpresaCommand;
+  responsable: ResponsableCommand;
+  sucursal_principal: SucursalPrincipalCommand;
+}
+
+// Resultado del registro: identificadores de lo creado de forma atómica
+export interface CreateClienteResult {
+  id_cliente: number;
+  nombre_principal: string;
+  ruc: string;
+  sucursal_principal_id: number;
+  usuario_responsable_id: number;
+}
+
+// ---------------------------------------------------------------------------
+// Comando de actualización (PATCH /clientes/:id) para el modal de edición de
+// cliente: Razón Social, RUC/Documento, Rubro y Plan de Soporte.
+// Es un tipo de dominio puro: lo implementa el DTO HTTP y lo consumirá el
+// caso de uso de actualización. Todos los campos son opcionales (PATCH
+// semántico): solo se modifican los campos enviados.
+// ---------------------------------------------------------------------------
+export interface UpdateClienteCommand {
+  // Razón Social (persona jurídica) o nombre (persona natural)
+  nombre_principal?: string;
+  // RUC o DNI
+  numero_documento?: string;
+  rubro?: string;
+  // Plan de Soporte
+  id_plan?: number;
+}
+
+// Resultado de la actualización: datos vigentes del cliente tras aplicar los
+// cambios. Es lo que devuelve el caso de uso y lo que adapta el DTO de respuesta.
+export interface UpdateClienteResult {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string;
+  rubro: string | null;
+  id_plan: number | null;
 }

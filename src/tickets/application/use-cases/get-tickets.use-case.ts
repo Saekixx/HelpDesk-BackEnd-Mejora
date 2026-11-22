@@ -16,6 +16,6 @@ export class GetTicketsUseCase {
   async execute(
     filters: TicketFilterCriteria,
   ): Promise<PaginatedTicketsResult> {
-    return await this.ticketRepository.findAllWhitFilters(filters);
+    return await this.ticketRepository.findAllWithFilters(filters);
   }
 }

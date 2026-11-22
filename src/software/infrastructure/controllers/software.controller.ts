@@ -4,6 +4,8 @@ import { FindByIdSoftwareUseCase } from '@/software/application/use-cases/find-b
 import { GetSoftwareUseCase } from '@/software/application/use-cases/get-software.usecase';
 import { ToggleSoftwareStatusUseCase } from '@/software/application/use-cases/toggle-software-status.usecase';
 import { UpdateSoftwareUseCase } from '@/software/application/use-cases/update-software.usecase';
+import { AssignEquipmentUseCase } from '@/software/application/use-cases/assign-equipment.usecase';
+import { ReleaseEquipmentUseCase } from '@/software/application/use-cases/release-equipment.usecase';
 import {
   Body,
   Controller,
@@ -22,10 +24,15 @@ import {
   ApiCreateSoftwareSwagger,
   ApiUpdateSoftwareSwagger,
   ApiToggleSoftwareStatusSwagger,
+  ApiAssignEquipmentSwagger,
+  ApiReleaseEquipmentSwagger,
+  ApiFindSoftwareVaultSwagger,
 } from '../docs/software.swagger';
 import { CreateSoftwareRequestDto } from '../dtos/create-software.request.dto';
 import { UpdateSoftwareRequestDto } from '../dtos/update-software.request.dto';
 import { FindAllSoftwareQueryDto } from '../dtos/find-all-software.query.dto';
+import { AssignSoftwareEquipmentDto } from '../../application/dtos/assign-software-equipment.dto';
+import { FindByIdSoftwareEquipoUseCase } from '@/software/application/use-cases/get-software-equipos.usecase';
 
 @ApiSoftwareTag()
 @Controller('software')
@@ -33,10 +40,13 @@ export class SoftwareController {
   constructor(
     private readonly findAllSoftwareUseCase: FindAllSoftwareUseCase,
     private readonly findByIdSoftwareUseCase: FindByIdSoftwareUseCase,
+    private readonly findByIdSoftwareEquipoUseCase: FindByIdSoftwareEquipoUseCase,
     private readonly getSoftwareUseCase: GetSoftwareUseCase,
     private readonly createSoftwareUseCase: CreateSoftwareUseCase,
     private readonly updateSoftwareUseCase: UpdateSoftwareUseCase,
     private readonly toggleSoftwareStatusUseCase: ToggleSoftwareStatusUseCase,
+    private readonly assignEquipmentUseCase: AssignEquipmentUseCase,
+    private readonly releaseEquipmentUseCase: ReleaseEquipmentUseCase,
   ) {}
 
   @Get()
@@ -80,6 +90,29 @@ export class SoftwareController {
     };
   }
 
+  @Post(':id/assign')
+  @ApiAssignEquipmentSwagger()
+  async assignEquipment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AssignSoftwareEquipmentDto,
+  ) {
+    await this.assignEquipmentUseCase.execute(id, dto);
+    return {
+      message: 'Equipo asignado exitosamente al software',
+    };
+  }
+
+  @Patch('equipment/:idAssignment/release')
+  @ApiReleaseEquipmentSwagger()
+  async releaseEquipment(
+    @Param('idAssignment', ParseIntPipe) idAssignment: number,
+  ) {
+    await this.releaseEquipmentUseCase.execute(idAssignment);
+    return {
+      message: 'Equipo liberado exitosamente',
+    };
+  }
+
   @Patch(':id')
   @ApiUpdateSoftwareSwagger()
   async update(
@@ -97,5 +130,16 @@ export class SoftwareController {
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     const message = await this.toggleSoftwareStatusUseCase.execute(id);
     return { message };
+  }
+
+  @Get(':id/boveda')
+  @ApiFindSoftwareVaultSwagger()
+  async getSoftwareVault(@Param('id') id: string) {
+    const data = await this.findByIdSoftwareEquipoUseCase.execute(Number(id));
+    return {
+      status: 200,
+      message: 'Bóveda de software obtenida exitosamente',
+      data,
+    };
   }
 }

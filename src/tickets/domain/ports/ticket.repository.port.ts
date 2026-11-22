@@ -1,3 +1,4 @@
+import { TicketDetalleCriteria } from '../criteria/ticket-detalle.criteria';
 import { TicketFilterCriteria } from '../criteria/ticket-filter.criteria';
 import { TicketResponseCriteria } from '../criteria/ticket-response.criteria';
 import { Ticket } from '../entities/ticket.entity';
@@ -19,7 +20,14 @@ export interface TicketRepositoryPort {
 
   findByPin(pin: string): Promise<Ticket | null>;
 
-  findAllWhitFilters(
+  findAllWithFilters(
     filters: TicketFilterCriteria,
   ): Promise<PaginatedTicketsResult>;
+
+  findDetailById(id: number): Promise<TicketDetalleCriteria | null>;
+
+  // Método para obtener tickets pendientes para auto-asignación según la antigüedad en minutos
+  findPendientesParaAutoAsignacion(
+    minutosAntiguedad: number,
+  ): Promise<Ticket[]>;
 }

@@ -9,6 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateSoftwareRequestDto } from '../dtos/create-software.request.dto';
 import { UpdateSoftwareRequestDto } from '../dtos/update-software.request.dto';
+import { AssignSoftwareEquipmentDto } from '../../application/dtos/assign-software-equipment.dto';
 
 export const ApiSoftwareTag = () => ApiTags('Software');
 
@@ -22,7 +23,8 @@ export const ApiFindAllSoftwareSwagger = () =>
       name: 'search',
       required: false,
       type: String,
-      description: 'Término de búsqueda (tipo, marca, modelo o nombre del software)',
+      description:
+        'Término de búsqueda (tipo, marca, modelo o nombre del software)',
       example: 'Microsoft Office',
     }),
     ApiQuery({
@@ -124,6 +126,70 @@ export const ApiToggleSoftwareStatusSwagger = () =>
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Estado actualizado correctamente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'Software no encontrado.',
+    }),
+  );
+
+export const ApiAssignEquipmentSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Asignar un equipo al software (Bóveda)' }),
+    ApiParam({
+      name: 'id',
+      type: Number,
+      description: 'ID numérico del software',
+    }),
+    ApiBody({ type: AssignSoftwareEquipmentDto }),
+    ApiResponse({
+      status: HttpStatus.CREATED,
+      description: 'Equipo asignado exitosamente al software.',
+    }),
+    ApiResponse({
+      status: HttpStatus.BAD_REQUEST,
+      description:
+        'Cupos llenos, datos inválidos o el equipo no pertenece al cliente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'Software o equipo no encontrado.',
+    }),
+  );
+
+export const ApiReleaseEquipmentSwagger = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Liberar un equipo asignado al software' }),
+    ApiParam({
+      name: 'idAssignment',
+      type: Number,
+      description: 'ID de la asignación en la tabla pivote (software_equipos)',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Equipo liberado exitosamente.',
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'La asignación de software no fue encontrada.',
+    }),
+  );
+
+export const ApiFindSoftwareVaultSwagger = () =>
+  applyDecorators(
+    ApiOperation({
+      summary:
+        'Obtener la bóveda de software con sus equipos vinculados, capacidad y llave maestra',
+    }),
+    ApiParam({
+      name: 'id',
+      type: Number,
+      description: 'ID numérico del software',
+      example: 1,
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Bóveda de software obtenida exitosamente.',
     }),
     ApiResponse({
       status: HttpStatus.NOT_FOUND,

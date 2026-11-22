@@ -16,11 +16,10 @@ import {
   ApiCloseTicketSwagger,
   ApiCreateTicketSwagger,
   ApiFindAllTicketsSwagger,
+  ApiFindOneTicketSwagger,
   ApiReopenTicketSwagger,
-  ApiStartChatSwagger,
 } from '../docs/tickets.swagger';
 
-import { AssignSupportCommand } from '../dtos/assign-support.request';
 import { CreateTicketDto } from '../dtos/create-ticket.dto';
 import { GetTicketsFilterDto } from '../dtos/get-tickets-query.dto';
 
@@ -31,10 +30,12 @@ import { Roles } from '@/auth/infrastructure/decorators/roles.decorator';
 import { GetTicketsUseCase } from '@/tickets/application/use-cases/get-tickets.use-case';
 import { CreateTicketUseCase } from '@/tickets/application/use-cases/create-ticket.use-case';
 import { AssignSupportTicketUseCase } from '@/tickets/application/use-cases/assign-support-ticket.use-case';
-import { StartChatTicketUseCase } from '@/tickets/application/use-cases/start-chat-ticket.use-case';
 import { ReopenTicketUseCase } from '@/tickets/application/use-cases/reopen-ticket.use-case';
 import { CloseTicketUseCase } from '@/tickets/application/use-cases/close-ticket.use-case';
 import { RolUsuario } from '@/tickets/domain/entities/ticket.entity';
+import { GetTicketDetalleUseCase } from '@/tickets/application/use-cases/get-ticket-detalle.use-case';
+import { CerrarTicketDto } from '../dtos/close-ticket.request';
+import { ReabrirTicketDto } from '../dtos/reopen-ticket.request';
 
 @ApiTags('Tickets')
 @ApiBearerAuth('access-token')
@@ -43,19 +44,37 @@ import { RolUsuario } from '@/tickets/domain/entities/ticket.entity';
 export class TicketsController {
   constructor(
     private readonly getTicketsUseCase: GetTicketsUseCase,
+    private readonly getTicketDetalleUseCase: GetTicketDetalleUseCase,
     private readonly createTicketUseCase: CreateTicketUseCase,
-    private readonly assignTicketUseCase: AssignSupportTicketUseCase,
-    private readonly startChatTicketUseCase: StartChatTicketUseCase,
-    private readonly reopenTicketUseCase: ReopenTicketUseCase,
     private readonly closeTicketUseCase: CloseTicketUseCase,
+    private readonly assignSupportTicketUseCase: AssignSupportTicketUseCase,
+    private readonly reopenTicketUseCase: ReopenTicketUseCase,
   ) {}
 
   @Get()
   @ApiFindAllTicketsSwagger()
   async findAll(@Query() query: GetTicketsFilterDto) {
-    const data = await this.getTicketsUseCase.execute(query);
+    const result = await this.getTicketsUseCase.execute(query);
     return {
       message: 'Tickets obtenidos exitosamente',
+      data: {
+        data: result.data,
+        meta: {
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: result.totalPages,
+        },
+      },
+    };
+  }
+
+  @Get(':id')
+  @ApiFindOneTicketSwagger()
+  async findById(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.getTicketDetalleUseCase.execute(id);
+    return {
+      message: 'Ticket obtenido exitosamente',
       data,
     };
   }
@@ -74,27 +93,20 @@ export class TicketsController {
     };
   }
 
-  @Patch('assign-support')
-  @Roles(
-    RolUsuario.ADMINISTRADOR,
-    RolUsuario.SOPORTE_TECNICO,
-    RolUsuario.SOPORTE_INSITU,
-  )
-  @ApiAssignSupportSwagger()
-  async assignSupport(@Body() command: AssignSupportCommand) {
-    const data = await this.assignTicketUseCase.execute(command);
+  @Patch(':id/close')
+  @ApiCloseTicketSwagger()
+  async close(
+    @Param('id', ParseIntPipe) idTicket: number,
+    @CurrentUser('userId') userId: number,
+    @Body() dto: CerrarTicketDto,
+  ) {
+    const data = await this.closeTicketUseCase.execute(
+      idTicket,
+      Number(userId),
+      dto.reporte_cierre,
+    );
     return {
-      message: 'Soporte asignado al ticket exitosamente',
-      data,
-    };
-  }
-
-  @Patch(':id/start-chat')
-  @ApiStartChatSwagger()
-  async startChat(@Param('id', ParseIntPipe) id: number) {
-    const data = await this.startChatTicketUseCase.execute(id);
-    return {
-      message: 'Chat iniciado correctamente',
+      message: 'Ticket cerrado correctamente',
       data,
     };
   }
@@ -102,37 +114,30 @@ export class TicketsController {
   @Patch(':id/reopen')
   @ApiReopenTicketSwagger()
   async reopen(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) idTicket: number,
     @CurrentUser('userId') userId: number,
-    @CurrentUser('role') role: string,
+    @Body() dto: ReabrirTicketDto,
   ) {
-    const data = await this.reopenTicketUseCase.execute({
-      id_ticket: id,
-      usuario_id: userId,
-      rol_usuario: role,
-    });
-
+    const data = await this.reopenTicketUseCase.execute(
+      idTicket,
+      Number(userId),
+      dto.motivo_reapertura,
+    );
     return {
-      message: 'Ticket reabierto exitosamente',
+      message: 'Ticket reabierto correctamente',
       data,
     };
   }
 
-  @Patch(':id/close')
-  @ApiCloseTicketSwagger()
-  async close(
+  @Patch(':id/assign-support')
+  @ApiAssignSupportSwagger()
+  async assignSupport(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser('userId') userId: number,
-    @CurrentUser('role') role: string,
+    @Body() idSoporte: number,
   ) {
-    const data = await this.closeTicketUseCase.execute({
-      id_ticket: id,
-      usuario_id: userId,
-      rol_usuario: role,
-    });
-
+    const data = await this.assignSupportTicketUseCase.execute(id, idSoporte);
     return {
-      message: 'Ticket cerrado exitosamente',
+      message: 'Soporte asignado correctamente',
       data,
     };
   }
