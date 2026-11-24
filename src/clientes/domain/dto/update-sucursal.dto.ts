@@ -20,6 +20,8 @@ export interface UpdateSucursalDto {
   id_cliente?: number;
   nombre_sucursal?: string;
   direccion?: string;
+  latitud?: number;
+  longitud?: number;
   id_zona?: number | null;
   encargado?: string | UpdateSucursalEncargadoCommand;
 }

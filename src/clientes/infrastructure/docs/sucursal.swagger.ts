@@ -244,6 +244,8 @@ const CREATE_SUCURSAL_REQUEST_EJEMPLO = {
   id_cliente: 1,
   nombre_sucursal: 'Sucursal Centro',
   direccion: 'Jr. Los Pinos 456',
+  latitud: -12.046374,
+  longitud: -77.042793,
   id_zona: 1,
   encargado: {
     nombre: 'María',
@@ -368,6 +370,8 @@ const UPDATE_SUCURSAL_REQUEST_EJEMPLO = {
   id_cliente: 1,
   nombre_sucursal: 'Sucursal Centro',
   direccion: 'Jr. Los Pinos 456',
+  latitud: -12.046374,
+  longitud: -77.042793,
   id_zona: 2,
   encargado: {
     nombre: 'María',

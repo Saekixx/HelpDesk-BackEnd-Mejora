@@ -27,7 +27,7 @@ type PrismaSucursalDetalle = PrismaSucursal & {
     id_cliente: number;
     nombre_principal: string;
     numero_documento: string | null;
-  } | null;
+  } | null; // <-- Quitamos latitud y longitud de aquí
   usuarios: { id_usuario: number; nombre: string; apellido: string }[];
 };
 
@@ -97,6 +97,8 @@ export class SucursalMapper {
       nombre_sucursal: sucursal.nombre_sucursal,
       is_active: sucursal.is_active,
       direccion: sucursal.direccion,
+      latitud: entity.latitud !== null ? Number(entity.latitud) : 0,
+      longitud: entity.longitud !== null ? Number(entity.longitud) : 0,
       id_zona: entity.id_zona,
       areasVinculadas: entity.area.map((area) => ({
         id_area: area.id_area,

@@ -5,6 +5,8 @@ export interface SucursalProps {
   telefono: string;
   direccion: string;
   correo: string;
+  latitud?: number;
+  longitud?: number;
   is_active: boolean;
   id_cliente: number;
   id_zona: number;
@@ -19,6 +21,8 @@ export class Sucursal {
   public readonly telefono: string;
   public readonly direccion: string;
   public readonly correo: string;
+  public readonly latitud?: number;
+  public readonly longitud?: number;
   public readonly is_active: boolean;
   public readonly id_cliente: number;
   public readonly id_zona: number;
@@ -32,6 +36,8 @@ export class Sucursal {
     this.telefono = props.telefono;
     this.direccion = props.direccion;
     this.correo = props.correo;
+    this.latitud = props.latitud;
+    this.longitud = props.longitud;
     this.is_active = props.is_active;
     this.id_cliente = props.id_cliente;
     this.id_zona = props.id_zona;
@@ -115,6 +121,8 @@ export interface SucursalDetail {
   nombre_sucursal: string;
   is_active: boolean;
   direccion: string;
+  latitud: number;
+  longitud: number;
   id_zona: number | null;
   areasVinculadas: SucursalDetailArea[];
   clienteEmpresa: SucursalDetailClienteEmpresa | null;

@@ -46,6 +46,20 @@ export class CreateSucursalHttpDto implements CreateSucursalDto {
   })
   readonly direccion: string;
 
+  @ApiProperty({
+    description: 'Latitud de la sucursal',
+    example: -12.046374,
+  })
+  @IsNotEmpty({ message: 'La latitud es obligatoria' })
+  readonly latitud: number;
+
+  @ApiProperty({
+    description: 'Longitud de la sucursal',
+    example: -77.042793,
+  })
+  @IsNotEmpty({ message: 'La longitud es obligatoria' })
+  readonly longitud: number;
+
   @ApiPropertyOptional({
     description: 'ID de la zona opcional',
     // Explícito: con `number | null` TypeScript emite `Object` y Swagger

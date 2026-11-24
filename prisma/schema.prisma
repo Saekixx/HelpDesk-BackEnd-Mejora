@@ -69,6 +69,8 @@ model sucursales {
   telefono        String    @db.VarChar(20)
   direccion       String    @db.VarChar(255)
   correo          String    @db.VarChar(255)
+  latitud         Decimal?        @db.Decimal(10, 8)
+  longitud        Decimal?        @db.Decimal(11, 8)
   is_principal    Boolean?  @default(false)
   id_cliente      Int?
   id_zona         Int?

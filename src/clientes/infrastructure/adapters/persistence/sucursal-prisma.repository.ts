@@ -123,7 +123,11 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
       where: { id_sucursal: id },
       include: {
         area: {
-          select: { id_area: true, nombre_area: true, is_active: true },
+          select: {
+            id_area: true,
+            nombre_area: true,
+            is_active: true,
+          },
           orderBy: { id_area: 'asc' },
         },
         clientes: {
@@ -219,6 +223,8 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
             telefono: encargado.telefono_contacto ?? '',
             direccion: data.direccion,
             correo: correoEncargado,
+            latitud: data.latitud,
+            longitud: data.longitud,
             is_active: data.is_active ?? true,
             id_cliente: data.id_cliente,
             id_zona: data.id_zona,
@@ -340,6 +346,8 @@ export class SucursalPrismaRepository implements SucursalRepositoryPort {
             ...(data.id_cliente !== undefined && {
               id_cliente: data.id_cliente,
             }),
+            ...(data.latitud !== undefined && { latitud: data.latitud }),
+            ...(data.longitud !== undefined && { longitud: data.longitud }),
             // number asigna la zona y null la desasigna
             ...(data.id_zona !== undefined && { id_zona: data.id_zona }),
             ...(nombreCompleto !== undefined && { encargado: nombreCompleto }),

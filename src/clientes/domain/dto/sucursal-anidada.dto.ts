@@ -7,6 +7,8 @@ export interface SucursalAnidadaDto {
   encargado?: string;
   telefono?: string;
   correo?: string;
+  latituda?: number;
+  longitud?: number;
   direccion?: string;
 }
 
@@ -22,6 +24,8 @@ export interface SucursalAnidadaPersistData {
   encargado: string;
   telefono: string;
   correo: string;
+  latitud: number;
+  longitud: number;
   direccion: string;
 }
 

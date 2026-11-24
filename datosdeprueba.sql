@@ -48,10 +48,10 @@ INSERT INTO zonas (nombre_zona, descripcion, is_active, created_at, updated_at) 
 ('Lima Centro / San Isidro', 'Cubre las sedes financieras y corporativas principales', TRUE, NOW(), NOW()),
 ('Lima Norte', 'Cubre las sucursales del sector industrial y comercial norte', TRUE, NOW(), NOW());
 
--- 5. Insertar Sucursales (Pertenecientes al Cliente ID 1 y asociadas a sus Zonas)
-INSERT INTO sucursales (nombre_sucursal, encargado, telefono, direccion, correo, id_cliente, id_zona, is_principal, is_active, created_at, updated_at) VALUES
-('Sede Central', 'Carlos Mendoza', '01-444-5555', 'Av. Principal 123', 'sede.central@innovaciontech.com', 1, 1, TRUE, TRUE, NOW(), NOW()),
-('Sucursal Norte', 'María Vargas', '01-555-6666', 'Av. Norte 456', 'norte@innovaciontech.com', 1, 2, FALSE, TRUE, NOW(), NOW());
+-- 5. Insertar Sucursales (Pertenecientes al Cliente ID 1, asociadas a sus Zonas y con coordenadas para Google Maps)
+INSERT INTO sucursales (nombre_sucursal, encargado, telefono, direccion, correo, latitud, longitud, id_cliente, id_zona, is_principal, is_active, created_at, updated_at) VALUES
+('Sede Central', 'Carlos Mendoza', '01-444-5555', 'Av. Principal 123', 'sede.central@innovaciontech.com', -12.09641200, -77.03542100, 1, 1, TRUE, TRUE, NOW(), NOW()),
+('Sucursal Norte', 'María Vargas', '01-555-6666', 'Av. Norte 456', 'norte@innovaciontech.com', -11.99123400, -77.06234500, 1, 2, FALSE, TRUE, NOW(), NOW());
 
 -- 6. Insertar Áreas (Asociadas a Sucursal ID 1)
 INSERT INTO area (nombre_area, contacto, telefono, correo, id_sucursal, is_active, created_at, updated_at) VALUES
