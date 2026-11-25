@@ -15,6 +15,8 @@ import { SOFT_LOCK_REPOSITORY } from './domain/port/soft-lock.repository.port';
 import { CitasSoporteController } from './infrastructure/controller/citas-soporte.controller';
 import { SoftLockController } from './infrastructure/controller/softLock.controller';
 import { AutoAssignInsituUseCase } from './application/use-case/citas/auto-assign-insitu.use-case';
+import { GetCitasUseCase } from './application/use-case/citas/get-citas.use-case';
+import { FindByCitaDetalleUseCase } from './application/use-case/citas/find-by-cita-detalle.use-case';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { AutoAssignInsituUseCase } from './application/use-case/citas/auto-assig
     // Casos de Uso Citas
     CreateCitaAndDerivateTicketUseCase,
     AutoAssignInsituUseCase,
+    FindByCitaDetalleUseCase,
+    GetCitasUseCase,
 
     // Casos de Uso SoftLock
     CreateSoftLockUseCase,

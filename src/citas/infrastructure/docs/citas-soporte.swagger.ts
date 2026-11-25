@@ -1,64 +1,134 @@
-import { applyDecorators, HttpStatus } from '@nestjs/common';
+import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
+  ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
 import { CreateCitaDto } from '../dto/create-cita.dto';
 
+export function ApiGetCitasSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Obtener lista de citas de soporte con filtros y paginación',
+      description:
+        'Retorna las citas de soporte registradas permitiendo filtrar por búsqueda (técnico, cliente o ID de cita), cliente, sucursal, estado o fecha programada.',
+    }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      type: Number,
+      example: 1,
+      description: 'Número de página para la paginación',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      type: Number,
+      example: 10,
+      description: 'Cantidad de registros por página',
+    }),
+    ApiQuery({
+      name: 'search',
+      required: false,
+      type: String,
+      description:
+        'Buscar por nombre/apellido del técnico, cliente o ID de cita',
+    }),
+    ApiQuery({
+      name: 'id_cliente',
+      required: false,
+      type: Number,
+      description: 'Filtrar por ID del cliente',
+    }),
+    ApiQuery({
+      name: 'id_sucursal',
+      required: false,
+      type: Number,
+      description: 'Filtrar por ID de la sucursal',
+    }),
+    ApiQuery({
+      name: 'estado',
+      required: false,
+      enum: [
+        'Pendiente',
+        'En_Camino',
+        'Completada',
+        'Cancelada',
+        'Reprogramada',
+      ],
+      description: 'Filtrar por estado de la cita',
+    }),
+    ApiQuery({
+      name: 'fecha_programada',
+      required: false,
+      type: String,
+      format: 'date',
+      description: 'Filtrar por fecha programada (YYYY-MM-DD)',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Citas de soporte obtenidas correctamente.',
+    }),
+    ApiResponse({
+      status: 400,
+      description: 'Parámetros de consulta inválidos.',
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+  );
+}
+
+export function ApiGetCitaDetalleSwagger() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Obtener detalle completo de una cita de soporte por ID',
+      description:
+        'Retorna toda la información detallada de una cita específica incluyendo técnico, cliente, sucursal (con coordenadas), área, trabajador y equipo.',
+    }),
+    ApiParam({
+      name: 'id',
+      description: 'ID único de la cita de soporte',
+      type: Number,
+      example: 1,
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Cita de soporte obtenida exitosamente.',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Cita de soporte no encontrada.',
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'Token JWT no válido o no enviado.',
+    }),
+  );
+}
+
 export function ApiCreateCitaAndDerivateTicketSwagger() {
   return applyDecorators(
-    ApiBearerAuth('access-token'),
     ApiOperation({
       summary: 'Crear cita de soporte y derivar ticket a InSitu',
-      description: `
-Valida el token de bloqueo temporal (**SoftLock**), crea el registro definitivo de la cita de soporte (*citas_soporte*), cambia el estado del ticket a **Derivado InSitu**, consume/elimina el SoftLock y registra de forma inmutable el evento de auditoría.
-      `,
+      description:
+        'Valida el token de bloqueo temporal (SoftLock), crea la cita de soporte, deriva el ticket a InSitu y registra la auditoría.',
     }),
     ApiBody({ type: CreateCitaDto }),
     ApiResponse({
-      status: HttpStatus.CREATED,
+      status: 201,
       description: 'Cita creada y ticket derivado exitosamente.',
-      schema: {
-        example: {
-          id_cita: 1,
-          id_ticket: 123,
-          id_tecnico: 1,
-          id_sucursal: 456,
-          fecha_programada: '2026-10-15T00:00:00.000Z',
-          hora_inicio: '1970-01-01T09:00:00.000Z',
-          hora_fin: '1970-01-01T11:00:00.000Z',
-          estado: 'Pendiente',
-          observaciones: null,
-        },
-      },
     }),
     ApiResponse({
-      status: HttpStatus.BAD_REQUEST,
-      description: 'El token de bloqueo no es válido o ya ha expirado.',
-      schema: {
-        example: {
-          message: 'El tiempo de reserva para esta franja horaria ha expirado.',
-          error: 'Bad Request',
-          statusCode: 400,
-        },
-      },
+      status: 400,
+      description: 'Token de bloqueo no válido o expirado.',
     }),
     ApiResponse({
-      status: HttpStatus.NOT_FOUND,
-      description: 'El ticket especificado no fue encontrado.',
-      schema: {
-        example: {
-          message: 'Ticket con ID 123 no encontrado.',
-          error: 'Not Found',
-          statusCode: 404,
-        },
-      },
-    }),
-    ApiResponse({
-      status: HttpStatus.UNAUTHORIZED,
-      description: 'Token JWT no válido o no enviado.',
+      status: 404,
+      description: 'Ticket no encontrado.',
     }),
   );
 }
