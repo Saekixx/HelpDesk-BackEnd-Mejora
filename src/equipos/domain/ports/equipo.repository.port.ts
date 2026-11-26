@@ -1,20 +1,22 @@
 import {
-  ComponenteHardware,
   Equipo,
+  EquipoCreadoItem,
   EquipoDetail,
-  EquipoListItem,
+  EquipoEstadisticas,
+  EquipoListadoItem,
+  EquipoOptionItem,
 } from '../entities/equipo.entity';
 import { GetEquiposFilterDto } from '../dto/get-equipos-filter.dto';
-import { CreateEquipoDto } from '../dto/create-equipo.dto';
-import { UpdateEquipoDto } from '../dto/update-equipo.dto';
-import { AgregarComponenteDto } from '../dto/agregar-componente.dto';
-import { ReemplazarComponenteDto } from '../dto/reemplazar-componente.dto';
+import { GetEquipoOptionsFilterDto } from '../dto/get-equipo-options-filter.dto';
+import { CreateEquipoData } from '../dto/create-equipo-data.dto';
+import { RegistrarInstalarComponenteData } from '../dto/registrar-instalar-componente-data.dto';
+import { RegistrarEReemplazarComponenteData } from '../dto/registrar-reemplazar-componente-data.dto';
 
 export const EQUIPO_REPOSITORY = 'EQUIPO_REPOSITORY';
 
 // Resultado paginado para el listado de equipos
 export interface PaginatedEquiposResult {
-  data: EquipoListItem[];
+  data: EquipoListadoItem[];
   total: number;
   page: number;
   limit: number;
@@ -32,40 +34,150 @@ export interface EquipoRepositoryPort {
   // instalado.
   findDetailById(id: number): Promise<EquipoDetail | null>;
 
-  // Devuelve un objeto con las opciones de búsqueda para el listado de equipos
+  // Opciones ligeras para selectores (GET /equipos/options): solo equipos
+  // activos, con filtros opcionales por cliente, sucursal, área, estado y
+  // búsqueda parcial, ordenados por nombre.
   getEquipoOptions(
+<<<<<<< HEAD
     id_area?: number,
     id_trabajador?: number,
   ): Promise<{ id_equipo: number; nombre_equipo: string }[]>;
+=======
+    filters?: GetEquipoOptionsFilterDto,
+  ): Promise<EquipoOptionItem[]>;
+>>>>>>> origin/giovanni
 
-  // create y update devuelven el equipo con sus relaciones resumidas (cliente,
-  // sucursal, área y trabajador asignado), igual que el listado.
-  create(data: CreateEquipoDto): Promise<EquipoListItem>;
+  // Conteos de equipos activos para las tarjetas KPI del inventario
+  // (GET /equipos/estadisticas): total, asignados y sin asignar. No recibe
+  // filtros.
+  getEstadisticas(): Promise<EquipoEstadisticas>;
 
-  update(id: number, data: UpdateEquipoDto): Promise<EquipoListItem>;
+  // Devuelve el equipo registrado con su ubicación y trabajador.
+  create(data: CreateEquipoData): Promise<EquipoCreadoItem>;
 
-  // Activa/desactiva un equipo (soft toggle sobre is_active)
-  toggleStatus(id: number): Promise<Equipo>;
+  // Alterna el estado lógico del equipo (PATCH /equipos/:id/estado) y deja
+  // coherentes is_active, estado e id_trabajador en una sola escritura:
+  // - Si está activo lo desactiva: is_active = false, estado = "Retirado" e
+  //   id_trabajador = null (un equipo retirado no puede seguir en custodia).
+  // - Si está desactivado lo reactiva: is_active = true, estado = "En_Almacen"
+  //   e id_trabajador = null, disponible para una nueva asignación.
+  // Devuelve el equipo ya actualizado y lanza EquipoNotFoundException si el
+  // equipo no existe.
+  toggleEstado(id: number): Promise<Equipo>;
+
+  // Libera el equipo: desvincula al trabajador custodio (id_trabajador = null)
+  // y lo deja "En_Almacen". Lanza EquipoNotFoundException si el equipo no
+  // existe. Solo persiste el cambio: las reglas de negocio (p. ej. qué estados
+  // admiten liberar) se validan en el caso de uso.
+  release(id: number): Promise<void>;
+
+  // Asigna el equipo a un trabajador (id_trabajador) y lo deja "Activo".
+  // `observaciones` solo se guarda si viene informada; si se omite, las
+  // observaciones actuales del equipo no se tocan. Lanza
+  // EquipoNotFoundException si el equipo no existe y
+  // TrabajadorEquipoNoDisponibleException si el trabajador no existe. Las
+  // demás reglas (trabajador activo y del mismo cliente, equipo activo) se
+  // validan en el caso de uso.
+  assign(
+    id: number,
+    idTrabajador: number,
+    observaciones?: string,
+  ): Promise<void>;
 
   existsByNumSerie(num_serie: string): Promise<boolean>;
 
   // Verifica si un equipo pertenece a un usuario
   isEquipoOwnedByUsuario(idEquipo: number, idUsuario: number): Promise<boolean>;
 
-  // Asocia un componente de hardware existente a un equipo, registrándolo como
-  // componente actual en registro_hardware. Lanza EquipoNotFoundException o
-  // ComponenteHardwareNotFoundException si el equipo o el hardware no existen.
-  agregarComponente(
-    id_equipo: number,
-    dto: AgregarComponenteDto,
-  ): Promise<ComponenteHardware>;
+  // Monta en el equipo un componente que está en stock
+  // (POST /equipos/:id/componentes/montar-stock). En una sola transacción pasa
+  // el hardware de "Disponible" a "Instalado" (id_equipo_actual = idEquipo) y
+  // crea su movimiento actual en registro_hardware (fecha de instalación,
+  // observaciones como motivo y, si se informa, el técnico responsable). La
+  // reserva del componente es atómica: si otra operación lo toma primero, se
+  // lanza ComponenteNoDisponibleException y no se escribe nada.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - ComponenteHardwareNotFoundException: el componente no existe.
+  // - ComponenteNoDisponibleException: el componente no está "Disponible" o ya
+  //   tiene un equipo asignado.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  montarComponenteStock(
+    idEquipo: number,
+    idHardware: number,
+    fechaInstalacion: Date,
+    observaciones?: string,
+    idTecnico?: number,
+  ): Promise<void>;
 
-  // Reemplaza de forma transaccional un componente actual del equipo: marca el
-  // registro saliente como histórico (is_actual = false) y crea el nuevo como
-  // actual. Lanza EquipoNotFoundException, ComponenteHardwareNotFoundException
-  // (hardware nuevo) o ComponenteNoInstaladoException (saliente no instalado).
-  reemplazarComponente(
-    id_equipo: number,
-    dto: ReemplazarComponenteDto,
-  ): Promise<ComponenteHardware>;
+  // Registra un componente nuevo y lo deja instalado en el equipo
+  // (POST /equipos/:id/componentes/registrar-instalar). En una sola
+  // transacción crea el hardware (estado "Instalado", id_equipo_actual =
+  // idEquipo) y su movimiento actual en registro_hardware; si algo falla no
+  // queda ni el componente ni el movimiento.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - NumeroSerieComponenteDuplicadoException: ya existe un componente con ese
+  //   número de serie.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  registrarEInstalarComponente(
+    idEquipo: number,
+    data: RegistrarInstalarComponenteData,
+  ): Promise<void>;
+
+  // Reemplaza un componente instalado por otro que está en stock
+  // (POST /equipos/:id/componentes/:idHardwareActual/reemplazar-stock). En una
+  // sola transacción:
+  // - El componente actual pasa a "Baja / Descarte", queda sin equipo y su
+  //   movimiento activo en registro_hardware se cierra (is_actual = false,
+  //   fecha_retiro = fechaReemplazo, motivo_retiro = observaciones).
+  // - El componente nuevo pasa de "Disponible" a "Instalado"
+  //   (id_equipo_actual = idEquipo) y se crea su movimiento actual (fecha de
+  //   instalación = fechaReemplazo, observaciones como motivo y, si se informa,
+  //   el técnico responsable).
+  // Si algo falla no se escribe nada: el componente actual sigue instalado.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - ComponenteNoInstaladoException: el componente actual no existe o no está
+  //   instalado en este equipo.
+  // - ComponenteHardwareNotFoundException: el componente nuevo no existe.
+  // - ComponenteNoDisponibleException: el componente nuevo no está
+  //   "Disponible", ya tiene un equipo asignado o es el mismo componente que
+  //   se retira.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  reemplazarComponenteStock(
+    idEquipo: number,
+    idHardwareActual: number,
+    idHardwareNuevo: number,
+    fechaReemplazo: Date,
+    observaciones?: string,
+    idTecnico?: number,
+  ): Promise<void>;
+
+  // Reemplaza un componente instalado por uno nuevo que se registra en el
+  // mismo acto (POST /equipos/:id/componentes/:idHardwareActual/
+  // registrar-reemplazar). En una sola transacción retira el componente actual
+  // (igual que reemplazarComponenteStock) y crea el hardware nuevo (estado
+  // "Instalado", id_equipo_actual = idEquipo) con su movimiento actual.
+  // Si algo falla no queda ni el componente nuevo ni cambios en el actual.
+  // Lanza:
+  // - EquipoNotFoundException: el equipo no existe.
+  // - ComponenteNoInstaladoException: el componente actual no existe o no está
+  //   instalado en este equipo.
+  // - NumeroSerieComponenteDuplicadoException: ya existe un componente con ese
+  //   número de serie.
+  // - TecnicoResponsableNoDisponibleException: el técnico informado no existe.
+  // Solo persiste: reglas como que el equipo esté activo se validan en el
+  // caso de uso.
+  registrarEReemplazarComponente(
+    idEquipo: number,
+    idHardwareActual: number,
+    data: RegistrarEReemplazarComponenteData,
+  ): Promise<void>;
 }
