@@ -84,24 +84,6 @@ export class EquipoController {
     };
   }
 
-<<<<<<< HEAD
-  @Get('/options')
-  @Roles(
-    RolEnum.ADMINISTRADOR,
-    RolEnum.SOPORTE_INSITU,
-    RolEnum.SOPORTE_TECNICO,
-    RolEnum.CLIENTE_TRABAJADOR,
-  )
-  @ApiGetEquipoOptionsSwagger()
-  async getEquipoOptions(
-    @Query('id_area') id_area?: number | undefined,
-    @Query('id_trabajador') id_trabajador?: number | undefined,
-  ) {
-    const data = await this.getEquipoOptionsUseCase.execute(
-      id_area ? Number(id_area) : undefined,
-      id_trabajador ? Number(id_trabajador) : undefined,
-    );
-=======
   // Debe declararse antes de `@Get(':id')`; si no, "options" se interpretaría
   // como un id.
   @Get('options')
@@ -109,7 +91,6 @@ export class EquipoController {
   @ApiGetEquipoOptionsSwagger()
   async getEquipoOptions(@Query() query: GetEquipoOptionsQueryDto) {
     const data = await this.getEquipoOptionsUseCase.execute(query);
->>>>>>> origin/giovanni
     return { message: 'Opciones de equipos obtenidas exitosamente', data };
   }
 

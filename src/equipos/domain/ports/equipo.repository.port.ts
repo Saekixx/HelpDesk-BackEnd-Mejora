@@ -38,14 +38,8 @@ export interface EquipoRepositoryPort {
   // activos, con filtros opcionales por cliente, sucursal, área, estado y
   // búsqueda parcial, ordenados por nombre.
   getEquipoOptions(
-<<<<<<< HEAD
-    id_area?: number,
-    id_trabajador?: number,
-  ): Promise<{ id_equipo: number; nombre_equipo: string }[]>;
-=======
     filters?: GetEquipoOptionsFilterDto,
   ): Promise<EquipoOptionItem[]>;
->>>>>>> origin/giovanni
 
   // Conteos de equipos activos para las tarjetas KPI del inventario
   // (GET /equipos/estadisticas): total, asignados y sin asignar. No recibe

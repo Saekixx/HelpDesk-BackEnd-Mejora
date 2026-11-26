@@ -756,36 +756,13 @@ export function ApiReemplazarComponenteStockSwagger() {
   );
 }
 
-<<<<<<< HEAD
-export const ApiGetEquipoOptionsSwagger = () =>
-  applyDecorators(
-=======
 export function ApiRegistrarEReemplazarComponenteSwagger() {
   return applyDecorators(
->>>>>>> origin/giovanni
     ApiOperation({
       summary:
         'Reemplazar un componente de un equipo registrando una pieza nueva',
       description:
-<<<<<<< HEAD
-        'Devuelve un listado de equipos con id y nombre, opcionalmente filtrado por área o por trabajador. Este endpoint se utiliza para alimentar los selectores de búsqueda en el frontend.',
-    }),
-    ApiQuery({
-      name: 'id_area',
-      required: false,
-      type: Number,
-      description: 'Filtrar opciones de equipos por ID del área',
-      example: 1,
-    }),
-    ApiQuery({
-      name: 'id_trabajador',
-      required: false,
-      type: Number,
-      description: 'Filtrar opciones de equipos por ID del trabajador',
-      example: 5,
-=======
         'Retira el componente actual del equipo y registra un componente nuevo ya instalado en su lugar. En una sola transacción: el componente actual pasa a "Baja / Descarte", queda sin equipo y su movimiento activo se cierra (fecha de retiro = fecha de reemplazo, motivo de retiro = observaciones); se crea el componente nuevo (estado "Instalado") con su movimiento actual y el usuario autenticado como técnico responsable. El equipo debe estar activo, el componente actual debe estar instalado en él y el número de serie nuevo no puede estar registrado en otro componente. Si algo falla no queda ni el componente nuevo ni cambios en el actual.',
->>>>>>> origin/giovanni
     }),
     ApiParam({
       name: 'id',
@@ -982,3 +959,4 @@ export function ApiGetEquipoEstadisticasSwagger() {
       description: 'El rol del usuario no tiene permiso de lectura.',
     }),
   );
+}
